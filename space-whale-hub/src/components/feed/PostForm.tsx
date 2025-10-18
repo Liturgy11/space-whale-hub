@@ -129,9 +129,30 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
             type="text"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
-            placeholder="Add tags (separated by commas): garden, cocoon, metamorphosis, whenua, cycles..."
+            placeholder="Add tags (separated by commas): garden, cocoon, metamorphosis, whenua, cycles, pride poetry, art therapy..."
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            suppressHydrationWarning
           />
+          <div className="mt-2">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Suggested tags:</p>
+            <div className="flex flex-wrap gap-2">
+              {['pride poetry', 'art therapy', 'neurodivergent', 'healing', 'garden', 'cocoon', 'metamorphosis', 'whenua', 'cycles', 'embodied', 'somatic', 'trauma-informed'].map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => {
+                    const currentTags = tags ? tags.split(',').map(t => t.trim()) : []
+                    if (!currentTags.includes(tag)) {
+                      setTags([...currentTags, tag].join(', '))
+                    }
+                  }}
+                  className="px-2 py-1 text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors"
+                >
+                  + {tag}
+                </button>
+              ))}
+            </div>
+          </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Tags help others find your post
           </p>

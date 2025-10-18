@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Space Whale Portal - A Sanctuary for Creative Becoming",
-  description: "A portal where your sensitivity is honored, your creativity is sacred, and your becoming is witnessed. A sanctuary for space whales navigating by starlight and whale song.",
+  description: "A portal where your sensitivity is honoured, your creativity is sacred, and your becoming is witnessed. A sanctuary for space whales navigating by starlight and whale song.",
 };
 
 export default function RootLayout({

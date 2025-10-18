@@ -17,6 +17,19 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
 - **PRIVACY & SAFETY FOUNDATION** - RLS policies and user data isolation
 - **VOICE-ALIGNED COPY** - All text reflects authentic therapeutic approach
 - **GARDEN INVITATIONS** - Creative prompts transformed to embodied, permission-giving language
+- **ARCHIVE SYSTEM** - Upload and display creative work with link sharing for large files
+- **UNIFIED CREATE BUTTON** - Main page Create button with dropdown for all content types
+- **AUS/UK ENGLISH** - Consistent spelling throughout (honoured, etc.)
+
+## Next Priority Features 🎯
+- **Archive Upload Albums** - Group related creative work together
+- **Tag-Based Search** - Find archive items by tags (pride poetry, art therapy, etc.)
+- **Community Post Tags** - Add tagging system to community feed posts
+- **User Tagging** - Tag other users in posts (future feature)
+- **Private to Community Sharing** - Share private journal entries to community
+- **Archive to Feed Sharing** - Share archive items to community feed
+- **Welcome Message** - New user onboarding with portal introduction
+- **UX Simplification** - Streamline overall user experience
 
 ## Development Phases
 

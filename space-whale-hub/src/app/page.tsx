@@ -2,13 +2,30 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Archive, Users, BookOpen, User, Sparkles } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Archive, Users, BookOpen, User, Sparkles, Plus, ChevronDown, FileText, Image as ImageIcon, Video, Music, Share2 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UserProfile from "@/components/UserProfile";
 import { useAuth } from "@/contexts/AuthContext";
 
 function HomeContent() {
   const { user } = useAuth();
+  const [showCreateMenu, setShowCreateMenu] = useState(false);
+  const createMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (createMenuRef.current && !createMenuRef.current.contains(event.target as Node)) {
+        setShowCreateMenu(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950 dark:via-purple-950 dark:to-pink-950">
       {/* Navigation */}
@@ -40,6 +57,68 @@ function HomeContent() {
               </Link>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Create Button */}
+              <div className="relative" ref={createMenuRef}>
+                <button
+                  onClick={() => setShowCreateMenu(!showCreateMenu)}
+                  className="flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </button>
+                
+                {/* Create Menu Dropdown */}
+                {showCreateMenu && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50">
+                    <div className="p-2">
+                      <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 px-2">
+                        Share Your Creation
+                      </div>
+                      
+                      {/* Journal Entry */}
+                      <Link 
+                        href="/personal" 
+                        onClick={() => setShowCreateMenu(false)}
+                        className="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                      >
+                        <FileText className="h-5 w-5 text-indigo-600 dark:text-indigo-400 mr-3" />
+                        <div>
+                          <div className="font-medium text-gray-900 dark:text-white">Journal Entry</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">Private reflection</div>
+                        </div>
+                      </Link>
+                      
+                      {/* Community Post */}
+                      <Link 
+                        href="/feed" 
+                        onClick={() => setShowCreateMenu(false)}
+                        className="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                      >
+                        <Share2 className="h-5 w-5 text-purple-600 dark:text-purple-400 mr-3" />
+                        <div>
+                          <div className="font-medium text-gray-900 dark:text-white">Community Post</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">Share with space whales</div>
+                        </div>
+                      </Link>
+                      
+                      {/* Archive Item */}
+                      <Link 
+                        href="/archive" 
+                        onClick={() => setShowCreateMenu(false)}
+                        className="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                      >
+                        <Archive className="h-5 w-5 text-pink-600 dark:text-pink-400 mr-3" />
+                        <div>
+                          <div className="font-medium text-gray-900 dark:text-white">Archive Item</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">Add to community archive</div>
+                        </div>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
               <UserProfile />
             </div>
           </div>
@@ -62,16 +141,15 @@ function HomeContent() {
           </div>
           
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-            Welcome to the{" "}
+            Welcome fellow travelers{" "}
             <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Space Whale Portal
+              to the Space Whale Portal
             </span>
           </h1>
           
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
-            A portal where your sensitivity is honored, your creativity is sacred, and your becoming is witnessed. 
-            A sanctuary for space whales navigating by starlight and whale song, where healing happens in relationship 
-            with the more-than-human world.
+            A portal for reflection, sharing, and connection. A sanctuary where your sensitivity is honoured, 
+            your creativity is sacred, and your becoming is witnessed. Online workshops and events coming in 2026...
           </p>
 
           {/* Feature Cards */}
@@ -113,7 +191,7 @@ function HomeContent() {
                 <User className="h-12 w-12 text-green-600 dark:text-green-400 mb-4 mx-auto" />
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Your Inner Garden</h3>
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  A sanctuary where your sensitivity is honored. Tend your garden with love, let it grow wild, let it rest when it needs to.
+                  A sanctuary where your sensitivity is honoured. Tend your garden with love, let it grow wild, let it rest when it needs to.
                 </p>
               </div>
             </Link>
