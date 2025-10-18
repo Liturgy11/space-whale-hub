@@ -1,24 +1,22 @@
-# Space Whale Hub - Development Plan
+# Space Whale Portal - Development Plan
 
 ## Project Overview
 A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creative expression, healing, and community connection. Built for LGBTIQA+ folks, NDIS participants, and anyone seeking a safe space for creative journey work.
 
 ## Current Status ✅
-- Landing page with branding
-- Archive section (static)
-- Community Feed (static)
-- Personal Space (static)
-- Workshops section (static)
-- Responsive design
-- Brand assets integrated
-- Complete authentication system with Supabase
-- Personal Space with journal entries and mood tracking
-- Community Feed with post creation and display
-- Media upload infrastructure
-- Database schema with proper relationships
-- Trauma-informed, neuroaffirming UI design
-- Space Whale branding and responsive design
-- **PRIVACY & SAFETY FOUNDATION** - Basic RLS policies and user isolation
+- **COMPLETE REBRAND** - Space Whale Hub → Space Whale Portal
+- **AUTHENTIC VOICE INTEGRATION** - Lit's therapeutic voice and creative philosophy embedded throughout
+- **GARDEN/NATURE METAPHORS** - Permission-giving, invitation-based language
+- **COMPLETE AUTHENTICATION SYSTEM** - Supabase integration with user profiles
+- **PERSONAL SPACE** - Journal entries with mood tracking and media uploads
+- **COMMUNITY PORTAL** - Post creation, display, and media sharing with auto-refresh
+- **MEDIA UPLOAD INFRASTRUCTURE** - Supabase Storage for images/videos in both spaces
+- **DATABASE SCHEMA** - Complete with proper relationships and RLS policies
+- **TRAUMA-INFORMED UI** - Neuroaffirming design with content warnings
+- **RESPONSIVE DESIGN** - Mobile-first approach
+- **PRIVACY & SAFETY FOUNDATION** - RLS policies and user data isolation
+- **VOICE-ALIGNED COPY** - All text reflects authentic therapeutic approach
+- **GARDEN INVITATIONS** - Creative prompts transformed to embodied, permission-giving language
 
 ## Development Phases
 

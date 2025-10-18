@@ -466,26 +466,30 @@ export async function getUserRegistrations(userId: string) {
 // ARCHIVE OPERATIONS
 // ============================================
 
-export async function createArchiveItem(userId: string, item: {
+export async function createArchiveItem(item: {
   title: string
   description?: string
-  content_type: string
+  content_type: 'video' | 'artwork' | 'zine' | 'audio'
   media_url: string
   thumbnail_url?: string
   artist_name?: string
   tags?: string[]
 }) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('User not authenticated')
+
   const { data, error } = await supabase
     .from('archive_items')
     .insert({
-      user_id: userId,
+      user_id: user.id,
       title: item.title,
       description: item.description,
       content_type: item.content_type,
       media_url: item.media_url,
       thumbnail_url: item.thumbnail_url,
       artist_name: item.artist_name,
-      tags: item.tags || []
+      tags: item.tags || [],
+      is_approved: true
     })
     .select()
     .single()
@@ -501,10 +505,7 @@ export async function getArchiveItems(options: {
 } = {}) {
   let query = supabase
     .from('archive_items')
-    .select(`
-      *,
-      profiles:user_id (display_name, avatar_url)
-    `)
+    .select('*')
     .eq('is_approved', true)
     .order('created_at', { ascending: false })
 
@@ -523,7 +524,7 @@ export async function getArchiveItems(options: {
   const { data, error } = await query
   
   if (error) throw error
-  return data
+  return data || []
 }
 
 export async function uploadArchiveMedia(userId: string, file: File, contentType: string) {
@@ -564,3 +565,4 @@ export async function reportContent(userId: string, contentType: string, content
   if (error) throw error
   return data
 }
+
