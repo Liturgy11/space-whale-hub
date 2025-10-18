@@ -9,6 +9,8 @@ interface Post {
   content: string
   tags: string[]
   content_warning?: string
+  media_url?: string
+  media_type?: string
   created_at: string
   author: {
     display_name: string
@@ -136,6 +138,51 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete }: 
           <p className="text-gray-900 dark:text-white whitespace-pre-wrap">
             {post.content}
           </p>
+          
+          {/* Media Display */}
+          {post.media_url && (
+            <div className="mt-4">
+              {post.media_type === 'image' ? (
+                <img
+                  src={post.media_url}
+                  alt="Post media"
+                  className="max-w-full h-64 object-cover rounded-lg shadow-sm"
+                />
+              ) : post.media_type === 'video' ? (
+                <video
+                  src={post.media_url}
+                  controls
+                  className="max-w-full h-64 object-cover rounded-lg shadow-sm"
+                />
+              ) : post.media_type === 'mood' ? (
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900 dark:to-purple-900">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-800 rounded-lg flex items-center justify-center">
+                      <span className="text-2xl">😊</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">Mood Shared</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">User shared their current mood</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
+                      <span className="text-indigo-600 dark:text-indigo-400 font-semibold">📄</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">Media File</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {post.media_url.split('/').pop()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           
           {/* Tags */}
           {post.tags && post.tags.length > 0 && (

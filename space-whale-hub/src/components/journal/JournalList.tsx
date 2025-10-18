@@ -175,6 +175,43 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
             <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap line-clamp-4">
               {entry.content}
             </p>
+            
+            {/* Media Display */}
+            {entry.media_url && (
+              <div className="mt-4">
+                {entry.media_type === 'image' ? (
+                  <img
+                    src={entry.media_url}
+                    alt="Journal media"
+                    className="max-w-full h-48 object-cover rounded-lg shadow-sm"
+                  />
+                ) : entry.media_type === 'video' ? (
+                  <video
+                    src={entry.media_url}
+                    controls
+                    className="max-w-full h-48 object-cover rounded-lg shadow-sm"
+                  />
+                ) : (
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
+                        <span className="text-indigo-600 dark:text-indigo-400 font-semibold">
+                          {entry.media_type === 'audio' ? '🎵' : '📄'}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {entry.media_type === 'audio' ? 'Audio File' : 'Document'}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {entry.media_url.split('/').pop()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           
           <div className="mt-4 flex justify-between items-center">

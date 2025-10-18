@@ -21,7 +21,11 @@ interface Post {
   is_liked: boolean
 }
 
-export default function FeedList() {
+interface FeedListProps {
+  refreshTrigger?: number
+}
+
+export default function FeedList({ refreshTrigger }: FeedListProps) {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -29,6 +33,13 @@ export default function FeedList() {
   useEffect(() => {
     loadPosts()
   }, [])
+
+  // Refresh when trigger changes
+  useEffect(() => {
+    if (refreshTrigger) {
+      loadPosts()
+    }
+  }, [refreshTrigger])
 
   const loadPosts = async () => {
     try {

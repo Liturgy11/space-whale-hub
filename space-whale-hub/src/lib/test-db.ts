@@ -23,3 +23,4 @@ export async function testDatabaseConnection() {
     return { success: false, error: err.message }
   }
 }
+

@@ -76,6 +76,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
               required
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
               placeholder="What should we call you?"
+              suppressHydrationWarning
             />
           </div>
 
@@ -90,6 +91,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
               onChange={(e) => setPronouns(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
               placeholder="e.g., they/them, she/her, he/him"
+              suppressHydrationWarning
             />
           </div>
 
@@ -105,6 +107,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
               required
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
               placeholder="your@email.com"
+              suppressHydrationWarning
             />
           </div>
 
@@ -121,6 +124,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
                 required
                 className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                 placeholder="Create a secure password"
+                suppressHydrationWarning
               />
               <button
                 type="button"
@@ -148,6 +152,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
                 required
                 className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                 placeholder="Confirm your password"
+                suppressHydrationWarning
               />
               <button
                 type="button"

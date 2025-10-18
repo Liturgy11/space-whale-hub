@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Space Whale Hub - Creative Community Platform",
-  description: "A digital sanctuary for creative expression, healing, and community connection. Join our space whale journey of art, nature, and transformative creativity.",
+  title: "Space Whale Portal - A Sanctuary for Creative Becoming",
+  description: "A portal where your sensitivity is honored, your creativity is sacred, and your becoming is witnessed. A sanctuary for space whales navigating by starlight and whale song.",
 };
 
 export default function RootLayout({

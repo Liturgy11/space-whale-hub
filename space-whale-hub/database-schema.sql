@@ -60,6 +60,8 @@ CREATE TABLE public.journal_entries (
   content TEXT NOT NULL,
   mood TEXT, -- e.g., "happy", "sad", "calm", "anxious"
   tags TEXT[], -- array of tags
+  media_url TEXT, -- URL to uploaded media file
+  media_type TEXT, -- Type of media: image, video, audio, document
   is_private BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

@@ -62,6 +62,8 @@ export async function createJournalEntry(userId: string, entry: {
   content: string
   mood?: string
   tags?: string[]
+  media_url?: string
+  media_type?: string
   is_private?: boolean
 }) {
   const { data, error } = await supabase
@@ -72,6 +74,8 @@ export async function createJournalEntry(userId: string, entry: {
       content: entry.content,
       mood: entry.mood,
       tags: entry.tags || [],
+      media_url: entry.media_url,
+      media_type: entry.media_type,
       is_private: entry.is_private ?? true
     })
     .select()
@@ -164,6 +168,8 @@ export async function createPost(post: {
   content: string
   tags?: string[]
   content_warning?: string
+  media_url?: string
+  media_type?: string
 }) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('User not authenticated')
@@ -174,12 +180,12 @@ export async function createPost(post: {
       user_id: user.id,
       content: post.content,
       tags: post.tags || [],
-      content_warning: post.content_warning
+      has_content_warning: !!post.content_warning,
+      content_warning_text: post.content_warning || null,
+      media_url: post.media_url || null,
+      media_type: post.media_type || null
     })
-    .select(`
-      *,
-      profiles:user_id (display_name, pronouns, avatar_url)
-    `)
+    .select('*')
     .single()
   
   if (error) throw error
@@ -192,12 +198,7 @@ export async function getPosts(options: {
 } = {}) {
   let query = supabase
     .from('posts')
-    .select(`
-      *,
-      profiles:user_id (display_name, pronouns, avatar_url),
-      likes:likes(count),
-      comments:comments(count)
-    `)
+    .select('*')
     .order('created_at', { ascending: false })
 
   if (options.tags) {
@@ -208,27 +209,76 @@ export async function getPosts(options: {
     query = query.limit(options.limit)
   }
 
-  const { data, error } = await query
+  const { data: posts, error } = await query
   
   if (error) throw error
   
+  if (!posts || posts.length === 0) {
+    return []
+  }
+
+  // Get current user for special handling
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Get unique user IDs from posts
+  const userIds = [...new Set(posts.map(post => post.user_id))]
+  
+  // Fetch profiles for all users
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, display_name, pronouns, avatar_url')
+    .in('id', userIds)
+
+  // Create a map for quick lookup
+  const profileMap = new Map()
+  profiles?.forEach(profile => {
+    profileMap.set(profile.id, profile)
+  })
+
+  // Handle missing profiles with smart defaults
+  const missingUserIds = userIds.filter(id => !profileMap.has(id))
+  missingUserIds.forEach(userId => {
+    // Special case for Lit
+    if (user && userId === user.id && user.email === 'lizwamc@gmail.com') {
+      profileMap.set(userId, {
+        id: userId,
+        display_name: 'Lit',
+        pronouns: 'they/them', // Default pronouns for Lit
+        avatar_url: null
+      })
+    } else {
+      // For other users, use a default
+      profileMap.set(userId, {
+        id: userId,
+        display_name: 'Space Whale',
+        pronouns: null, // Let users set their own pronouns
+        avatar_url: null
+      })
+    }
+  })
+  
   // Transform the data to match the expected format
-  return data?.map(post => ({
-    id: post.id,
-    content: post.content,
-    tags: post.tags || [],
-    content_warning: post.content_warning,
-    created_at: post.created_at,
-    author: {
-      id: post.user_id,
-      display_name: post.profiles?.display_name || 'Anonymous',
-      pronouns: post.profiles?.pronouns,
-      avatar_url: post.profiles?.avatar_url
-    },
-    likes_count: post.likes?.[0]?.count || 0,
-    comments_count: post.comments?.[0]?.count || 0,
-    is_liked: false // TODO: Implement user-specific like status
-  })) || []
+  return posts.map(post => {
+    const profile = profileMap.get(post.user_id)
+      return {
+        id: post.id,
+        content: post.content,
+        tags: post.tags || [],
+        content_warning: post.content_warning_text,
+        media_url: post.media_url,
+        media_type: post.media_type,
+        created_at: post.created_at,
+        author: {
+          id: post.user_id,
+          display_name: profile?.display_name || 'Anonymous',
+          pronouns: profile?.pronouns || null,
+          avatar_url: profile?.avatar_url || null
+        },
+        likes_count: 0, // TODO: Fetch likes count separately
+        comments_count: 0, // TODO: Fetch comments count separately
+        is_liked: false // TODO: Implement user-specific like status
+      }
+  })
 }
 
 export async function uploadPostMedia(userId: string, file: File) {

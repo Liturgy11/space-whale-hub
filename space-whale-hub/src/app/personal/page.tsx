@@ -99,7 +99,7 @@ function PersonalSpaceContent() {
                   height={32}
                   className="rounded-full"
                 />
-                <span className="text-xl font-bold text-gray-900 dark:text-white">Personal Space</span>
+                <span className="text-xl font-bold text-gray-900 dark:text-white">Your Inner Garden</span>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -118,10 +118,11 @@ function PersonalSpaceContent() {
           <div className="flex justify-between items-center mb-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Welcome back, {user?.user_metadata?.display_name || 'Space Whale'}! 🐋
+                Welcome home, {user?.user_metadata?.display_name || 'Space Whale'}! 🐋
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-300">
-                Your private sanctuary for reflection, journaling, and creative exploration.
+                A sanctuary where your sensitivity is honored, your creativity is sacred, and your becoming is witnessed. 
+                This is your private garden - tend it with love, let it grow wild, let it rest when it needs to.
               </p>
             </div>
             <button

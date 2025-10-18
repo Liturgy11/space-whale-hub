@@ -23,20 +23,20 @@ function HomeContent() {
                 height={32}
                 className="rounded-full"
               />
-              <span className="text-xl font-bold text-gray-900 dark:text-white">Space Whale Hub</span>
+              <span className="text-xl font-bold text-gray-900 dark:text-white">Space Whale Portal</span>
             </div>
             <div className="hidden md:flex space-x-8">
               <Link href="/archive" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-                Archive
+                The Archive
               </Link>
               <Link href="/feed" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-                Community Feed
+                Community Portal
               </Link>
               <Link href="/workshops" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                 Workshops
               </Link>
               <Link href="/personal" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-                Personal Space
+                Your Inner Garden
               </Link>
             </div>
             <div className="flex items-center space-x-4">
@@ -64,14 +64,14 @@ function HomeContent() {
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
             Welcome to the{" "}
             <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Space Whale Hub
+              Space Whale Portal
             </span>
           </h1>
           
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
-            A digital sanctuary for creative expression, healing, and community connection. 
-            Drawing on nature and creativity as tools for healing, we offer a trauma-informed, 
-            neuroaffirming, and gender-affirming space for your creative journey.
+            A portal where your sensitivity is honored, your creativity is sacred, and your becoming is witnessed. 
+            A sanctuary for space whales navigating by starlight and whale song, where healing happens in relationship 
+            with the more-than-human world.
           </p>
 
           {/* Feature Cards */}
@@ -79,9 +79,10 @@ function HomeContent() {
             <Link href="/archive" className="group">
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105">
                 <Archive className="h-12 w-12 text-indigo-600 dark:text-indigo-400 mb-4 mx-auto" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Archive</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">The Archive</h3>
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  Explore pride poetry videos, community artwork, and creative expressions from our community.
+                  A collection of what's been harvested - poetry that sings, art that speaks, 
+                  and the beautiful mess of creative becoming from fellow space whales.
                 </p>
               </div>
             </Link>
@@ -89,9 +90,9 @@ function HomeContent() {
             <Link href="/feed" className="group">
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105">
                 <Users className="h-12 w-12 text-purple-600 dark:text-purple-400 mb-4 mx-auto" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Community Feed</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Community Portal</h3>
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  Share reflections, zines, and resources. Connect with fellow space whales in our community.
+                  Share what's forming and reforming in you. Connect with fellow space whales navigating by starlight and whale song.
                 </p>
               </div>
             </Link>
@@ -99,9 +100,10 @@ function HomeContent() {
             <Link href="/workshops" className="group">
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105">
                 <BookOpen className="h-12 w-12 text-pink-600 dark:text-pink-400 mb-4 mx-auto" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Workshops</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Garden Gatherings</h3>
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  Join transformative workshops and courses. Learn, create, and grow together.
+                  Come sit in circle with fellow space whales. Share what's taking root, 
+                  witness each other's becoming, and tend the garden together.
                 </p>
               </div>
             </Link>
@@ -109,9 +111,9 @@ function HomeContent() {
             <Link href="/personal" className="group">
               <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105">
                 <User className="h-12 w-12 text-green-600 dark:text-green-400 mb-4 mx-auto" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Personal Space</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Your Inner Garden</h3>
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  Your private sanctuary for reflection, journaling, and creative exploration.
+                  A sanctuary where your sensitivity is honored. Tend your garden with love, let it grow wild, let it rest when it needs to.
                 </p>
               </div>
             </Link>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { ArrowLeft, Plus, Sparkles, Filter, Search } from "lucide-react";
+import { ArrowLeft, Plus, Sparkles, Filter, Search, RefreshCw } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UserProfile from "@/components/UserProfile";
 import PostForm from "@/components/feed/PostForm";
@@ -11,12 +11,13 @@ import FeedList from "@/components/feed/FeedList";
 
 function CommunityFeedContent() {
   const [showPostForm, setShowPostForm] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const aiPrompts = [
-    "What does your inner space whale look like? Draw or describe the colors, patterns, and energy that represent your authentic self.",
-    "Create a gratitude mandala using only natural materials you can find around you today.",
-    "Write a letter to your younger self - what would you want them to know about their journey ahead?",
-    "Design a safe space in your mind. What elements make you feel most protected and free to be yourself?"
+    "What is already growing and flourishing in your garden? Take time to notice what's thriving.",
+    "Where in your body do you feel most held? What lives there? What constellation is forming inside you today?",
+    "Hello, sky. What wisdom do you have for me today? Sit with a tree - what does it want to tell you about patience?",
+    "You're in cocoon phase. What are you incubating? What wants to emerge when you're ready?"
   ];
 
   return (
@@ -58,12 +59,21 @@ function CommunityFeedContent() {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            Community Feed
+          <div className="flex items-center justify-between mb-4">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Community Portal
           </h1>
+            <button
+              onClick={() => setRefreshTrigger(prev => prev + 1)}
+              className="flex items-center px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+            >
+              <RefreshCw className="h-5 w-5 mr-2" />
+              Refresh
+            </button>
+          </div>
           <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
-            Share reflections, zines, and resources. Connect with fellow space whales in our trauma-informed, 
-            neuroaffirming, and gender-affirming community.
+            A sanctuary where your sensitivity is honored, your creativity is sacred, and your becoming is witnessed. 
+            Share what's forming and reforming in you. Connect with fellow space whales navigating by starlight and whale song.
           </p>
         </div>
 
@@ -71,7 +81,7 @@ function CommunityFeedContent() {
         <div className="bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 rounded-xl p-6 mb-8">
           <div className="flex items-center mb-4">
             <Sparkles className="h-6 w-6 text-indigo-600 dark:text-indigo-400 mr-2" />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Today's Creative Prompts</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Garden Invitations</h2>
           </div>
           <div className="grid md:grid-cols-2 gap-4">
             {aiPrompts.map((prompt, index) => (
@@ -88,7 +98,7 @@ function CommunityFeedContent() {
             <PostForm 
               onPostCreated={() => {
                 setShowPostForm(false);
-                // TODO: Refresh feed list
+                setRefreshTrigger(prev => prev + 1); // Trigger feed refresh
               }}
               onCancel={() => setShowPostForm(false)}
             />
@@ -96,7 +106,7 @@ function CommunityFeedContent() {
         )}
 
         {/* Feed List */}
-        <FeedList />
+        <FeedList refreshTrigger={refreshTrigger} />
       </main>
     </div>
   );

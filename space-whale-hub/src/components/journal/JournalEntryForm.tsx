@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { createJournalEntry } from '@/lib/database'
-import { Loader2, Save, X } from 'lucide-react'
+import { Loader2, Save, X, Upload, Image, X as XIcon } from 'lucide-react'
 
 interface JournalEntryFormProps {
   onSuccess?: (entry: any) => void
@@ -15,8 +15,11 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [mood, setMood] = useState('')
+  const [mediaUrl, setMediaUrl] = useState('')
+  const [mediaType, setMediaType] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showMediaUpload, setShowMediaUpload] = useState(false)
 
   const moods = [
     { value: 'joyful', emoji: '😊', label: 'Joyful' },
@@ -43,6 +46,8 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
         title: title.trim() || undefined,
         content: content.trim(),
         mood: mood || undefined,
+        media_url: mediaUrl || undefined,
+        media_type: mediaType || undefined,
         is_private: true
       })
 
@@ -50,6 +55,9 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
       setTitle('')
       setContent('')
       setMood('')
+      setMediaUrl('')
+      setMediaType('')
+      setShowMediaUpload(false)
 
       if (onSuccess) onSuccess(entry)
     } catch (err: any) {
@@ -62,7 +70,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">New Journal Entry</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Tend Your Garden</h2>
         {onCancel && (
           <button
             onClick={onCancel}
@@ -82,7 +90,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Title (Optional)
+            What's Growing? (Optional)
           </label>
           <input
             type="text"
@@ -96,7 +104,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            How are you feeling today?
+            What season are you in?
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
             {moods.map((m) => (
@@ -117,9 +125,59 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
           </div>
         </div>
 
+        {/* Media Upload Section */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            Add Media (Optional)
+          </label>
+          
+          {!mediaUrl ? (
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors">
+              <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-gray-600 dark:text-gray-300 mb-3">
+                Add photos, videos, or audio to your entry
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowMediaUpload(true)}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                <Upload className="h-4 w-4 mr-2 inline" />
+                Upload Media
+              </button>
+            </div>
+          ) : (
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Image className="h-6 w-6 text-indigo-600" />
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {mediaType === 'image' ? 'Image' : mediaType === 'video' ? 'Video' : 'Media'} attached
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {mediaUrl.split('/').pop()}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMediaUrl('')
+                    setMediaType('')
+                  }}
+                  className="text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                >
+                  <XIcon className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Your Thoughts
+            What's Taking Root?
           </label>
           <textarea
             value={content}
@@ -169,6 +227,59 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
           </button>
         </div>
       </form>
+
+      {/* Media Upload Modal */}
+      {showMediaUpload && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Upload Media</h3>
+                <button
+                  onClick={() => setShowMediaUpload(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              
+              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
+                <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  Upload your creative content
+                </h4>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  Drag and drop files here, or click to browse
+                </p>
+                <input
+                  type="file"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      const file = e.target.files[0]
+                      const url = URL.createObjectURL(file)
+                      setMediaUrl(url)
+                      setMediaType(file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'document')
+                      setShowMediaUpload(false)
+                    }
+                  }}
+                  accept="image/*,video/*,audio/*"
+                  className="hidden"
+                  id="media-upload"
+                />
+                <label
+                  htmlFor="media-upload"
+                  className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+                >
+                  Choose File
+                </label>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
+                  Supports images, videos, and audio files
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
