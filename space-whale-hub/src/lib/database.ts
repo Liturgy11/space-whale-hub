@@ -230,16 +230,11 @@ export async function getPosts(options: {
   for (const userId of userIds) {
     // Special case for current user - use their actual metadata
     if (user && userId === user.id) {
-      console.log('Current user metadata:', user.user_metadata)
-      console.log('User email:', user.email)
-      
       // Try multiple fallbacks for display name
       const displayName = user.user_metadata?.display_name || 
                          user.user_metadata?.full_name || 
                          user.user_metadata?.name ||
                          (user.email ? user.email.split('@')[0] : 'Lit')
-      
-      console.log('Resolved display name:', displayName)
       
       profileMap.set(userId, {
         id: userId,

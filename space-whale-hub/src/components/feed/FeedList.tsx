@@ -48,24 +48,18 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
       setLoading(true)
       const postsData = await getPosts()
       setPosts(postsData)
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
   }
 
   const handleLike = async (postId: string) => {
-    if (!user) {
-      console.log('No user found for like')
-      return
-    }
-    
-    console.log('Toggling like for post:', postId, 'user:', user.id)
+    if (!user) return
     
     try {
       const result = await toggleLike(user.id, postId)
-      console.log('Like result:', result)
       
       // Update the post in the local state
       setPosts(posts.map(post => 
@@ -77,7 +71,7 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
             }
           : post
       ))
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error toggling like:', err)
       setError('Failed to update like. Please try again.')
     }

@@ -59,7 +59,7 @@ function CommunityFeedContent() {
             </button>
           </div>
           <p className="text-lg font-space-whale-body text-space-whale-navy mb-6">
-            Share what's forming and reforming in you. Connect with fellow space whales navigating by starlight and whale song.
+            Share what&apos;s forming and reforming in you. Connect with fellow space whales navigating by starlight and whale song.
           </p>
           
           {/* Share Button */}
