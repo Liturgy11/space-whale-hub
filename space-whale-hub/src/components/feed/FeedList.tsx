@@ -56,10 +56,16 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
   }
 
   const handleLike = async (postId: string) => {
-    if (!user) return
+    if (!user) {
+      console.log('No user found for like')
+      return
+    }
+    
+    console.log('Toggling like for post:', postId, 'user:', user.id)
     
     try {
       const result = await toggleLike(user.id, postId)
+      console.log('Like result:', result)
       
       // Update the post in the local state
       setPosts(posts.map(post => 

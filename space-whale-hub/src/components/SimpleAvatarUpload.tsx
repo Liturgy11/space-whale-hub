@@ -16,34 +16,101 @@ export default function SimpleAvatarUpload({ onClose }: SimpleAvatarUploadProps)
   const [success, setSuccess] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')!
+      const img = new Image()
+      
+      img.onload = () => {
+        // Set max dimensions
+        const maxSize = 400
+        let { width, height } = img
+        
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width
+            width = maxSize
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height
+            height = maxSize
+          }
+        }
+        
+        canvas.width = width
+        canvas.height = height
+        
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, width, height)
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            })
+            resolve(compressedFile)
+          } else {
+            resolve(file)
+          }
+        }, 'image/jpeg', 0.8)
+      }
+      
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
   const handleAvatarUpload = async (file: File) => {
     setUploading(true)
     setSuccess('')
     
     try {
-      // Convert to base64 for now (bypasses storage issues)
-      const reader = new FileReader()
-      reader.onload = async (e) => {
-        const base64 = e.target?.result as string
-        
-        // Update user metadata with base64 avatar
-        const { error } = await supabase.auth.updateUser({
-          data: { 
-            ...user.user_metadata,
-            avatar_url: base64 
-          }
+      // Compress image to reduce size
+      const compressedFile = await compressImage(file)
+      
+      // Create a unique filename with user ID
+      const fileExt = 'jpg' // Always use jpg after compression
+      const fileName = `${user.id}-avatar.${fileExt}`
+      const filePath = `${user.id}/${fileName}`
+      
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, compressedFile, {
+          cacheControl: '3600',
+          upsert: true
         })
 
-        if (error) {
-          console.error('Update error:', error)
-          setSuccess('❌ Failed to save avatar')
-        } else {
-          setAvatarUrl(base64)
-          setSuccess('✨ Avatar saved successfully! ✨')
-        }
+      if (error) {
+        console.error('Upload error:', error)
+        setSuccess('❌ Upload failed. Please try again.')
         setUploading(false)
+        return
       }
-      reader.readAsDataURL(file)
+
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath)
+
+      // Update user metadata with new avatar URL
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { 
+          ...user.user_metadata,
+          avatar_url: publicUrl 
+        }
+      })
+
+      if (updateError) {
+        console.error('Update error:', updateError)
+        setSuccess('❌ Avatar uploaded but profile update failed.')
+      } else {
+        setAvatarUrl(publicUrl)
+        setSuccess('✨ Avatar saved successfully! ✨')
+      }
+      
+      setUploading(false)
     } catch (error) {
       console.error('Upload error:', error)
       setSuccess('❌ Upload failed. Please try again.')

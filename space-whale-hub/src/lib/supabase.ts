@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { checkAndFixStorage } from './storage-fix'
 
 const supabaseUrl = 'https://qrmdgbzmdtvqcuzfkwar.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -7,7 +8,69 @@ if (!supabaseAnonKey) {
   throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable. Please check your .env.local file.')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Custom storage that handles quota errors and prevents large values
+const customStorage = {
+  getItem: (key: string) => {
+    try {
+      return localStorage.getItem(key)
+    } catch (error) {
+      console.warn('Storage getItem failed:', error)
+      return null
+    }
+  },
+  setItem: (key: string, value: string) => {
+    try {
+      // Check if the value is too large (over 1MB)
+      const valueSize = new Blob([value]).size
+      if (valueSize > 1024 * 1024) { // 1MB limit
+        console.warn(`Value too large (${(valueSize / 1024 / 1024).toFixed(2)}MB), skipping storage`)
+        return
+      }
+
+      // Check storage before setting
+      checkAndFixStorage()
+      localStorage.setItem(key, value)
+    } catch (error) {
+      console.warn('Storage setItem failed, clearing storage:', error)
+      // If quota exceeded, clear storage and try again
+      try {
+        localStorage.clear()
+        // Only try to store if value is small enough
+        const valueSize = new Blob([value]).size
+        if (valueSize <= 1024 * 1024) {
+          localStorage.setItem(key, value)
+        } else {
+          console.warn('Value still too large after cleanup, skipping')
+        }
+      } catch (retryError) {
+        console.error('Storage retry failed:', retryError)
+      }
+    }
+  },
+  removeItem: (key: string) => {
+    try {
+      localStorage.removeItem(key)
+    } catch (error) {
+      console.warn('Storage removeItem failed:', error)
+    }
+  }
+}
+
+// Create Supabase client with custom storage
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: typeof window !== 'undefined' ? customStorage : undefined,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce'
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'space-whale-portal'
+    }
+  }
+})
 
 // Database types (we'll define these as we build the schema)
 export type Database = {
