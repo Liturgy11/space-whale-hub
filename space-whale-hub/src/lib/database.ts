@@ -223,62 +223,74 @@ export async function getPosts(options: {
   // Get unique user IDs from posts
   const userIds = [...new Set(posts.map(post => post.user_id))]
   
-  // Fetch profiles for all users
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('id, display_name, pronouns, avatar_url')
-    .in('id', userIds)
-
-  // Create a map for quick lookup
+  // Create a map for quick lookup using user metadata
   const profileMap = new Map()
-  profiles?.forEach(profile => {
-    profileMap.set(profile.id, profile)
-  })
-
-  // Handle missing profiles with smart defaults
-  const missingUserIds = userIds.filter(id => !profileMap.has(id))
-  missingUserIds.forEach(userId => {
-    // Special case for Lit
-    if (user && userId === user.id && user.email === 'lizwamc@gmail.com') {
+  
+  // For each user ID, try to get their profile data
+  for (const userId of userIds) {
+    // Special case for current user - use their actual metadata
+    if (user && userId === user.id) {
       profileMap.set(userId, {
         id: userId,
-        display_name: 'Lit',
-        pronouns: 'they/them', // Default pronouns for Lit
-        avatar_url: null
+        display_name: user.user_metadata?.display_name || 'Space Whale',
+        pronouns: user.user_metadata?.pronouns || null,
+        avatar_url: user.user_metadata?.avatar_url || null
       })
     } else {
-      // For other users, use a default
-      profileMap.set(userId, {
-        id: userId,
-        display_name: 'Space Whale',
-        pronouns: null, // Let users set their own pronouns
-        avatar_url: null
-      })
+      // For other users, try to get from profiles table first, then fallback
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, display_name, pronouns, avatar_url')
+        .eq('id', userId)
+        .single()
+      
+      if (profile) {
+        profileMap.set(userId, profile)
+      } else {
+        // Fallback for missing profiles
+        profileMap.set(userId, {
+          id: userId,
+          display_name: 'Space Whale',
+          pronouns: null,
+          avatar_url: null
+        })
+      }
     }
-  })
+  }
+  
+  // Get current user for like status
+  const { data: { user: currentUser } } = await supabase.auth.getUser()
   
   // Transform the data to match the expected format
-  return posts.map(post => {
+  return Promise.all(posts.map(async post => {
     const profile = profileMap.get(post.user_id)
-      return {
-        id: post.id,
-        content: post.content,
-        tags: post.tags || [],
-        content_warning: post.content_warning_text,
-        media_url: post.media_url,
-        media_type: post.media_type,
-        created_at: post.created_at,
-        author: {
-          id: post.user_id,
-          display_name: profile?.display_name || 'Anonymous',
-          pronouns: profile?.pronouns || null,
-          avatar_url: profile?.avatar_url || null
-        },
-        likes_count: 0, // TODO: Fetch likes count separately
-        comments_count: 0, // TODO: Fetch comments count separately
-        is_liked: false // TODO: Implement user-specific like status
-      }
-  })
+    
+    // Get like count, comment count, and user like status
+    const [likesCount, commentsCount, isLiked] = await Promise.all([
+      getLikeCount(post.id),
+      getCommentCount(post.id),
+      currentUser ? hasUserLikedPost(currentUser.id, post.id) : Promise.resolve(false)
+    ])
+    
+    return {
+      id: post.id,
+      content: post.content,
+      tags: post.tags || [],
+      content_warning: post.content_warning_text,
+      media_url: post.media_url,
+      media_type: post.media_type,
+      created_at: post.created_at,
+      author: {
+        id: post.user_id,
+        display_name: profile?.display_name || 'Anonymous',
+        pronouns: profile?.pronouns || null,
+        avatar_url: profile?.avatar_url || null
+      },
+      likes_count: likesCount,
+      comments_count: commentsCount,
+      is_liked: isLiked
+    }
+  }))
 }
 
 export async function uploadPostMedia(userId: string, file: File) {
@@ -311,28 +323,132 @@ export async function createComment(userId: string, postId: string, content: str
       post_id: postId,
       content: content
     })
-    .select(`
-      *,
-      profiles:user_id (display_name, pronouns, avatar_url)
-    `)
+    .select('*')
+    .single()
+  
+  if (error) throw error
+  
+  // Get user info from auth instead of profiles table
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  return {
+    ...data,
+    profiles: {
+      display_name: user?.user_metadata?.display_name || 'Space Whale',
+      pronouns: user?.user_metadata?.pronouns || null,
+      avatar_url: user?.user_metadata?.avatar_url || null
+    }
+  }
+}
+
+// Helper function to ensure a profile exists for a user
+async function ensureProfileExists(userId: string) {
+  try {
+    const { data: existingProfile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .eq('id', userId)
+      .single()
+    
+    if (fetchError && fetchError.code === 'PGRST116') {
+      // Profile doesn't exist, create one
+      console.log('Creating profile for user:', userId)
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          display_name: 'Space Whale',
+          pronouns: null,
+          avatar_url: null
+        })
+      
+      if (insertError) {
+        console.error('Error creating profile:', insertError)
+      }
+    } else if (existingProfile && !existingProfile.display_name) {
+      // Profile exists but no display name, update it
+      await supabase
+        .from('profiles')
+        .update({ display_name: 'Space Whale' })
+        .eq('id', userId)
+    }
+  } catch (error) {
+    console.error('Error in ensureProfileExists:', error)
+  }
+}
+
+export async function getComments(postId: string) {
+  const { data, error } = await supabase
+    .from('comments')
+    .select('*')
+    .eq('post_id', postId)
+    .order('created_at', { ascending: true })
+  
+  if (error) throw error
+  
+  if (!data || data.length === 0) {
+    return []
+  }
+  
+  // For now, use a simple approach - get current user and show their name
+  // TODO: In the future, we can implement a proper profiles system
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  return data.map(comment => {
+    // If it's the current user's comment, show their name
+    // Otherwise, show a generic name
+    const isCurrentUser = user && comment.user_id === user.id
+    
+    return {
+      ...comment,
+      profiles: {
+        display_name: isCurrentUser 
+          ? (user.user_metadata?.display_name || 'You')
+          : 'Space Whale',
+        pronouns: isCurrentUser 
+          ? (user.user_metadata?.pronouns || null)
+          : null,
+        avatar_url: isCurrentUser 
+          ? (user.user_metadata?.avatar_url || null)
+          : null
+      }
+    }
+  })
+}
+
+export async function getCommentCount(postId: string) {
+  const { count, error } = await supabase
+    .from('comments')
+    .select('*', { count: 'exact', head: true })
+    .eq('post_id', postId)
+  
+  if (error) throw error
+  return count || 0
+}
+
+export async function updateComment(commentId: string, content: string) {
+  const { data, error } = await supabase
+    .from('comments')
+    .update({ 
+      content,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', commentId)
+    .select('*')
     .single()
   
   if (error) throw error
   return data
 }
 
-export async function getComments(postId: string) {
-  const { data, error } = await supabase
+export async function deleteComment(commentId: string) {
+  const { error } = await supabase
     .from('comments')
-    .select(`
-      *,
-      profiles:user_id (display_name, pronouns, avatar_url)
-    `)
-    .eq('post_id', postId)
-    .order('created_at', { ascending: true })
+    .delete()
+    .eq('id', commentId)
   
   if (error) throw error
-  return data
+  return true
 }
 
 // ============================================

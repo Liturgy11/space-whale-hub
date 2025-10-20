@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Heart, MessageCircle, Share, MoreHorizontal, Flag, Edit, Trash2 } from 'lucide-react'
+import CommentForm from './CommentForm'
+import CommentsList from './CommentsList'
 
 interface Post {
   id: string
@@ -34,6 +36,9 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete }: 
   const { user } = useAuth()
   const [showContent, setShowContent] = useState(!post.content_warning)
   const [showOptions, setShowOptions] = useState(false)
+  const [showComments, setShowComments] = useState(false)
+  const [showCommentForm, setShowCommentForm] = useState(false)
+  const [commentsRefreshTrigger, setCommentsRefreshTrigger] = useState(0)
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -49,18 +54,28 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete }: 
   const isAuthor = user?.id === post.author.id
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+    <div className="bg-lofi-card rounded-xl shadow-lg p-6 rainbow-border-soft">
       {/* Post Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-            {post.author.display_name?.charAt(0) || '?'}
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-space-whale-purple to-accent-pink flex items-center justify-center">
+            {post.author.avatar_url ? (
+              <img
+                src={post.author.avatar_url}
+                alt={post.author.display_name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-white font-semibold text-sm">
+                {post.author.display_name?.charAt(0) || '?'}
+              </span>
+            )}
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">
+            <h3 className="font-space-whale-subheading text-space-whale-navy">
               {post.author.display_name}
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm font-space-whale-body text-space-whale-purple">
               {post.author.pronouns && `${post.author.pronouns} • `}
               {formatDate(post.created_at)}
             </p>
@@ -135,7 +150,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete }: 
       {/* Post Content */}
       {showContent && (
         <div className="mb-4">
-          <p className="text-gray-900 dark:text-white whitespace-pre-wrap">
+          <p className="text-space-whale-navy font-space-whale-body whitespace-pre-wrap">
             {post.content}
           </p>
           
@@ -212,15 +227,25 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete }: 
             }`}
           >
             <Heart className={`h-5 w-5 ${post.is_liked ? 'fill-current' : ''}`} />
-            <span className="text-sm font-medium">{post.likes_count}</span>
+            {post.likes_count > 0 && (
+              <span className="text-xs text-gray-400 font-normal">{post.likes_count}</span>
+            )}
           </button>
 
           <button
-            onClick={() => onComment?.(post.id)}
-            className="flex items-center space-x-2 text-gray-500 hover:text-indigo-500 transition-colors"
+            onClick={() => {
+              setShowComments(!showComments)
+              setShowCommentForm(!showComments)
+              onComment?.(post.id)
+            }}
+            className={`flex items-center space-x-2 transition-colors ${
+              showComments ? 'text-indigo-500' : 'text-gray-500 hover:text-indigo-500'
+            }`}
           >
             <MessageCircle className="h-5 w-5" />
-            <span className="text-sm font-medium">{post.comments_count}</span>
+            {post.comments_count > 0 && (
+              <span className="text-xs text-gray-400 font-normal">{post.comments_count}</span>
+            )}
           </button>
 
           <button className="flex items-center space-x-2 text-gray-500 hover:text-indigo-500 transition-colors">
@@ -229,6 +254,31 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete }: 
           </button>
         </div>
       </div>
+
+      {/* Comments Section */}
+      {showComments && (
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="space-y-4">
+            {/* Comment Form */}
+            {showCommentForm && (
+              <CommentForm
+                postId={post.id}
+                onCommentAdded={() => {
+                  setCommentsRefreshTrigger(prev => prev + 1)
+                  setShowCommentForm(false)
+                }}
+                onCancel={() => setShowCommentForm(false)}
+              />
+            )}
+
+            {/* Comments List */}
+            <CommentsList
+              postId={post.id}
+              refreshTrigger={commentsRefreshTrigger}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { getJournalEntries, deleteJournalEntry } from '@/lib/database'
-import { Calendar, Heart, Edit, Trash2, Lock, Eye } from 'lucide-react'
+import { getJournalEntries, deleteJournalEntry, createPost } from '@/lib/database'
+import { Calendar, Heart, Edit, Trash2, Lock, Eye, Share2 } from 'lucide-react'
 
 interface JournalListProps {
   refreshTrigger?: number
@@ -15,6 +15,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [sharingId, setSharingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -49,6 +50,34 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       setError(err.message)
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  const handleShareToCommunity = async (entry: any) => {
+    if (!confirm('Share this entry to the Community Orbit? It will be visible to other space whales.')) {
+      return
+    }
+
+    try {
+      setSharingId(entry.id)
+      
+      // Create a community post from this journal entry
+      const postData = {
+        content: entry.content,
+        media_url: entry.media_url || undefined,
+        media_type: entry.media_type || undefined,
+        tags: entry.tags || []
+      }
+      
+      await createPost(postData)
+      
+      // Show success message
+      alert('✨ Your thoughts are now floating in the Community Orbit! ✨')
+      
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setSharingId(null)
     }
   }
 
@@ -126,20 +155,20 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   return (
     <div className="space-y-4">
       {entries.map((entry) => (
-        <div key={entry.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
+        <div key={entry.id} className="bg-lofi-card rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 rainbow-border-soft">
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">
               <div className="flex items-center space-x-3 mb-2">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-xl font-space-whale-subheading text-space-whale-navy">
                   {entry.title || 'Untitled Entry'}
                 </h3>
                 <div className="flex items-center space-x-2">
-                  <Lock className="h-4 w-4 text-gray-400" />
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Private</span>
+                  <Lock className="h-4 w-4 text-space-whale-purple" />
+                  <span className="text-xs text-space-whale-purple font-space-whale-body">Private</span>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+              <div className="flex items-center space-x-4 text-sm text-space-whale-purple font-space-whale-body">
                 <div className="flex items-center">
                   <Calendar className="h-4 w-4 mr-1" />
                   {formatDate(entry.created_at)}
@@ -154,6 +183,18 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
             </div>
             
             <div className="flex items-center space-x-2">
+              <button 
+                onClick={() => handleShareToCommunity(entry)}
+                disabled={sharingId === entry.id}
+                className="p-2 text-gray-400 hover:text-pink-500 transition-colors disabled:opacity-50"
+                title="Share to Community Orbit"
+              >
+                {sharingId === entry.id ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-pink-500"></div>
+                ) : (
+                  <Share2 className="h-4 w-4" />
+                )}
+              </button>
               <button className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                 <Edit className="h-4 w-4" />
               </button>
@@ -172,7 +213,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
           </div>
           
           <div className="prose prose-sm max-w-none">
-            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap line-clamp-4">
+            <p className="text-space-whale-navy whitespace-pre-wrap line-clamp-4 font-space-whale-body">
               {entry.content}
             </p>
             
@@ -215,7 +256,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
           </div>
           
           <div className="mt-4 flex justify-between items-center">
-            <button className="flex items-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-medium transition-colors">
+            <button className="flex items-center text-space-whale-purple hover:text-space-whale-navy text-sm font-space-whale-accent transition-colors">
               <Eye className="h-4 w-4 mr-1" />
               Read full entry
             </button>

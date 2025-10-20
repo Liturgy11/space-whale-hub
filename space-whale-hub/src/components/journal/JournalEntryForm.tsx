@@ -21,18 +21,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
   const [error, setError] = useState('')
   const [showMediaUpload, setShowMediaUpload] = useState(false)
 
-  const moods = [
-    { value: 'joyful', emoji: '😊', label: 'Joyful' },
-    { value: 'calm', emoji: '😌', label: 'Calm' },
-    { value: 'anxious', emoji: '😰', label: 'Anxious' },
-    { value: 'sad', emoji: '😢', label: 'Sad' },
-    { value: 'angry', emoji: '😠', label: 'Angry' },
-    { value: 'grateful', emoji: '🙏', label: 'Grateful' },
-    { value: 'excited', emoji: '🤩', label: 'Excited' },
-    { value: 'peaceful', emoji: '🧘', label: 'Peaceful' },
-    { value: 'overwhelmed', emoji: '😵', label: 'Overwhelmed' },
-    { value: 'hopeful', emoji: '✨', label: 'Hopeful' },
-  ]
+  // Removed emoji mood selection - keeping it simple
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,13 +57,13 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+    <div className="bg-lofi-card rounded-xl shadow-lg p-6 rainbow-border-soft">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Tend Your Garden</h2>
+        <h2 className="text-2xl font-space-whale-heading text-space-whale-navy">New Journal Entry</h2>
         {onCancel && (
           <button
             onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="text-space-whale-purple hover:text-space-whale-navy transition-colors"
           >
             <X className="h-6 w-6" />
           </button>
@@ -89,58 +78,36 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            What's Growing? (Optional)
+          <label className="block text-sm font-medium text-space-whale-navy mb-2 font-space-whale-body">
+            Title (Optional)
           </label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+            className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors"
             placeholder="Give your entry a title..."
             maxLength={200}
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            What season are you in?
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-            {moods.map((m) => (
-              <button
-                key={m.value}
-                type="button"
-                onClick={() => setMood(mood === m.value ? '' : m.value)}
-                className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
-                  mood === m.value
-                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                    : 'border-gray-200 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-600'
-                }`}
-              >
-                <span className="text-2xl mb-1">{m.emoji}</span>
-                <span className="text-xs text-gray-600 dark:text-gray-300">{m.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Media Upload Section */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            Add Media (Optional)
+          <label className="block text-sm font-medium text-space-whale-navy mb-3 font-space-whale-body">
+            Add Photos (Optional)
           </label>
           
           {!mediaUrl ? (
-            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors">
-              <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-600 dark:text-gray-300 mb-3">
+            <div className="border-2 border-dashed border-space-whale-lavender/30 rounded-lg p-6 text-center hover:border-space-whale-purple/50 transition-colors">
+              <Upload className="h-8 w-8 text-space-whale-purple mx-auto mb-2" />
+              <p className="text-space-whale-navy mb-3 font-space-whale-body">
                 Add photos, videos, or audio to your entry
               </p>
               <button
                 type="button"
                 onClick={() => setShowMediaUpload(true)}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                className="px-4 py-2 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-colors font-space-whale-accent"
               >
                 <Upload className="h-4 w-4 mr-2 inline" />
                 Upload Media
@@ -176,23 +143,23 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            What's Taking Root?
+          <label className="block text-sm font-medium text-space-whale-navy mb-2 font-space-whale-body">
+            What's on your mind?
           </label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             required
             rows={8}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors resize-none"
+            className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors resize-none"
             placeholder="Write freely... this space is just for you. Share your thoughts, feelings, experiences, or anything that's on your mind."
             maxLength={10000}
           />
           <div className="flex justify-between items-center mt-2">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-space-whale-purple font-space-whale-body">
               🔒 Private by default - only you can see this
             </p>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-space-whale-purple">
               {content.length}/10,000 characters
             </span>
           </div>
@@ -203,7 +170,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="px-6 py-3 border border-space-whale-lavender/30 text-space-whale-navy rounded-lg hover:bg-space-whale-lavender/10 transition-colors font-space-whale-accent"
             >
               Cancel
             </button>
@@ -211,7 +178,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
           <button
             type="submit"
             disabled={loading || !content.trim()}
-            className="flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl"
+            className="flex items-center px-6 py-3 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg font-space-whale-accent hover:from-space-whale-purple/90 hover:to-accent-pink/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl"
           >
             {loading ? (
               <>

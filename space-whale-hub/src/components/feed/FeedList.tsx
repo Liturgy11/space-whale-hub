@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getPosts } from '@/lib/database'
+import { getPosts, toggleLike } from '@/lib/database'
+import { useAuth } from '@/contexts/AuthContext'
 import PostCard from './PostCard'
 
 interface Post {
@@ -26,6 +27,7 @@ interface FeedListProps {
 }
 
 export default function FeedList({ refreshTrigger }: FeedListProps) {
+  const { user } = useAuth()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -54,12 +56,29 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
   }
 
   const handleLike = async (postId: string) => {
-    // TODO: Implement like functionality
-    console.log('Liked post:', postId)
+    if (!user) return
+    
+    try {
+      const result = await toggleLike(user.id, postId)
+      
+      // Update the post in the local state
+      setPosts(posts.map(post => 
+        post.id === postId 
+          ? { 
+              ...post, 
+              is_liked: result.liked,
+              likes_count: result.liked ? post.likes_count + 1 : post.likes_count - 1
+            }
+          : post
+      ))
+    } catch (err: any) {
+      console.error('Error toggling like:', err)
+      setError('Failed to update like. Please try again.')
+    }
   }
 
   const handleComment = (postId: string) => {
-    // TODO: Implement comment functionality
+    // Comment functionality is handled in PostCard component
     console.log('Comment on post:', postId)
   }
 

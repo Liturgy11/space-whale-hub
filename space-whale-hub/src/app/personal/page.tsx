@@ -10,11 +10,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import JournalEntryForm from "@/components/journal/JournalEntryForm";
 import JournalList from "@/components/journal/JournalList";
 import MediaUpload from "@/components/media/MediaUpload";
+import MoodBoardUpload from "@/components/media/MoodBoardUpload";
 
 function PersonalSpaceContent() {
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [showMediaUpload, setShowMediaUpload] = useState(false);
+  const [showMoodBoardUpload, setShowMoodBoardUpload] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleEntryCreated = () => {
@@ -126,10 +128,7 @@ function PersonalSpaceContent() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <button className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                <Plus className="h-4 w-4 mr-2" />
-                New Entry
-              </button>
+              <UserProfile />
             </div>
           </div>
         </div>
@@ -144,8 +143,8 @@ function PersonalSpaceContent() {
                 Welcome home, {user?.user_metadata?.display_name || 'Space Whale'}! 🐋
               </h1>
               <p className="text-lg font-space-whale-body text-space-whale-navy">
-                A sanctuary where your sensitivity is honoured, your creativity is sacred, and your becoming is witnessed. 
-                This is your private garden - tend it with love, let it grow wild, let it rest when it needs to.
+                Your private space for reflection, creativity, and gentle becoming. 
+                A soft place to land and explore what's forming within you.
               </p>
             </div>
             <button
@@ -167,75 +166,78 @@ function PersonalSpaceContent() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Quick Actions */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
+            {/* Quick Actions - Tumblr Style */}
+            <div className="bg-lofi-card rounded-xl shadow-lg p-6 rainbow-border-soft">
+              <h2 className="text-xl font-space-whale-subheading text-space-whale-navy mb-4">What feels right today?</h2>
               <div className="grid md:grid-cols-2 gap-4">
-                <button className="flex items-center p-4 bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 rounded-lg hover:from-indigo-200 hover:to-purple-200 dark:hover:from-indigo-800 dark:hover:to-purple-800 transition-all duration-300">
-                  <FileText className="h-6 w-6 text-indigo-600 dark:text-indigo-400 mr-3" />
+                <button 
+                  onClick={() => setShowForm(!showForm)}
+                  className="flex items-center p-4 bg-gradient-to-r from-pink-100 to-purple-100 rounded-lg hover:from-pink-200 hover:to-purple-200 transition-all duration-300 group"
+                >
+                  <FileText className="h-6 w-6 text-pink-500 mr-3 group-hover:scale-110 transition-transform" />
                   <div className="text-left">
-                    <div className="font-medium text-gray-900 dark:text-white">New Journal Entry</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">Reflect on your day</div>
-                  </div>
-                </button>
-                <button className="flex items-center p-4 bg-gradient-to-r from-pink-100 to-purple-100 dark:from-pink-900 dark:to-purple-900 rounded-lg hover:from-pink-200 hover:to-purple-200 dark:hover:from-pink-800 dark:hover:to-purple-800 transition-all duration-300">
-                  <Palette className="h-6 w-6 text-pink-600 dark:text-pink-400 mr-3" />
-                  <div className="text-left">
-                    <div className="font-medium text-gray-900 dark:text-white">Create Artwork</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">Express yourself</div>
+                    <div className="font-medium text-space-whale-navy">Write something</div>
+                    <div className="text-sm text-space-whale-purple">words, thoughts, feelings</div>
                   </div>
                 </button>
                 <button 
-                  onClick={() => setShowMediaUpload(true)}
-                  className="flex items-center p-4 bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900 dark:to-blue-900 rounded-lg hover:from-green-200 hover:to-blue-200 dark:hover:from-green-800 dark:hover:to-blue-800 transition-all duration-300"
+                  onClick={() => setShowMoodBoardUpload(true)}
+                  className="flex items-center p-4 bg-gradient-to-r from-blue-100 to-teal-100 rounded-lg hover:from-blue-200 hover:to-teal-200 transition-all duration-300 group"
                 >
-                  <Camera className="h-6 w-6 text-green-600 dark:text-green-400 mr-3" />
+                  <Camera className="h-6 w-6 text-blue-500 mr-3 group-hover:scale-110 transition-transform" />
                   <div className="text-left">
-                    <div className="font-medium text-gray-900 dark:text-white">Upload Media</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">Share your creations</div>
+                    <div className="font-medium text-space-whale-navy">Add photos</div>
+                    <div className="text-sm text-space-whale-purple">mood board vibes</div>
                   </div>
                 </button>
-                <button className="flex items-center p-4 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900 dark:to-orange-900 rounded-lg hover:from-yellow-200 hover:to-orange-200 dark:hover:from-yellow-800 dark:hover:to-orange-800 transition-all duration-300">
-                  <BookOpen className="h-6 w-6 text-yellow-600 dark:text-yellow-400 mr-3" />
+                <button className="flex items-center p-4 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-lg hover:from-yellow-200 hover:to-orange-200 transition-all duration-300 group">
+                  <Palette className="h-6 w-6 text-orange-500 mr-3 group-hover:scale-110 transition-transform" />
                   <div className="text-left">
-                    <div className="font-medium text-gray-900 dark:text-white">Start Zine</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">Create a zine</div>
+                    <div className="font-medium text-space-whale-navy">Make art</div>
+                    <div className="text-sm text-space-whale-purple">doodles, collages, whatever</div>
+                  </div>
+                </button>
+                <button className="flex items-center p-4 bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg hover:from-green-200 hover:to-emerald-200 transition-all duration-300 group">
+                  <BookOpen className="h-6 w-6 text-green-500 mr-3 group-hover:scale-110 transition-transform" />
+                  <div className="text-left">
+                    <div className="font-medium text-space-whale-navy">Create zine</div>
+                    <div className="text-sm text-space-whale-purple">mini magazine magic</div>
                   </div>
                 </button>
               </div>
             </div>
 
-            {/* Journal Entries */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Your Journal Entries</h2>
+            {/* Journal Entries - Tumblr Style */}
+            <div className="bg-lofi-card rounded-xl shadow-lg p-6 rainbow-border-soft">
+              <h2 className="text-xl font-space-whale-subheading text-space-whale-navy mb-6">Your thoughts & feelings</h2>
               <JournalList key={refreshKey} />
             </div>
 
-            {/* Draft Artworks */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            {/* Works in Progress - Tumblr Style */}
+            <div className="bg-lofi-card rounded-xl shadow-lg p-6 rainbow-border-soft">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Draft Artworks</h2>
-                <button className="flex items-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
+                <h2 className="text-xl font-space-whale-subheading text-space-whale-navy">Works in progress</h2>
+                <button className="flex items-center text-space-whale-purple hover:text-space-whale-navy transition-colors font-space-whale-accent">
                   <Plus className="h-4 w-4 mr-1" />
-                  New Artwork
+                  Start something
                 </button>
               </div>
               
               <div className="grid md:grid-cols-2 gap-4">
                 {draftArtworks.map((artwork) => (
-                  <div key={artwork.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <div key={artwork.id} className="border border-space-whale-lavender/30 rounded-lg p-4 hover:bg-space-whale-lavender/10 transition-colors group">
                     <div className="flex items-center space-x-3 mb-2">
-                      <span className="text-2xl">{artwork.thumbnail}</span>
+                      <span className="text-2xl group-hover:scale-110 transition-transform">{artwork.thumbnail}</span>
                       <div className="flex-1">
-                        <h3 className="font-medium text-gray-900 dark:text-white">{artwork.title}</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{artwork.type}</p>
+                        <h3 className="font-medium text-space-whale-navy font-space-whale-body">{artwork.title}</h3>
+                        <p className="text-sm text-space-whale-purple">{artwork.type}</p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-xs text-space-whale-purple">
                         {artwork.lastModified}
                       </span>
-                      <button className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm">
+                      <button className="text-space-whale-purple hover:text-space-whale-navy text-sm font-space-whale-accent transition-colors">
                         Continue →
                       </button>
                     </div>
@@ -247,70 +249,81 @@ function PersonalSpaceContent() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Garden Invitation */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Garden Invitation</h3>
+            {/* Reflection Prompt */}
+            <div className="bg-lofi-card rounded-xl shadow-lg p-6 rainbow-border-soft">
+              <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-4">Reflection Prompt</h3>
               
               {currentPrompt ? (
-                <div className="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900 dark:to-purple-900 rounded-lg border-l-4 border-indigo-500">
-                  <p className="text-sm text-gray-700 dark:text-gray-300 italic">
+                <div className="mb-4 p-4 bg-gradient-to-r from-space-whale-lavender/20 to-accent-pink/20 rounded-lg border-l-4 border-space-whale-purple">
+                  <p className="text-sm text-space-whale-navy italic font-space-whale-body">
                     "{currentPrompt}"
                   </p>
                 </div>
               ) : (
-                <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                    Click below to receive a gentle invitation for your garden
+                <div className="mb-4 p-4 bg-space-whale-lavender/10 rounded-lg">
+                  <p className="text-sm text-space-whale-purple text-center font-space-whale-body">
+                    Need a gentle nudge? Get a reflection prompt
                   </p>
                 </div>
               )}
               
               <button 
                 onClick={generateRandomPrompt}
-                className="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 font-medium"
+                className="w-full px-4 py-3 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-all duration-300 font-space-whale-accent"
               >
-                {currentPrompt ? 'New Garden Invitation' : 'Generate Garden Invitation'}
+                {currentPrompt ? 'New Prompt' : 'Get Reflection Prompt'}
+              </button>
+            </div>
+
+            {/* Creative Activity Generator */}
+            <div className="bg-lofi-card rounded-xl shadow-lg p-6 rainbow-border-soft">
+              <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-4">Creative Spark</h3>
+              <p className="text-sm text-space-whale-purple mb-4 font-space-whale-body">
+                Feeling stuck? Get a creative activity suggestion
+              </p>
+              <button className="w-full px-4 py-3 bg-gradient-to-r from-accent-orange to-accent-yellow text-white rounded-lg hover:from-accent-orange/90 hover:to-accent-yellow/90 transition-all duration-300 font-space-whale-accent">
+                Generate Activity
               </button>
             </div>
 
             {/* Privacy Settings */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Privacy Settings</h3>
+            <div className="bg-lofi-card rounded-xl shadow-lg p-6 rainbow-border-soft">
+              <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-4">Privacy</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Default to Private</span>
-                  <input type="checkbox" className="rounded" defaultChecked />
+                  <span className="text-sm text-space-whale-navy font-space-whale-body">Default to Private</span>
+                  <input type="checkbox" className="rounded border-space-whale-lavender" defaultChecked />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Share with Community</span>
-                  <input type="checkbox" className="rounded" />
+                  <span className="text-sm text-space-whale-navy font-space-whale-body">Share with Community</span>
+                  <input type="checkbox" className="rounded border-space-whale-lavender" />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">AI-Generated Prompts</span>
-                  <input type="checkbox" className="rounded" defaultChecked />
+                  <span className="text-sm text-space-whale-navy font-space-whale-body">AI-Generated Prompts</span>
+                  <input type="checkbox" className="rounded border-space-whale-lavender" defaultChecked />
                 </div>
               </div>
             </div>
 
-            {/* Quick Stats */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Your Journey</h3>
+            {/* Your Journey Stats */}
+            <div className="bg-lofi-card rounded-xl shadow-lg p-6 rainbow-border-soft">
+              <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-4">Your journey</h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Journal Entries</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">12</span>
+                  <span className="text-sm text-space-whale-purple font-space-whale-body">Journal entries</span>
+                  <span className="text-sm font-medium text-space-whale-navy">12</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Artworks Created</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">8</span>
+                  <span className="text-sm text-space-whale-purple font-space-whale-body">Artworks created</span>
+                  <span className="text-sm font-medium text-space-whale-navy">8</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Days Active</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">24</span>
+                  <span className="text-sm text-space-whale-purple font-space-whale-body">Days active</span>
+                  <span className="text-sm font-medium text-space-whale-navy">24</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Community Shares</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">5</span>
+                  <span className="text-sm text-space-whale-purple font-space-whale-body">Community shares</span>
+                  <span className="text-sm font-medium text-space-whale-navy">5</span>
                 </div>
               </div>
             </div>
@@ -329,6 +342,22 @@ function PersonalSpaceContent() {
                 // TODO: Add to user's media collection
               }}
               onCancel={() => setShowMediaUpload(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Mood Board Upload Modal */}
+      {showMoodBoardUpload && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-4xl">
+            <MoodBoardUpload 
+              onUploadComplete={(urls, type) => {
+                console.log('Mood board created:', urls, type);
+                setShowMoodBoardUpload(false);
+                // TODO: Add to user's mood board collection
+              }}
+              onCancel={() => setShowMoodBoardUpload(false)}
             />
           </div>
         </div>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { ArrowLeft, Plus, Sparkles, Filter, Search, RefreshCw } from "lucide-react";
+import { ArrowLeft, Plus, Filter, Search, RefreshCw } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UserProfile from "@/components/UserProfile";
 import PostForm from "@/components/feed/PostForm";
@@ -13,35 +13,6 @@ function CommunityFeedContent() {
   const [showPostForm, setShowPostForm] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const aiPrompts = [
-    "What is already growing and flourishing in your garden? Take time to notice what's thriving.",
-    "Where in your body do you feel most held? What lives there? What constellation is forming inside you today?",
-    "Hello, sky. What wisdom do you have for me today? Sit with a tree - what does it want to tell you about patience?",
-    "You're in cocoon phase. What are you incubating? What wants to emerge when you're ready?",
-    "What is already growing and flourishing in your garden? Take time to notice what's thriving.",
-    "Your garden needs tending. What wants to be weeded? What wants to be watered?",
-    "Are you sitting on seeds that could be planted? What's waiting to grow?",
-    "What in your life is ready for composting? What's dead or dying that could nourish new growth?",
-    "It's harvest time. What's ripe for the picking? What's ready to be shared?",
-    "Where in your body do you feel most held? What lives there?",
-    "Your body holds galaxies. What constellation is forming inside you today?",
-    "If your nervous system had a landscape, what would grow there?",
-    "What texture is your grief? What color does it want to become?",
-    "Close your eyes. What does safety feel like in your body?",
-    "Where are you in the life/death/life cycle right now? What's dying? What's being born?",
-    "Are you lava, caterpillar, or butterfly today? Different parts of you might be in different stages.",
-    "What season are you in? Spring's emergence? Summer's fullness? Autumn's letting go? Winter's rest?",
-    "You're in cocoon phase. What are you incubating? What wants to emerge when you're ready?",
-    "Time isn't linear. Your younger self is reaching through time - what do they need to hear?",
-    "What's forming and reforming in you right now? What's dispersing?"
-  ];
-
-  const [currentPrompt, setCurrentPrompt] = useState<string | null>(null);
-
-  const generateRandomPrompt = () => {
-    const randomIndex = Math.floor(Math.random() * aiPrompts.length);
-    setCurrentPrompt(aiPrompts[randomIndex]);
-  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -66,13 +37,6 @@ function CommunityFeedContent() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <button 
-                onClick={() => setShowPostForm(true)}
-                className="btn-lofi flex items-center"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Share
-              </button>
               <UserProfile />
             </div>
           </div>
@@ -95,39 +59,21 @@ function CommunityFeedContent() {
             </button>
           </div>
           <p className="text-lg font-space-whale-body text-space-whale-navy mb-6">
-            A sanctuary where your sensitivity is honoured, your creativity is sacred, and your becoming is witnessed. 
             Share what's forming and reforming in you. Connect with fellow space whales navigating by starlight and whale song.
           </p>
+          
+          {/* Share Button */}
+          <div className="mb-8">
+            <button 
+              onClick={() => setShowPostForm(true)}
+              className="btn-lofi flex items-center"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Share
+            </button>
+          </div>
         </div>
 
-        {/* Garden Invitation */}
-        <div className="bg-lofi-card rounded-xl p-6 mb-8 rainbow-border-soft glow-soft">
-          <div className="flex items-center mb-4">
-            <Sparkles className="h-6 w-6 text-accent-pink mr-2 float-gentle" />
-            <h2 className="text-xl font-space-whale-subheading text-space-whale-navy">Garden Invitation</h2>
-          </div>
-          
-          {currentPrompt ? (
-            <div className="mb-4 p-4 bg-white/80 rounded-lg border-l-4 border-accent-pink">
-              <p className="text-space-whale-navy italic font-space-whale-body">
-                "{currentPrompt}"
-              </p>
-            </div>
-          ) : (
-            <div className="mb-4 p-4 bg-white/50 rounded-lg">
-              <p className="text-space-whale-navy text-center font-space-whale-body">
-                Click below to receive a gentle invitation for your garden
-              </p>
-            </div>
-          )}
-          
-          <button 
-            onClick={generateRandomPrompt}
-            className="w-full px-4 py-3 bg-white/80 text-space-whale-navy rounded-lg hover:bg-space-whale-lavender/20 transition-all duration-300 font-space-whale-accent border border-space-whale-lavender/30"
-          >
-            {currentPrompt ? 'New Garden Invitation' : 'Generate Garden Invitation'}
-          </button>
-        </div>
 
         {/* Post Form Modal */}
         {showPostForm && (
