@@ -104,13 +104,13 @@ function PersonalSpaceContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950 dark:via-purple-950 dark:to-pink-950">
+    <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+      <nav className="bg-white/80 backdrop-blur-sm border-b border-space-whale-lavender/20 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <Link href="/" className="flex items-center text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+              <Link href="/" className="flex items-center text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent">
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 Back to Hub
               </Link>
@@ -122,7 +122,7 @@ function PersonalSpaceContent() {
                   height={32}
                   className="rounded-full"
                 />
-                <span className="text-xl font-bold text-gray-900 dark:text-white">Your Inner Garden</span>
+                <span className="text-xl font-space-whale-heading text-space-whale-navy">Inner Space</span>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -140,17 +140,17 @@ function PersonalSpaceContent() {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <h1 className="text-3xl font-space-whale-heading text-space-whale-navy mb-2">
                 Welcome home, {user?.user_metadata?.display_name || 'Space Whale'}! 🐋
               </h1>
-              <p className="text-lg text-gray-600 dark:text-gray-300">
+              <p className="text-lg font-space-whale-body text-space-whale-navy">
                 A sanctuary where your sensitivity is honoured, your creativity is sacred, and your becoming is witnessed. 
                 This is your private garden - tend it with love, let it grow wild, let it rest when it needs to.
               </p>
             </div>
             <button
               onClick={() => setShowForm(!showForm)}
-              className="flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+              className="btn-lofi flex items-center"
             >
               <Plus className="h-5 w-5 mr-2" />
               {showForm ? 'Cancel' : 'New Entry'}

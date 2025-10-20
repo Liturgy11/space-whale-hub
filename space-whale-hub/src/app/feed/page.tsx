@@ -44,13 +44,13 @@ function CommunityFeedContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950 dark:via-purple-950 dark:to-pink-950">
+    <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+      <nav className="bg-white/80 backdrop-blur-sm border-b border-space-whale-lavender/20 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <Link href="/" className="flex items-center text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+              <Link href="/" className="flex items-center text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent">
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 Back to Hub
               </Link>
@@ -62,13 +62,13 @@ function CommunityFeedContent() {
                   height={32}
                   className="rounded-full"
                 />
-                <span className="text-xl font-bold text-gray-900 dark:text-white">Community Feed</span>
+                <span className="text-xl font-space-whale-heading text-space-whale-navy">Community Orbit</span>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <button 
                 onClick={() => setShowPostForm(true)}
-                className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                className="btn-lofi flex items-center"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Share
@@ -83,39 +83,39 @@ function CommunityFeedContent() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Community Portal
+          <h1 className="text-3xl font-space-whale-heading text-space-whale-navy">
+            Community Orbit
           </h1>
             <button
               onClick={() => setRefreshTrigger(prev => prev + 1)}
-              className="flex items-center px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+              className="flex items-center px-4 py-2 text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent"
             >
               <RefreshCw className="h-5 w-5 mr-2" />
               Refresh
             </button>
           </div>
-          <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
+          <p className="text-lg font-space-whale-body text-space-whale-navy mb-6">
             A sanctuary where your sensitivity is honoured, your creativity is sacred, and your becoming is witnessed. 
             Share what's forming and reforming in you. Connect with fellow space whales navigating by starlight and whale song.
           </p>
         </div>
 
         {/* Garden Invitation */}
-        <div className="bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 rounded-xl p-6 mb-8">
+        <div className="bg-lofi-card rounded-xl p-6 mb-8 rainbow-border-soft glow-soft">
           <div className="flex items-center mb-4">
-            <Sparkles className="h-6 w-6 text-indigo-600 dark:text-indigo-400 mr-2" />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Garden Invitation</h2>
+            <Sparkles className="h-6 w-6 text-accent-pink mr-2 float-gentle" />
+            <h2 className="text-xl font-space-whale-subheading text-space-whale-navy">Garden Invitation</h2>
           </div>
           
           {currentPrompt ? (
-            <div className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg border-l-4 border-indigo-500">
-              <p className="text-gray-700 dark:text-gray-300 italic">
+            <div className="mb-4 p-4 bg-white/80 rounded-lg border-l-4 border-accent-pink">
+              <p className="text-space-whale-navy italic font-space-whale-body">
                 "{currentPrompt}"
               </p>
             </div>
           ) : (
-            <div className="mb-4 p-4 bg-white/50 dark:bg-gray-800/50 rounded-lg">
-              <p className="text-gray-600 dark:text-gray-400 text-center">
+            <div className="mb-4 p-4 bg-white/50 rounded-lg">
+              <p className="text-space-whale-navy text-center font-space-whale-body">
                 Click below to receive a gentle invitation for your garden
               </p>
             </div>
@@ -123,7 +123,7 @@ function CommunityFeedContent() {
           
           <button 
             onClick={generateRandomPrompt}
-            className="w-full px-4 py-3 bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-300 font-medium border border-indigo-200 dark:border-indigo-700"
+            className="w-full px-4 py-3 bg-white/80 text-space-whale-navy rounded-lg hover:bg-space-whale-lavender/20 transition-all duration-300 font-space-whale-accent border border-space-whale-lavender/30"
           >
             {currentPrompt ? 'New Garden Invitation' : 'Generate Garden Invitation'}
           </button>

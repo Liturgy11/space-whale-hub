@@ -1,26 +1,270 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Space Whale Brand Colors */
+  --space-whale-navy: #060a49;
+  --space-whale-purple: #8c579b;
+  --space-whale-dark-purple: #50327c;
+  --space-whale-lavender: #B89EC4;
+  --space-whale-light-lavender: #B090B0;
+  --space-whale-white: #ffffff;
+  
+  /* Cosmic gradient colors */
+  --cosmic-deep: #1a1a40;
+  --cosmic-purple: #4a2c5a;
+  --cosmic-pink: #8c4a6b;
+  
+  /* Accent colors from brand materials */
+  --accent-teal: #40A0B0;
+  --accent-orange: #F0A080;
+  --accent-pink: #A060C0;
+  --accent-yellow: #F0D060;
+  --accent-green: #40B080;
+  
+  /* Background and foreground */
+  --background: var(--space-whale-white);
+  --foreground: var(--space-whale-navy);
+  --background-dark: var(--space-whale-navy);
+  --foreground-dark: var(--space-whale-white);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-space-whale-navy: var(--space-whale-navy);
+  --color-space-whale-purple: var(--space-whale-purple);
+  --color-space-whale-dark-purple: var(--space-whale-dark-purple);
+  --color-space-whale-lavender: var(--space-whale-lavender);
+  --color-space-whale-light-lavender: var(--space-whale-light-lavender);
+  --color-cosmic-deep: var(--cosmic-deep);
+  --color-cosmic-purple: var(--cosmic-purple);
+  --color-cosmic-pink: var(--cosmic-pink);
+  --color-accent-teal: var(--accent-teal);
+  --color-accent-orange: var(--accent-orange);
+  --color-accent-pink: var(--accent-pink);
+  --color-accent-yellow: var(--accent-yellow);
+  --color-accent-green: var(--accent-green);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-inter: var(--font-inter);
+  --font-poppins: var(--font-poppins);
+  --font-quicksand: var(--font-quicksand);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: var(--background-dark);
+    --foreground: var(--foreground-dark);
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+}
+
+/* Space Whale Typography Classes */
+.font-space-whale-heading {
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.font-space-whale-subheading {
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.font-space-whale-body {
+  font-family: var(--font-inter), sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.font-space-whale-accent {
+  font-family: var(--font-quicksand), sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+
+.font-space-whale-playful {
+  font-family: var(--font-quicksand), sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Space Whale Brand Button Styles */
+.btn-space-whale {
+  @apply px-6 py-3 rounded-xl transition-all duration-200;
+  font-family: var(--font-quicksand), sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--space-whale-lavender);
+  color: var(--space-whale-white);
+  box-shadow: 0 4px 12px rgba(184, 158, 196, 0.3);
+}
+
+.btn-space-whale:hover {
+  background: var(--space-whale-purple);
+  box-shadow: 0 6px 16px rgba(184, 158, 196, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-space-whale-secondary {
+  @apply px-6 py-3 rounded-xl transition-all duration-200;
+  font-family: var(--font-quicksand), sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--space-whale-navy);
+  color: var(--space-whale-white);
+  box-shadow: 0 4px 12px rgba(6, 10, 73, 0.3);
+}
+
+.btn-space-whale-secondary:hover {
+  background: var(--space-whale-dark-purple);
+  box-shadow: 0 6px 16px rgba(6, 10, 73, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Cosmic gradient backgrounds */
+.bg-cosmic {
+  background: linear-gradient(135deg, var(--cosmic-deep) 0%, var(--cosmic-purple) 50%, var(--cosmic-pink) 100%);
+}
+
+.bg-cosmic-light {
+  background: linear-gradient(135deg, var(--space-whale-white) 0%, var(--space-whale-lavender) 50%, var(--space-whale-purple) 100%);
+}
+
+/* Rainbow border effect */
+.rainbow-border {
+  position: relative;
+  background: var(--space-whale-white);
+  border-radius: 16px;
+}
+
+.rainbow-border::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: linear-gradient(45deg, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080);
+  border-radius: 19px;
+  z-index: -1;
+}
+
+/* Cosmic background with soft, minimal aesthetic */
+.star-field {
+  background-image: 
+    radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1px 1px at 40px 70px, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(0.5px 0.5px at 90px 40px, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(0.5px 0.5px at 130px 80px, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1px 1px at 160px 30px, rgba(255, 255, 255, 0.2), transparent);
+  background-repeat: repeat;
+  background-size: 300px 200px;
+  animation: twinkle 8s ease-in-out infinite alternate;
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.3; }
+  100% { opacity: 0.8; }
+}
+
+/* Soft cosmic gradient backgrounds */
+.bg-cosmic-soft {
+  background: linear-gradient(135deg, 
+    rgba(184, 158, 196, 0.1) 0%, 
+    rgba(139, 87, 155, 0.15) 25%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(184, 158, 196, 0.1) 75%,
+    rgba(139, 87, 155, 0.15) 100%);
+}
+
+.bg-cosmic-warm {
+  background: linear-gradient(135deg, 
+    rgba(240, 160, 128, 0.1) 0%, 
+    rgba(160, 96, 192, 0.15) 25%,
+    rgba(255, 255, 255, 0.9) 50%,
+    rgba(240, 160, 128, 0.1) 75%,
+    rgba(160, 96, 192, 0.15) 100%);
+}
+
+/* Soft rainbow border - more subtle */
+.rainbow-border-soft {
+  position: relative;
+  background: var(--space-whale-white);
+  border-radius: 16px;
+  border: 1px solid rgba(184, 158, 196, 0.2);
+}
+
+.rainbow-border-soft::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, 
+    rgba(255, 107, 107, 0.3), 
+    rgba(255, 142, 83, 0.3), 
+    rgba(255, 193, 7, 0.3), 
+    rgba(76, 175, 80, 0.3), 
+    rgba(33, 150, 243, 0.3), 
+    rgba(156, 39, 176, 0.3));
+  border-radius: 18px;
+  z-index: -1;
+  opacity: 0.6;
+}
+
+/* Floating animation for cosmic elements */
+.float-gentle {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Soft glow effects */
+.glow-soft {
+  box-shadow: 0 0 20px rgba(184, 158, 196, 0.2);
+}
+
+.glow-soft:hover {
+  box-shadow: 0 0 30px rgba(184, 158, 196, 0.3);
+}
+
+/* Indie/lofi aesthetic - soft, muted colors */
+.text-lofi {
+  color: rgba(139, 87, 155, 0.8);
+}
+
+.bg-lofi-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(184, 158, 196, 0.2);
+}
+
+/* Soft button styles for indie aesthetic */
+.btn-lofi {
+  @apply px-4 py-2 rounded-lg transition-all duration-300;
+  font-family: var(--font-quicksand), sans-serif;
+  font-weight: 500;
+  background: rgba(184, 158, 196, 0.1);
+  color: var(--space-whale-purple);
+  border: 1px solid rgba(184, 158, 196, 0.3);
+}
+
+.btn-lofi:hover {
+  background: rgba(184, 158, 196, 0.2);
+  border-color: rgba(184, 158, 196, 0.5);
+  transform: translateY(-1px);
 }

@@ -74,13 +74,13 @@ export default function Workshops() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950 dark:via-purple-950 dark:to-pink-950">
+    <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+      <nav className="bg-white/80 backdrop-blur-sm border-b border-space-whale-lavender/20 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <Link href="/" className="flex items-center text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+              <Link href="/" className="flex items-center text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent">
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 Back to Hub
               </Link>
@@ -92,11 +92,11 @@ export default function Workshops() {
                   height={32}
                   className="rounded-full"
                 />
-                <span className="text-xl font-bold text-gray-900 dark:text-white">Workshops & Events</span>
+                <span className="text-xl font-space-whale-heading text-space-whale-navy">Deep Space</span>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <button className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+              <button className="btn-lofi flex items-center">
                 <Plus className="h-4 w-4 mr-2" />
                 Host Workshop
               </button>
@@ -108,17 +108,17 @@ export default function Workshops() {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            Workshops & Events
+          <h1 className="text-3xl font-space-whale-heading text-space-whale-navy mb-4">
+            Deep Space
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
-            Join transformative workshops and courses. Learn, create, and grow together in our 
-            trauma-informed, neuroaffirming, and gender-affirming community.
+          <p className="text-lg font-space-whale-body text-space-whale-navy mb-6">
+            Take your journey deeper with art and therapy resources, online groups and workshops. 
+            Learn, create, and grow together in our trauma-informed, neuroaffirming, and gender-affirming community.
           </p>
           
           {/* Acknowledgement */}
-          <div className="bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 rounded-xl p-6 mb-8">
-            <p className="text-sm text-gray-700 dark:text-gray-300">
+          <div className="bg-lofi-card rounded-xl p-6 mb-8 rainbow-border-soft glow-soft">
+            <p className="text-sm font-space-whale-body text-space-whale-navy">
               <strong>Land Acknowledgement:</strong> Space Whale operates on First Nations land, Darkinjung Country, 
               (Central Coast, NSW). We acknowledge sovereignty was never ceded and pay our respects to elder's 
               past, present and emerging. Space Whale welcomes all people and celebrates diversity. 
@@ -129,7 +129,7 @@ export default function Workshops() {
 
         {/* Upcoming Workshops */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Upcoming Workshops</h2>
+          <h2 className="text-2xl font-space-whale-heading text-space-whale-navy mb-6">Upcoming Workshops</h2>
           <div className="grid lg:grid-cols-2 gap-6">
             {upcomingWorkshops.map((workshop) => (
               <div key={workshop.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">

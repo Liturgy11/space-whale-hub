@@ -21,6 +21,82 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
 - **UNIFIED CREATE BUTTON** - Main page Create button with dropdown for all content types
 - **AUS/UK ENGLISH** - Consistent spelling throughout (honoured, etc.)
 
+### 🎨 Visual Design & Brand Integration (Latest Update)
+- **SPACE WHALE BRAND COLORS** - Integrated throughout with CSS variables
+- **COSMIC TYPOGRAPHY** - Poppins (headings), Inter (body), Quicksand (accents)
+- **INDIE/LOFI AESTHETIC** - Soft, minimal, cosmic but cozy design language
+- **COSMIC NAMING SYSTEM** - Community Orbit, Inner Space, Deep Space, The Archive
+- **TRANS FLAG ICONS** - Cosmic icons with trans colors (Star, Orbit, Sparkles, Heart)
+- **FLOATING ANIMATIONS** - Gentle cosmic animations for visual appeal
+- **RAINBOW BORDERS** - Soft rainbow borders and glow effects
+- **CLEAN READABILITY** - White background with navy/purple text for accessibility
+- **CREATE BUTTON UX** - Moved to main page to prevent cutoff, better positioning
+
+## Strategic Vision & Key Themes 🌟
+
+### 1. Ethical Framework
+- **AI transparency**: All AI features must be opt-in with clear FAQs
+- **Content attribution**: Credit sources, share learning process
+- **Client involvement**: Check in about getting feedback from therapy clients
+- **ND/creative/ethical clients**: Deep thinkers who care about AI ethics, copyright, electricity use
+
+### 2. Core Use Cases (Why People Would Come)
+- **Workshop/class registration** (e.g., In Our Nature, Creative Project Club)
+- **Private digital journal** with photo uploads - feels "tumblr myspace indie queer kinda lofi"
+- **Safe(r) community sharing** - not Meta/X, for vulnerable work
+- **Connect with ND queers**, poetry/nature lovers, healing/liberation folks
+- **Be witnessed in creative journey**
+
+### 3. Portal Structure (Still Evolving) ✨
+#### Current Implementation:
+- **Community Orbit** ✨ (formerly Community Feed)
+- **The Archive** ✨ (workshops, Pride Poetry videos, past events, qi gong, meditation)
+- **Inner Space** ✨ (formerly Inner Garden) - private journal
+- **Deep Space** ✨ (formerly Workshops) - for workshops/courses
+
+#### Future Considerations:
+- **Meeting Place** (or Landing Place) - for workshops/courses (invite-only?)
+- **Outer Space** - ?
+
+#### Features:
+- Creative prompts/activities (curated community)
+- Journaling questions
+- Workshop photos, resources
+- Digital books/zines from community
+
+### 4. Safety & Access
+- **Invite code to register** (gatekeeper against spam, keep it safe)
+- **Opt-in/out of notifications** (likely email)
+- **Moderation concerns**: How committed can you be over time? Set expectations about response times
+
+### 5. AI Concerns (From Your Clients)
+- Copyright/artist exploitation
+- Electricity use (environmental)
+- Ethics of use
+- **Your response**: Transparency, opt-in only, clear disclaimers
+
+#### Future: Space Whale AI Companion
+- For inquiry & deeper understanding
+- Clear limits: "Don't make major life decisions w/out talking to a human"
+- Safety: Flag harm to self/others
+
+### 6. Monetization Ideas
+- **Free**: Basic access, community, journal
+- **Paid**: Workshops, courses (via Stripe)
+- **Scholarship fund**: "Pay it forward"
+- **Sponsor a trans/ND person** for subsidized therapy
+- **Future**: Invite practitioners to host (they can monetize)
+- **Substack integration** - somehow?
+
+### 7. Expansion Vision
+- **Invite friends/colleagues** to host workshops
+- **Community members** can eventually offer workshops
+- **Opportunity to monetize** for other practitioners
+- **The Nest, The Network** (community building)
+- **"We dream/idream"** (holodeck?) - digital books, zines
+- **Filmmaking/screencraft** remain somehow?
+- **Web 3 integration** and ability to mint art as NFT much further down the track and if wanted by the community
+
 ## Next Priority Features 🎯
 - **Archive Upload Albums** - Group related creative work together
 - **Tag-Based Search** - Find archive items by tags (pride poetry, art therapy, etc.)
