@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import { checkAndFixStorage } from './storage-fix'
 
 const supabaseUrl = 'https://qrmdgbzmdtvqcuzfkwar.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -27,8 +26,6 @@ const customStorage = {
         return
       }
 
-      // Check storage before setting (temporarily disabled)
-      // checkAndFixStorage()
       localStorage.setItem(key, value)
     } catch (error) {
       console.warn('Storage setItem failed, clearing storage:', error)

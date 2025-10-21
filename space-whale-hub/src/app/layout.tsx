@@ -2,9 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter, Poppins, Quicksand } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
-import StorageDebugger from "@/components/StorageDebugger";
-import EmergencyStorageFix from "@/components/EmergencyStorageFix";
-import { checkAndFixStorage } from "@/lib/storage-fix";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,10 +41,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Check and fix storage on app startup
-  if (typeof window !== 'undefined') {
-    checkAndFixStorage()
-  }
 
   return (
     <html lang="en">
@@ -55,9 +48,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${poppins.variable} ${quicksand.variable} antialiased`}
       >
         <AuthProvider>
-          {/* <EmergencyStorageFix /> */}
           {children}
-          <StorageDebugger />
         </AuthProvider>
       </body>
     </html>
