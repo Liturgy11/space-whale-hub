@@ -10,7 +10,7 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
 - **COMPLETE AUTHENTICATION SYSTEM** - Supabase integration with user profiles
 - **PERSONAL SPACE** - Journal entries with mood tracking and media uploads
 - **COMMUNITY PORTAL** - Post creation, display, and media sharing with auto-refresh
-- **MEDIA UPLOAD INFRASTRUCTURE** - Supabase Storage for images/videos in both spaces
+- **MEDIA UPLOAD INFRASTRUCTURE** - Base64 encoding (temporary solution for RLS issues)
 - **DATABASE SCHEMA** - Complete with proper relationships and RLS policies
 - **TRAUMA-INFORMED UI** - Neuroaffirming design with content warnings
 - **RESPONSIVE DESIGN** - Mobile-first approach
@@ -97,7 +97,21 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
 - **Filmmaking/screencraft** remain somehow?
 - **Web 3 integration** and ability to mint art as NFT much further down the track and if wanted by the community
 
+## ⚠️ Temporary Solutions & Known Issues
+
+### Storage & Media Upload (Temporary Base64 Solution)
+- **Current Status**: Using base64 encoding for all media uploads to bypass Supabase Storage RLS issues
+- **Why**: Supabase Storage RLS policies were blocking authenticated users from uploading files
+- **Impact**: Images/videos are stored as base64 data URLs in database instead of Supabase Storage
+- **Performance**: Base64 encoding increases database size and may impact performance with large files
+- **Next Steps**: 
+  - Fix Supabase Storage RLS policies for proper file storage
+  - Implement proper file size limits and validation
+  - Consider CDN integration for better performance
+  - Document file cleanup procedures
+
 ## Next Priority Features 🎯
+- **Fix Storage RLS Issues** - Resolve Supabase Storage permissions and migrate from base64
 - **Archive Upload Albums** - Group related creative work together
 - **Tag-Based Search** - Find archive items by tags (pride poetry, art therapy, etc.)
 - **Community Post Tags** - Add tagging system to community feed posts
