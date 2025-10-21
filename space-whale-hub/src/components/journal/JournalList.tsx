@@ -30,14 +30,17 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
     }
 
     console.log('Loading journal entries for user:', user.id)
+    console.log('User object:', user)
 
     try {
       setLoading(true)
       const data = await getJournalEntries(user.id)
       console.log('Loaded journal entries:', data)
-      setEntries(data)
+      console.log('Number of entries:', data?.length || 0)
+      setEntries(data || [])
     } catch (err: any) {
       console.error('Error loading entries:', err)
+      console.error('Error details:', err.message, err.code, err.details)
       setError(err.message)
     } finally {
       setLoading(false)
