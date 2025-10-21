@@ -71,7 +71,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
         content_warning: hasContentWarning ? contentWarning : null,
         media_url: mediaUrl || undefined,
         media_type: mediaType || undefined
-      })
+      }, user?.id)
 
       setContent('')
       setTags('')
