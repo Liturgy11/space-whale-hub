@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
@@ -19,8 +19,13 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [mounted, setMounted] = useState(false)
 
   const { signUp } = useAuth()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

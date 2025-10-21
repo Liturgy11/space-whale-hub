@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
@@ -15,8 +15,13 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [mounted, setMounted] = useState(false)
 
   const { signIn } = useAuth()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,6 +37,30 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
     }
     
     setLoading(false)
+  }
+
+  if (!mounted) {
+    return (
+      <div className="max-w-md mx-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              Welcome Back
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300">
+              Sign in to continue your space whale journey
+            </p>
+          </div>
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+            <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+            <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded mb-6"></div>
+            <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -59,7 +88,6 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
               required
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
               placeholder="your@email.com"
-              suppressHydrationWarning
             />
           </div>
 
