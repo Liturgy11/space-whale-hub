@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Upload, X, Image, Video, FileText, Music, Tag } from 'lucide-react'
-import { createArchiveItem } from '@/lib/database'
+import { createConstellationItem } from '@/lib/database'
 import { supabase } from '@/lib/supabase'
 
 interface ArchiveUploadProps {
@@ -78,8 +78,8 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
         mediaUrl = formData.media_url
       }
       
-      // Create archive item
-      await createArchiveItem({
+      // Create constellation item
+      await createConstellationItem({
         title: formData.title,
         description: formData.description,
         content_type: formData.content_type,

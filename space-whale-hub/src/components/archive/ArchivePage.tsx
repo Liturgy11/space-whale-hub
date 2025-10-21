@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getArchiveItems } from '@/lib/database'
+import { getConstellationItems } from '@/lib/database'
 import ArchiveUpload from './ArchiveUpload'
 import ArchiveItemModal from './ArchiveItemModal'
 import LinkPreview from './LinkPreview'
@@ -24,13 +24,13 @@ export default function ArchivePage() {
   const [selectedItem, setSelectedItem] = useState<ArchiveItem | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const loadArchiveItems = async () => {
+  const loadConstellationItems = async () => {
     try {
       setLoading(true)
-      const items = await getArchiveItems()
+      const items = await getConstellationItems()
       setArchiveItems(items)
     } catch (error) {
-      console.error('Error fetching archive items:', error)
+      console.error('Error fetching constellation items:', error)
     } finally {
       setLoading(false)
     }
@@ -47,12 +47,12 @@ export default function ArchivePage() {
   }
 
   useEffect(() => {
-    loadArchiveItems()
+    loadConstellationItems()
   }, [])
 
   const handleUploadComplete = () => {
-    // Refresh the archive items after upload
-    loadArchiveItems()
+    // Refresh the constellation items after upload
+    loadConstellationItems()
   }
 
   if (loading) {
@@ -74,7 +74,7 @@ export default function ArchivePage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                The Archive
+                Constellation
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-300">
                 A collection of creative work from our community - poetry, art, videos, and more from fellow space whales.
@@ -187,7 +187,7 @@ export default function ArchivePage() {
             <div className="max-w-md mx-auto">
               <div className="text-6xl mb-4">🐋</div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                Contribute your art to our community archive
+                Contribute your art to our constellation
               </h3>
               <p className="text-gray-600 dark:text-gray-300 mb-6">
                 Share your creative work with fellow space whales. We'd love to see what you're creating.

@@ -23,6 +23,32 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
 
   // Removed emoji mood selection - keeping it simple
 
+  const handleFileUpload = async (file: File) => {
+    if (!user) return
+
+    try {
+      console.log('Uploading file for journal entry:', { fileName: file.name, fileSize: file.size, fileType: file.type })
+
+      // Convert file to base64 (same approach as Community Orbit posts)
+      const reader = new FileReader()
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+
+      const base64Data = await base64Promise
+      console.log('Converted to base64, length:', base64Data.length)
+
+      setMediaUrl(base64Data)
+      setMediaType(file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'document')
+      setShowMediaUpload(false)
+    } catch (err: any) {
+      console.error('File upload error:', err)
+      setError(err.message)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
@@ -222,11 +248,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
                   type="file"
                   onChange={(e) => {
                     if (e.target.files && e.target.files[0]) {
-                      const file = e.target.files[0]
-                      const url = URL.createObjectURL(file)
-                      setMediaUrl(url)
-                      setMediaType(file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'document')
-                      setShowMediaUpload(false)
+                      handleFileUpload(e.target.files[0])
                     }
                   }}
                   accept="image/*,video/*,audio/*"

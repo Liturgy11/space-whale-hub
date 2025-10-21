@@ -37,6 +37,19 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       const data = await getJournalEntries(user.id)
       console.log('Loaded journal entries:', data)
       console.log('Number of entries:', data?.length || 0)
+      
+      // Debug media data
+      data?.forEach((entry, index) => {
+        if (entry.media_url) {
+          console.log(`Entry ${index} media:`, {
+            hasMedia: !!entry.media_url,
+            mediaType: entry.media_type,
+            mediaUrlStart: entry.media_url?.substring(0, 50) + '...',
+            isBase64: entry.media_url?.startsWith('data:')
+          })
+        }
+      })
+      
       setEntries(data || [])
     } catch (err: any) {
       console.error('Error loading entries:', err)
@@ -94,8 +107,13 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
+    
+    // Check if it's the same day
+    const isSameDay = date.toDateString() === now.toDateString()
+    if (isSameDay) return 'Today'
+    
     const diffTime = Math.abs(now.getTime() - date.getTime())
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
 
     if (diffDays === 1) return 'Yesterday'
     if (diffDays < 7) return `${diffDays} days ago`
@@ -235,7 +253,55 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                     src={entry.media_url}
                     alt="Journal media"
                     className="max-w-full h-48 object-cover rounded-lg shadow-sm"
+                    onError={(e) => {
+                      console.log('Image failed to load:', entry.media_url?.substring(0, 50) + '...')
+                      console.log('Media type:', entry.media_type)
+                      // Hide broken images (old blob URLs)
+                      if (entry.media_url?.startsWith('blob:')) {
+                        console.log('Hiding broken blob URL image')
+                        e.currentTarget.style.display = 'none'
+                      }
+                    }}
+                    onLoad={() => {
+                      console.log('Image loaded successfully:', entry.media_url?.substring(0, 50) + '...')
+                    }}
                   />
+                ) : entry.media_type === 'moodboard' ? (
+                  <div className="space-y-2">
+                    {/* Show all mood board images in a grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {entry.tags && entry.tags.length > 0 ? (
+                        // Use tags array for all images
+                        entry.tags.map((imageUrl: string, index: number) => (
+                          <img
+                            key={index}
+                            src={imageUrl}
+                            alt={`Mood board image ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg shadow-sm"
+                            onError={(e) => {
+                              console.log('Mood board image failed to load:', imageUrl?.substring(0, 50) + '...')
+                            }}
+                          />
+                        ))
+                      ) : (
+                        // Fallback to just the primary image
+                        <img
+                          src={entry.media_url}
+                          alt="Mood board primary image"
+                          className="w-full h-32 object-cover rounded-lg shadow-sm"
+                          onError={(e) => {
+                            console.log('Mood board image failed to load:', entry.media_url?.substring(0, 50) + '...')
+                          }}
+                        />
+                      )}
+                    </div>
+                    {/* Show count if there are more than 3 images */}
+                    {entry.tags && entry.tags.length > 3 && (
+                      <div className="text-xs text-space-whale-purple font-space-whale-body text-center">
+                        + {entry.tags.length - 3} more images
+                      </div>
+                    )}
+                  </div>
                 ) : entry.media_type === 'video' ? (
                   <video
                     src={entry.media_url}

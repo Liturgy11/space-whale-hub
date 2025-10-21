@@ -352,10 +352,45 @@ function PersonalSpaceContent() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="w-full max-w-4xl">
             <MoodBoardUpload 
-              onUploadComplete={(urls, type) => {
+              onUploadComplete={async (urls, type) => {
                 console.log('Mood board created:', urls, type);
                 setShowMoodBoardUpload(false);
-                // TODO: Add to user's mood board collection
+                
+                // Create a journal entry with the mood board images
+                try {
+                  console.log('Starting mood board creation...', { userId: user.id, urlsCount: urls.length });
+                  
+                  const { createJournalEntry } = await import('@/lib/database');
+                  
+                  // Store all images as a JSON array in the content
+                  const allImagesJson = JSON.stringify(urls);
+                  console.log('Creating journal entry with data:', {
+                    title: 'Mood Board',
+                    content: `Created a mood board with ${urls.length} image${urls.length > 1 ? 's' : ''}`,
+                    media_url: urls[0],
+                    media_type: 'moodboard'
+                  });
+                  
+                  const entry = await createJournalEntry(user.id, {
+                    title: 'Mood Board',
+                    content: `Created a mood board with ${urls.length} image${urls.length > 1 ? 's' : ''}`,
+                    media_url: urls[0], // Use first image as primary display
+                    media_type: 'moodboard',
+                    is_private: true,
+                    tags: urls // Store all image URLs in tags array for display
+                  });
+                  
+                  console.log('Mood board journal entry created successfully:', entry);
+                  
+                  // Show success message
+                  alert('✨ Mood board created successfully! ✨');
+                  
+                  // Trigger refresh of journal list
+                  setRefreshKey(prev => prev + 1);
+                } catch (error) {
+                  console.error('Error creating mood board journal entry:', error);
+                  alert(`❌ Error creating mood board: ${error.message}`);
+                }
               }}
               onCancel={() => setShowMoodBoardUpload(false)}
             />

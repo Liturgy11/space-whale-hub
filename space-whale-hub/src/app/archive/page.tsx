@@ -23,7 +23,7 @@ export default function Archive() {
                   height={32}
                   className="rounded-full"
                 />
-                <span className="text-xl font-space-whale-heading text-space-whale-navy">The Archive</span>
+                <span className="text-xl font-space-whale-heading text-space-whale-navy">Constellation</span>
               </div>
             </div>
             <div className="flex items-center space-x-4">

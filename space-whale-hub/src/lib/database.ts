@@ -66,6 +66,8 @@ export async function createJournalEntry(userId: string, entry: {
   media_type?: string
   is_private?: boolean
 }) {
+  console.log('createJournalEntry called with:', { userId, entry });
+  
   const { data, error } = await supabase
     .from('journal_entries')
     .insert({
@@ -80,6 +82,8 @@ export async function createJournalEntry(userId: string, entry: {
     })
     .select()
     .single()
+  
+  console.log('createJournalEntry result:', { data, error });
   
   if (error) throw error
   return data
@@ -170,26 +174,14 @@ export async function createPost(post: {
   content_warning?: string
   media_url?: string
   media_type?: string
-}) {
-  // Always use authenticated user for RLS compliance
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  
-  console.log('createPost - Auth check:', { user: user?.id, authError })
-  
-  if (authError) {
-    console.error('Auth error in createPost:', authError)
-    throw new Error(`Authentication error: ${authError.message}`)
-  }
-  
-  if (!user) {
-    console.error('No user found in createPost')
-    throw new Error('User not authenticated')
-  }
+}, userId: string) {
+  // Use the passed userId from client-side context
+  if (!userId) throw new Error('User ID is required')
 
   const { data, error } = await supabase
     .from('posts')
     .insert({
-      user_id: user.id,
+      user_id: userId,
       content: post.content,
       tags: post.tags || [],
       has_content_warning: !!post.content_warning,
@@ -478,36 +470,47 @@ export async function deleteComment(commentId: string) {
 // ============================================
 
 export async function toggleLike(userId: string, postId: string) {
-  // Check if already liked
-  const { data: existingLike } = await supabase
-    .from('likes')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('post_id', postId)
-    .single()
-
-  if (existingLike) {
-    // Unlike
-    const { error } = await supabase
-      .from('likes')
-      .delete()
-      .eq('id', existingLike.id)
+  try {
+    console.log('toggleLike called with:', { userId, postId })
     
-    if (error) throw error
-    return { liked: false }
-  } else {
-    // Like
-    const { data, error } = await supabase
+    // Check if already liked
+    const { data: existingLike, error: checkError } = await supabase
       .from('likes')
-      .insert({
-        user_id: userId,
-        post_id: postId
-      })
-      .select()
+      .select('id')
+      .eq('user_id', userId)
+      .eq('post_id', postId)
       .single()
-    
-    if (error) throw error
-    return { liked: true, data }
+
+    console.log('Existing like check:', { existingLike, checkError })
+
+    if (existingLike) {
+      // Unlike
+      const { error: deleteError } = await supabase
+        .from('likes')
+        .delete()
+        .eq('id', existingLike.id)
+      
+      console.log('Delete result:', { deleteError })
+      if (deleteError) throw deleteError
+      return { liked: false }
+    } else {
+      // Like
+      const { data, error: insertError } = await supabase
+        .from('likes')
+        .insert({
+          user_id: userId,
+          post_id: postId
+        })
+        .select()
+        .single()
+      
+      console.log('Insert result:', { data, insertError })
+      if (insertError) throw insertError
+      return { liked: true, data }
+    }
+  } catch (error) {
+    console.error('toggleLike error:', error)
+    throw error
   }
 }
 
@@ -601,10 +604,10 @@ export async function getUserRegistrations(userId: string) {
 }
 
 // ============================================
-// ARCHIVE OPERATIONS
+// CONSTELLATION OPERATIONS
 // ============================================
 
-export async function createArchiveItem(item: {
+export async function createConstellationItem(item: {
   title: string
   description?: string
   content_type: 'video' | 'artwork' | 'zine' | 'audio'
@@ -636,7 +639,7 @@ export async function createArchiveItem(item: {
   return data
 }
 
-export async function getArchiveItems(options: {
+export async function getConstellationItems(options: {
   content_type?: string
   tags?: string[]
   limit?: number
@@ -665,7 +668,7 @@ export async function getArchiveItems(options: {
   return data || []
 }
 
-export async function uploadArchiveMedia(userId: string, file: File, contentType: string) {
+export async function uploadConstellationMedia(userId: string, file: File, contentType: string) {
   const fileExt = file.name.split('.').pop()
   const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
   const filePath = `${userId}/${contentType}/${fileName}`

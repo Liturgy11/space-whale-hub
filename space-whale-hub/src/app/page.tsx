@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
-import { Archive, Users, BookOpen, User, Sparkles, Plus, ChevronDown, FileText, Image as ImageIcon, Video, Music, Share2, Star, Orbit, Heart, Key } from "lucide-react";
+import { Archive, Users, BookOpen, User, Sparkles, Plus, ChevronDown, FileText, Image as ImageIcon, Video, Music, Share2, Star, Orbit, Heart, Key, Zap, Compass, Layers, RotateCcw, Loader2, Eye, Users2, Circle, Shield, CircleDot, CircleDotDashed } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UserProfile from "@/components/UserProfile";
 import SetDisplayName from "@/components/SetDisplayName";
@@ -55,7 +55,7 @@ function HomeContent() {
             </div>
             <div className="hidden md:flex space-x-8">
               <Link href="/archive" className="text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent">
-                The Archive
+                Constellation
               </Link>
               <Link href="/feed" className="text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent">
                 Community Orbit
@@ -155,8 +155,8 @@ function HomeContent() {
                     >
                       <Star className="h-6 w-6 text-blue-300 mr-4" />
                       <div>
-                        <div className="font-medium text-space-whale-navy text-lg">Archive Item</div>
-                        <div className="text-sm text-space-whale-purple">Add to community archive</div>
+                        <div className="font-medium text-space-whale-navy text-lg">Constellation</div>
+                        <div className="text-sm text-space-whale-purple">Add to constellation</div>
                       </div>
                     </Link>
                   </div>
@@ -169,59 +169,57 @@ function HomeContent() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
             <Link href="/archive" className="group">
               <div className="bg-lofi-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105 rainbow-border-soft glow-soft">
-                <Star className="h-12 w-12 text-blue-300 mb-4 mx-auto float-gentle" />
-                <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">The Archive</h3>
+                <Star className="h-12 w-12 text-purple-600 mb-4 mx-auto float-gentle" />
+                <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">Constellation</h3>
                 <p className="text-space-whale-navy text-sm font-space-whale-body">
-                  A collection of what's been harvested - poetry that sings, art that speaks, 
-                  and the beautiful mess of creative becoming from fellow space whales.
+                  Witness what's been harvested - pride poetry, workshop wisdom, and creative offerings from fellow space whales. Each piece a star in our shared sky.
                 </p>
               </div>
             </Link>
 
             <Link href="/feed" className="group">
               <div className="bg-lofi-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105 rainbow-border-soft glow-soft">
-                <Orbit className="h-12 w-12 text-pink-300 mb-4 mx-auto float-gentle" />
+                <Orbit className="h-12 w-12 text-yellow-500 mb-4 mx-auto float-gentle" />
                 <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">Community Orbit</h3>
                 <p className="text-space-whale-navy text-sm font-space-whale-body">
-                  Share what's forming and reforming in you. Connect with fellow space whales navigating by starlight and whale song.
+                  The community stream - share your art, poetry, and reflections. Connect with ND queers, nature lovers, and seekers navigating toward healing and liberation.
                 </p>
               </div>
             </Link>
 
             <Link href="/workshops" className="group">
               <div className="bg-lofi-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105 rainbow-border-soft glow-soft group-hover:shadow-purple-200/50">
-                <Sparkles className="h-12 w-12 text-purple-300 mb-4 mx-auto float-gentle group-hover:text-purple-400" />
+                <CircleDotDashed className="h-12 w-12 text-purple-500 mb-4 mx-auto float-gentle group-hover:text-purple-600" />
                 <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">Deep Space</h3>
                 <p className="text-space-whale-navy text-sm font-space-whale-body">
-                  Take your journey deeper with art and therapy resources, online groups and workshops. 
-                  Learn, create, and grow together in our trauma-informed, neuroaffirming community.
+                  Workshops and creative offerings to support your journey. Explore at your pace - art therapy resources, online groups, and spaces to grow together.
                 </p>
               </div>
             </Link>
 
             <Link href="/personal" className="group">
               <div className="bg-lofi-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105 rainbow-border-soft glow-soft">
-                <Heart className="h-12 w-12 text-pink-200 mb-4 mx-auto float-gentle" />
+                <Eye className="h-12 w-12 text-yellow-600 mb-4 mx-auto float-gentle" />
                 <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">Inner Space</h3>
                 <p className="text-space-whale-navy text-sm font-space-whale-body">
-                  Your personal reflection and journaling space, mood board and optional tools to track mood and habits.
+                  Your personal cosmos - journal, create mood boards, look back on your journey. Private by default. Optional mood and habit tracking to help you witness your own patterns.
                 </p>
               </div>
             </Link>
           </div>
 
-          {/* Call to Action */}
-          <div className="mt-12">
-            <Link 
-              href="/feed"
-              className="btn-lofi inline-flex items-center text-lg"
-            >
-              <Sparkles className="h-5 w-5 mr-2" />
-              Start Your Journey
-            </Link>
-          </div>
         </div>
       </main>
+
+      {/* Land Acknowledgement */}
+      <div className="bg-lofi-card rounded-xl p-6 mx-4 sm:mx-6 lg:mx-8 mb-8 rainbow-border-soft glow-soft">
+        <p className="text-sm font-space-whale-body text-space-whale-navy">
+          <strong>Land Acknowledgement:</strong> Space Whale operates on First Nations land, Darkinjung Country, 
+          (Central Coast, NSW). We acknowledge sovereignty was never ceded and pay our respects to elder's 
+          past, present and emerging. Space Whale welcomes all people and celebrates diversity. 
+          Space Whale is a registered LGBTIQA+ safe space.
+        </p>
+      </div>
 
       {/* Footer */}
       <footer className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700 mt-16">

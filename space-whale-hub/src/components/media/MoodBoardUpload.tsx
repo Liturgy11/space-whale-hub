@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import { Upload, X, Image, Loader2, Check, Plus, Trash2 } from 'lucide-react'
+import { Upload, X, Image as ImageIcon, Loader2, Check, Plus, Trash2 } from 'lucide-react'
 
 interface MoodBoardUploadProps {
   onUploadComplete?: (urls: string[], type: string) => void
@@ -90,6 +90,34 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
+  const compressImage = (file: File, maxWidth: number = 800, quality: number = 0.8): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new window.Image() // Use window.Image to avoid conflict
+      
+      img.onload = () => {
+        // Calculate new dimensions
+        let { width, height } = img
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width
+          width = maxWidth
+        }
+        
+        canvas.width = width
+        canvas.height = height
+        
+        // Draw and compress
+        ctx?.drawImage(img, 0, 0, width, height)
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality)
+        resolve(compressedDataUrl)
+      }
+      
+      img.onerror = reject
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
   const uploadFiles = async () => {
     if (!files.length || !user) return
 
@@ -97,34 +125,27 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
     setError('')
 
     try {
-      const uploadPromises = files.map(async (fileObj) => {
-        const fileExt = fileObj.file.name.split('.').pop()
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-        const filePath = `${user.id}/moodboard/${fileName}`
-
-        // Upload to Supabase Storage
-        const { error: uploadError } = await supabase.storage
-          .from('archive')
-          .upload(filePath, fileObj.file)
-
-        if (uploadError) throw uploadError
-
-        // Get public URL
-        const { data } = supabase.storage
-          .from('archive')
-          .getPublicUrl(filePath)
-
-        return data.publicUrl
+      // Compress and convert files to base64
+      const base64Promises = files.map(async (fileObj) => {
+        console.log('Compressing image:', fileObj.file.name, 'Size:', fileObj.file.size)
+        
+        // Compress image before converting to base64
+        const compressedBase64 = await compressImage(fileObj.file, 800, 0.7)
+        console.log('Compressed base64 length:', compressedBase64.length)
+        
+        return compressedBase64
       })
 
-      const urls = await Promise.all(uploadPromises)
+      const base64Urls = await Promise.all(base64Promises)
+      console.log('All images compressed, total URLs:', base64Urls.length)
       
-      // Call completion callback
+      // Call completion callback with base64 URLs
       if (onUploadComplete) {
-        onUploadComplete(urls, 'moodboard')
+        onUploadComplete(base64Urls, 'moodboard')
       }
 
     } catch (err: any) {
+      console.error('Mood board upload error:', err)
       setError(err.message)
     } finally {
       setUploading(false)

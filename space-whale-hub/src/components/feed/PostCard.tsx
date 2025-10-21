@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Heart, MessageCircle, Share, MoreHorizontal, Flag, Edit, Trash2 } from 'lucide-react'
+import { Heart, MessageCircle, Share, MoreHorizontal, Flag, Edit, Trash2, X, ZoomIn } from 'lucide-react'
 import CommentForm from './CommentForm'
 import CommentsList from './CommentsList'
 
@@ -39,6 +39,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete }: 
   const [showComments, setShowComments] = useState(false)
   const [showCommentForm, setShowCommentForm] = useState(false)
   const [commentsRefreshTrigger, setCommentsRefreshTrigger] = useState(0)
+  const [showImageModal, setShowImageModal] = useState(false)
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -158,11 +159,16 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete }: 
           {post.media_url && (
             <div className="mt-4">
               {post.media_type === 'image' ? (
-                <img
-                  src={post.media_url}
-                  alt="Post media"
-                  className="max-w-full h-64 object-cover rounded-lg shadow-sm"
-                />
+                <div className="relative group cursor-pointer" onClick={() => setShowImageModal(true)}>
+                  <img
+                    src={post.media_url}
+                    alt="Post media"
+                    className="max-w-full h-64 object-cover rounded-lg shadow-sm transition-transform group-hover:scale-105"
+                  />
+                  <div className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ZoomIn className="h-4 w-4 text-white" />
+                  </div>
+                </div>
               ) : post.media_type === 'video' ? (
                 <video
                   src={post.media_url}
@@ -277,6 +283,21 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete }: 
               refreshTrigger={commentsRefreshTrigger}
             />
           </div>
+        </div>
+      )}
+
+      {/* Image Zoom Modal */}
+      {showImageModal && post.media_url && post.media_type === 'image' && (
+        <div 
+          className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setShowImageModal(false)}
+        >
+          <img
+            src={post.media_url}
+            alt="Post media - enlarged (click to close)"
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl cursor-pointer"
+            onClick={() => setShowImageModal(false)}
+          />
         </div>
       )}
     </div>
