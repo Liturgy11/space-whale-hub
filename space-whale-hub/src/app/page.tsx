@@ -12,6 +12,8 @@ function HomeContent() {
   const { user } = useAuth();
   const [showCreateMenu, setShowCreateMenu] = useState(false);
   const createMenuRef = useRef<HTMLDivElement>(null);
+  
+  console.log('HomeContent - Current user:', user)
 
   // Close menu when clicking outside
   useEffect(() => {
