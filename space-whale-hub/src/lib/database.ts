@@ -170,16 +170,9 @@ export async function createPost(post: {
   content_warning?: string
   media_url?: string
   media_type?: string
-}, userId?: string) {
-  // Try to get user from parameter first, then from auth
-  let user
-  if (userId) {
-    user = { id: userId }
-  } else {
-    const { data: { user: authUser } } = await supabase.auth.getUser()
-    user = authUser
-  }
-  
+}) {
+  // Always use authenticated user for RLS compliance
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('User not authenticated')
 
   const { data, error } = await supabase
