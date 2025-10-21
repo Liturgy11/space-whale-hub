@@ -24,13 +24,20 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   }, [user, refreshTrigger])
 
   const loadEntries = async () => {
-    if (!user) return
+    if (!user) {
+      console.log('No user found for journal entries')
+      return
+    }
+
+    console.log('Loading journal entries for user:', user.id)
 
     try {
       setLoading(true)
       const data = await getJournalEntries(user.id)
+      console.log('Loaded journal entries:', data)
       setEntries(data)
     } catch (err: any) {
+      console.error('Error loading entries:', err)
       setError(err.message)
     } finally {
       setLoading(false)
