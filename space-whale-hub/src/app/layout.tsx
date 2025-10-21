@@ -55,7 +55,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${poppins.variable} ${quicksand.variable} antialiased`}
       >
         <AuthProvider>
-          <EmergencyStorageFix />
+          {/* <EmergencyStorageFix /> */}
           {children}
           <StorageDebugger />
         </AuthProvider>

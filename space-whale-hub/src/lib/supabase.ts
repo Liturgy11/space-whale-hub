@@ -27,8 +27,8 @@ const customStorage = {
         return
       }
 
-      // Check storage before setting
-      checkAndFixStorage()
+      // Check storage before setting (temporarily disabled)
+      // checkAndFixStorage()
       localStorage.setItem(key, value)
     } catch (error) {
       console.warn('Storage setItem failed, clearing storage:', error)
