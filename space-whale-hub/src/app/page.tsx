@@ -6,14 +6,23 @@ import { useState, useEffect, useRef } from "react";
 import { Archive, Users, BookOpen, User, Sparkles, Plus, ChevronDown, FileText, Image as ImageIcon, Video, Music, Share2, Star, Orbit, Heart, Key } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UserProfile from "@/components/UserProfile";
+import SetDisplayName from "@/components/SetDisplayName";
 import { useAuth } from "@/contexts/AuthContext";
 
 function HomeContent() {
   const { user } = useAuth();
   const [showCreateMenu, setShowCreateMenu] = useState(false);
+  const [showSetDisplayName, setShowSetDisplayName] = useState(false);
   const createMenuRef = useRef<HTMLDivElement>(null);
   
   console.log('HomeContent - Current user:', user)
+  
+  // Show display name modal if user doesn't have display_name set
+  useEffect(() => {
+    if (user && !user.user_metadata?.display_name) {
+      setShowSetDisplayName(true);
+    }
+  }, [user]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -222,6 +231,11 @@ function HomeContent() {
           </div>
         </div>
       </footer>
+
+      {/* Set Display Name Modal */}
+      {showSetDisplayName && (
+        <SetDisplayName />
+      )}
     </div>
   );
 }
