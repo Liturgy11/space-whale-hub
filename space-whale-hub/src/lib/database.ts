@@ -172,8 +172,19 @@ export async function createPost(post: {
   media_type?: string
 }) {
   // Always use authenticated user for RLS compliance
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('User not authenticated')
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  
+  console.log('createPost - Auth check:', { user: user?.id, authError })
+  
+  if (authError) {
+    console.error('Auth error in createPost:', authError)
+    throw new Error(`Authentication error: ${authError.message}`)
+  }
+  
+  if (!user) {
+    console.error('No user found in createPost')
+    throw new Error('User not authenticated')
+  }
 
   const { data, error } = await supabase
     .from('posts')
