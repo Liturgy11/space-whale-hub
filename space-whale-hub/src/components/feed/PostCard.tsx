@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Heart, MessageCircle, Share, MoreHorizontal, Flag, Edit, Trash2, X, ZoomIn } from 'lucide-react'
+import { Heart, MessageCircle, MoreHorizontal, Bookmark, Edit, Trash2, X, ZoomIn } from 'lucide-react'
 import CommentForm from './CommentForm'
 import CommentsList from './CommentsList'
 
@@ -30,9 +30,10 @@ interface PostCardProps {
   onComment?: (postId: string) => void
   onEdit?: (postId: string) => void
   onDelete?: (postId: string) => void
+  onBookmark?: (postId: string) => void
 }
 
-export default function PostCard({ post, onLike, onComment, onEdit, onDelete }: PostCardProps) {
+export default function PostCard({ post, onLike, onComment, onEdit, onDelete, onBookmark }: PostCardProps) {
   const { user } = useAuth()
   const [showContent, setShowContent] = useState(!post.content_warning)
   const [showOptions, setShowOptions] = useState(false)
@@ -120,8 +121,12 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete }: 
             </div>
           )}
           
-          <button className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-            <Flag className="h-4 w-4" />
+          <button 
+            onClick={() => onBookmark?.(post.id)}
+            className="p-2 text-gray-400 hover:text-yellow-500 transition-colors"
+            title="Save for later"
+          >
+            <Bookmark className="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -254,10 +259,6 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete }: 
             )}
           </button>
 
-          <button className="flex items-center space-x-2 text-gray-500 hover:text-indigo-500 transition-colors">
-            <Share className="h-5 w-5" />
-            <span className="text-sm font-medium">Share</span>
-          </button>
         </div>
       </div>
 

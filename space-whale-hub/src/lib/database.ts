@@ -196,6 +196,50 @@ export async function createPost(post: {
   return data
 }
 
+export async function updatePost(postId: string, post: {
+  content: string
+  tags?: string[]
+  content_warning?: string
+  media_url?: string
+  media_type?: string
+}, userId: string) {
+  // Use the passed userId from client-side context
+  if (!userId) throw new Error('User ID is required')
+
+  const { data, error } = await supabase
+    .from('posts')
+    .update({
+      content: post.content,
+      tags: post.tags || [],
+      has_content_warning: !!post.content_warning,
+      content_warning_text: post.content_warning || null,
+      media_url: post.media_url || null,
+      media_type: post.media_type || null,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', postId)
+    .eq('user_id', userId) // Ensure user can only update their own posts
+    .select('*')
+    .single()
+  
+  if (error) throw error
+  return data
+}
+
+export async function deletePost(postId: string, userId: string) {
+  // Use the passed userId from client-side context
+  if (!userId) throw new Error('User ID is required')
+
+  const { error } = await supabase
+    .from('posts')
+    .delete()
+    .eq('id', postId)
+    .eq('user_id', userId) // Ensure user can only delete their own posts
+  
+  if (error) throw error
+  return { success: true }
+}
+
 export async function getPosts(options: {
   tags?: string[]
   limit?: number

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { createJournalEntry } from '@/lib/database'
+import { uploadMedia } from '@/lib/storage-api'
 import { Loader2, Save, X, Upload, Image, X as XIcon } from 'lucide-react'
 
 interface JournalEntryFormProps {
@@ -27,25 +28,33 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
     if (!user) return
 
     try {
-      console.log('Uploading file for journal entry:', { fileName: file.name, fileSize: file.size, fileType: file.type })
-
-      // Convert file to base64 (same approach as Community Orbit posts)
-      const reader = new FileReader()
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = reject
-        reader.readAsDataURL(file)
+      console.log('Starting file upload for journal entry:', { 
+        fileName: file.name, 
+        fileSize: file.size, 
+        fileType: file.type,
+        userId: user.id 
       })
 
-      const base64Data = await base64Promise
-      console.log('Converted to base64, length:', base64Data.length)
+      // Use new storage system instead of base64
+      const result = await uploadMedia(file, {
+        category: 'journal',
+        filename: `${Date.now()}-${file.name}`
+      }, user.id)
 
-      setMediaUrl(base64Data)
+      console.log('File upload successful:', { 
+        url: result.url, 
+        path: result.path, 
+        bucket: result.bucket 
+      })
+      
+      setMediaUrl(result.url)
       setMediaType(file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'document')
       setShowMediaUpload(false)
+      setError('') // Clear any previous errors
     } catch (err: any) {
-      console.error('File upload error:', err)
-      setError(err.message)
+      console.error('File upload failed:', err)
+      setError(`Upload failed: ${err.message}`)
+      // Don't close the modal on error so user can try again
     }
   }
 
@@ -223,7 +232,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
 
       {/* Media Upload Modal */}
       {showMediaUpload && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
@@ -264,6 +273,12 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
                   Supports images, videos, and audio files
                 </p>
+                
+                {error && (
+                  <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

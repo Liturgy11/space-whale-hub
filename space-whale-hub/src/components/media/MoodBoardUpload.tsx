@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { supabase } from '@/lib/supabase'
+import { uploadMultipleMedia } from '@/lib/storage-api'
 import { Upload, X, Image as ImageIcon, Loader2, Check, Plus, Trash2 } from 'lucide-react'
 
 interface MoodBoardUploadProps {
@@ -125,23 +125,24 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
     setError('')
 
     try {
-      // Compress and convert files to base64
-      const base64Promises = files.map(async (fileObj) => {
-        console.log('Compressing image:', fileObj.file.name, 'Size:', fileObj.file.size)
-        
-        // Compress image before converting to base64
-        const compressedBase64 = await compressImage(fileObj.file, 800, 0.7)
-        console.log('Compressed base64 length:', compressedBase64.length)
-        
-        return compressedBase64
-      })
-
-      const base64Urls = await Promise.all(base64Promises)
-      console.log('All images compressed, total URLs:', base64Urls.length)
+      console.log('Uploading mood board images to storage:', files.length)
       
-      // Call completion callback with base64 URLs
+      // Use new storage system for multiple files
+      const results = await uploadMultipleMedia(
+        files.map(f => f.file),
+        {
+          category: 'journal',
+          folder: 'moodboards'
+        },
+        user.id
+      )
+
+      const urls = results.map(result => result.url)
+      console.log('Mood board images uploaded:', urls.length)
+      
+      // Call completion callback with storage URLs
       if (onUploadComplete) {
-        onUploadComplete(base64Urls, 'moodboard')
+        onUploadComplete(urls, 'moodboard')
       }
 
     } catch (err: any) {

@@ -241,9 +241,12 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
           </div>
           
           <div className="prose prose-sm max-w-none">
-            <p className="text-space-whale-navy whitespace-pre-wrap line-clamp-4 font-space-whale-body">
-              {entry.content}
-            </p>
+            {/* Only show content if it's not a mood board */}
+            {entry.media_type !== 'moodboard' && (
+              <p className="text-space-whale-navy whitespace-pre-wrap line-clamp-4 font-space-whale-body">
+                {entry.content}
+              </p>
+            )}
             
             {/* Media Display */}
             {entry.media_url && (
@@ -267,38 +270,51 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                     }}
                   />
                 ) : entry.media_type === 'moodboard' ? (
-                  <div className="space-y-2">
-                    {/* Show all mood board images in a grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  <div className="space-y-3">
+                    <div className="text-sm text-space-whale-purple font-space-whale-body mb-3">
+                      ✨ Mood board with {entry.tags ? entry.tags.filter((url: string) => url.startsWith('data:image/')).length : 1} image{entry.tags && entry.tags.filter((url: string) => url.startsWith('data:image/')).length > 1 ? 's' : ''}
+                    </div>
+                    {/* Show mood board images in a clean grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {entry.tags && entry.tags.length > 0 ? (
-                        // Use tags array for all images
-                        entry.tags.map((imageUrl: string, index: number) => (
-                          <img
-                            key={index}
-                            src={imageUrl}
-                            alt={`Mood board image ${index + 1}`}
-                            className="w-full h-32 object-cover rounded-lg shadow-sm"
-                            onError={(e) => {
-                              console.log('Mood board image failed to load:', imageUrl?.substring(0, 50) + '...')
-                            }}
-                          />
-                        ))
+                        // Filter and use only valid image URLs from tags array
+                        entry.tags
+                          .filter((imageUrl: string) => imageUrl.startsWith('data:image/'))
+                          .slice(0, 6)
+                          .map((imageUrl: string, index: number) => (
+                            <div key={index} className="aspect-square bg-gradient-to-br from-space-whale-lavender/20 to-accent-pink/20 rounded-lg flex items-center justify-center">
+                              <img
+                                src={imageUrl}
+                                alt={`Mood board image ${index + 1}`}
+                                className="w-full h-full object-cover rounded-lg"
+                                onError={(e) => {
+                                  console.log('Mood board image failed to load')
+                                  e.currentTarget.style.display = 'none'
+                                }}
+                              />
+                            </div>
+                          ))
                       ) : (
                         // Fallback to just the primary image
-                        <img
-                          src={entry.media_url}
-                          alt="Mood board primary image"
-                          className="w-full h-32 object-cover rounded-lg shadow-sm"
-                          onError={(e) => {
-                            console.log('Mood board image failed to load:', entry.media_url?.substring(0, 50) + '...')
-                          }}
-                        />
+                        <div className="aspect-square bg-gradient-to-br from-space-whale-lavender/20 to-accent-pink/20 rounded-lg flex items-center justify-center">
+                          <img
+                            src={entry.media_url}
+                            alt="Mood board primary image"
+                            className="w-full h-full object-cover rounded-lg"
+                            onError={(e) => {
+                              console.log('Mood board image failed to load')
+                              e.currentTarget.style.display = 'none'
+                            }}
+                          />
+                        </div>
                       )}
                     </div>
-                    {/* Show count if there are more than 3 images */}
-                    {entry.tags && entry.tags.length > 3 && (
-                      <div className="text-xs text-space-whale-purple font-space-whale-body text-center">
-                        + {entry.tags.length - 3} more images
+                    {/* Show count if there are more than 6 images */}
+                    {entry.tags && entry.tags.filter((url: string) => url.startsWith('data:image/')).length > 6 && (
+                      <div className="text-center">
+                        <span className="inline-flex items-center px-3 py-1 bg-space-whale-lavender/20 text-space-whale-purple text-sm rounded-full">
+                          + {entry.tags.filter((url: string) => url.startsWith('data:image/')).length - 6} more images
+                        </span>
                       </div>
                     )}
                   </div>

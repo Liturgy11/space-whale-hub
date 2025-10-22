@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { createPost } from '@/lib/database'
-import { supabase } from '@/lib/supabase'
-import { Image, Video, Smile, Send, X, AlertTriangle, Loader2 } from 'lucide-react'
+import { uploadMedia } from '@/lib/storage-api'
+import { Image, Video, Send, X, AlertTriangle, Loader2 } from 'lucide-react'
 
 interface PostFormProps {
   onPostCreated?: () => void
@@ -31,31 +31,17 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
     setError('')
 
     try {
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-      const filePath = `${user.id}/community/${fileName}`
+      console.log('Uploading file for community post:', { fileName: file.name, fileSize: file.size, fileType: file.type })
 
-      console.log('Uploading file:', { fileName, filePath, fileSize: file.size, fileType: file.type })
+      // Use new storage system instead of base64
+      const result = await uploadMedia(file, {
+        category: 'posts',
+        filename: `${Date.now()}-${file.name}`
+      }, user.id)
 
-      // Convert file to base64 for now (bypasses storage RLS issues)
-      const reader = new FileReader()
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = reject
-        reader.readAsDataURL(file)
-      })
-
-      const base64Data = await base64Promise
-      console.log('Converted to base64, length:', base64Data.length)
-      console.log('Base64 preview:', base64Data.substring(0, 100) + '...')
-
-      // For now, just use the base64 data directly
-      const data = { publicUrl: base64Data }
-
-      console.log('Public URL:', data.publicUrl)
-
-      setMediaUrl(data.publicUrl)
-      setMediaType(file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'document')
+      console.log('File uploaded to storage:', result.url)
+      setMediaUrl(result.url)
+      setMediaType(file.type.startsWith('image/') ? 'image' : 'video')
       setShowMediaUpload(false)
     } catch (err: any) {
       console.error('File upload error:', err)
@@ -81,8 +67,8 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            userId: user.id,
-            displayName: user.user_metadata?.display_name || 'Lit'
+            userId: user!.id,
+            displayName: user!.user_metadata?.display_name || 'Lit'
           }),
         })
       } catch (profileError) {
@@ -93,10 +79,10 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
       await createPost({
         content: content.trim(),
         tags: tags.split(',').map(tag => tag.trim()).filter(Boolean),
-        content_warning: hasContentWarning ? contentWarning : null,
+        content_warning: hasContentWarning ? contentWarning : undefined,
         media_url: mediaUrl || undefined,
         media_type: mediaType || undefined
-      }, user.id)
+      }, user!.id)
 
       setContent('')
       setTags('')
@@ -117,18 +103,17 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Share with Fellow Space Whales</h2>
-        {onCancel && (
+    <div className="bg-lofi-card rounded-xl p-6 rainbow-border-soft glow-soft">
+      {onCancel && (
+        <div className="flex justify-end mb-4">
           <button
             onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="text-gray-400 hover:text-space-whale-purple transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Content Input */}
@@ -137,7 +122,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="What's forming and reforming in you? Share your half-baked wonder, your garden's harvest, or what's taking root..."
-            className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+            className="w-full p-4 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent resize-none font-space-whale-body text-space-whale-navy"
             rows={4}
             maxLength={2000}
           />
@@ -154,14 +139,14 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
             type="text"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
-            placeholder="Add tags (separated by commas): garden, cocoon, metamorphosis, whenua, cycles, pride poetry, art therapy..."
-            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            placeholder="Add tags (separated by commas): garden, cocoon, metamorphosis, cycles, pride poetry, art therapy..."
+            className="w-full p-3 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body text-space-whale-navy"
             suppressHydrationWarning
           />
           <div className="mt-2">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Suggested tags:</p>
             <div className="flex flex-wrap gap-2">
-              {['pride poetry', 'art therapy', 'neurodivergent', 'healing', 'garden', 'cocoon', 'metamorphosis', 'whenua', 'cycles', 'embodied', 'somatic', 'trauma-informed'].map((tag) => (
+              {['pride poetry', 'art therapy', 'neurodivergent', 'healing', 'garden', 'cocoon', 'metamorphosis', 'cycles', 'embodied', 'somatic', 'trauma-informed', 'space whale', 'cosmic', 'inner space'].map((tag) => (
                 <button
                   key={tag}
                   type="button"
@@ -171,7 +156,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
                       setTags([...currentTags, tag].join(', '))
                     }
                   }}
-                  className="px-2 py-1 text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors"
+                  className="px-2 py-1 text-xs bg-space-whale-lavender/20 text-space-whale-purple rounded-full hover:bg-space-whale-lavender/30 transition-colors font-space-whale-body"
                 >
                   + {tag}
                 </button>
@@ -193,7 +178,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
               className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">
-              This post contains content that may need gentle tending
+              This post contains content that may be sensitive or triggering
             </span>
           </label>
           
@@ -202,7 +187,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
               type="text"
               value={contentWarning}
               onChange={(e) => setContentWarning(e.target.value)}
-              placeholder="What needs gentle tending? (e.g., grief, transformation, tender places...)"
+              placeholder="What should people know before reading? (e.g., mentions of trauma, mental health, grief, self-harm, etc.)"
               className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
           )}
@@ -215,14 +200,12 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
               <div className="flex items-center space-x-3">
                 {mediaType === 'image' ? (
                   <Image className="h-6 w-6 text-indigo-600" />
-                ) : mediaType === 'video' ? (
-                  <Video className="h-6 w-6 text-indigo-600" />
                 ) : (
-                  <Smile className="h-6 w-6 text-indigo-600" />
+                  <Video className="h-6 w-6 text-indigo-600" />
                 )}
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">
-                    {mediaType === 'image' ? 'Image' : mediaType === 'video' ? 'Video' : 'Mood'} attached
+                    {mediaType === 'image' ? 'Image' : 'Video'} attached
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {mediaUrl.split('/').pop()}
@@ -272,18 +255,6 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
               <Video className="h-4 w-4 mr-1" />
               Video
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                // For now, just set a placeholder mood
-                setMediaUrl('mood-placeholder')
-                setMediaType('mood')
-              }}
-              className="flex items-center px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-            >
-              <Smile className="h-4 w-4 mr-1" />
-              Mood
-            </button>
           </div>
 
           <div className="flex space-x-3">
@@ -299,7 +270,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
             <button
               type="submit"
               disabled={!content.trim() || uploading}
-              className="flex items-center px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="btn-lofi flex items-center px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {uploading ? (
                 <>

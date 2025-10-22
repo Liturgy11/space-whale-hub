@@ -12,7 +12,6 @@ import JournalList from "@/components/journal/JournalList";
 import MediaUpload from "@/components/media/MediaUpload";
 import MoodBoardUpload from "@/components/media/MoodBoardUpload";
 import WallpaperCustomizer from "@/components/personal/WallpaperCustomizer";
-import StorageTest from "@/components/StorageTest";
 
 function PersonalSpaceContent() {
   const { user } = useAuth();
@@ -197,12 +196,6 @@ function PersonalSpaceContent() {
           <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
             <h2 className="text-2xl font-space-whale-subheading text-space-whale-navy mb-6">Your Journey</h2>
             <JournalList key={refreshKey} />
-          </div>
-
-          {/* Storage Test - Temporary for Phase 1 */}
-          <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
-            <h2 className="text-2xl font-space-whale-subheading text-space-whale-navy mb-6">Storage Test</h2>
-            <StorageTest />
           </div>
         </div>
       </main>

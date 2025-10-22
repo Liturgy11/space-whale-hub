@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getPosts, toggleLike } from '@/lib/database'
+import { getPosts, toggleLike, deletePost } from '@/lib/database'
 import { useAuth } from '@/contexts/AuthContext'
 import PostCard from './PostCard'
+import EditPostForm from './EditPostForm'
 
 interface Post {
   id: string
@@ -31,6 +32,7 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [editingPost, setEditingPost] = useState<Post | null>(null)
 
   useEffect(() => {
     loadPosts()
@@ -83,13 +85,43 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
   }
 
   const handleEdit = (postId: string) => {
-    // TODO: Implement edit functionality
-    console.log('Edit post:', postId)
+    const post = posts.find(p => p.id === postId)
+    if (post) {
+      setEditingPost(post)
+    }
+  }
+
+  const handleEditCancel = () => {
+    setEditingPost(null)
+  }
+
+  const handleEditSuccess = () => {
+    setEditingPost(null)
+    loadPosts() // Refresh the posts to show updated content
   }
 
   const handleDelete = async (postId: string) => {
-    // TODO: Implement delete functionality
-    console.log('Delete post:', postId)
+    if (!user) return
+    
+    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+      return
+    }
+    
+    try {
+      await deletePost(postId, user.id)
+      // Remove the post from local state
+      setPosts(posts.filter(post => post.id !== postId))
+    } catch (err) {
+      console.error('Error deleting post:', err)
+      setError('Failed to delete post. Please try again.')
+    }
+  }
+
+  const handleBookmark = (postId: string) => {
+    // TODO: Implement bookmark functionality
+    console.log('Bookmark post:', postId)
+    // For now, just show a simple alert
+    alert('Post saved for later! (Bookmark functionality coming soon)')
   }
 
   if (loading) {
@@ -153,14 +185,24 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
   return (
     <div className="space-y-6">
       {posts.map((post) => (
-        <PostCard
-          key={post.id}
-          post={post}
-          onLike={handleLike}
-          onComment={handleComment}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        <div key={post.id}>
+          {editingPost && editingPost.id === post.id ? (
+            <EditPostForm
+              post={post}
+              onPostUpdated={handleEditSuccess}
+              onCancel={handleEditCancel}
+            />
+          ) : (
+            <PostCard
+              post={post}
+              onLike={handleLike}
+              onComment={handleComment}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onBookmark={handleBookmark}
+            />
+          )}
+        </div>
       ))}
     </div>
   )
