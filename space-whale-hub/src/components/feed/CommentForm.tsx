@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { createComment } from '@/lib/database'
+// Removed createComment import - now using secure API route
 import { Send, Loader2 } from 'lucide-react'
 
 interface CommentFormProps {
@@ -25,7 +25,25 @@ export default function CommentForm({ postId, onCommentAdded, onCancel }: Commen
     setLoading(true)
 
     try {
-      await createComment(user.id, postId, content.trim())
+      // Use the secure API route instead of direct database function
+      const response = await fetch('/api/create-comment-secure', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          postId: postId,
+          content: content.trim(),
+          userId: user.id
+        })
+      })
+
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create comment')
+      }
+
       setContent('')
       if (onCommentAdded) onCommentAdded()
     } catch (err: any) {

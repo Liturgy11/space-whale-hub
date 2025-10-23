@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { updatePost } from '@/lib/database'
+import { uploadMedia } from '@/lib/storage-client'
 import { Image, Video, Smile, Save, X, AlertTriangle, Loader2 } from 'lucide-react'
 
 interface Post {
@@ -50,34 +51,22 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
     setError('')
 
     try {
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-      const filePath = `${user.id}/community/${fileName}`
+      console.log('Uploading file for post edit:', { fileName: file.name, fileSize: file.size, fileType: file.type })
 
-      console.log('Uploading file:', { fileName, filePath, fileSize: file.size, fileType: file.type })
+      // Use new storage system instead of base64
+      const result = await uploadMedia(file, {
+        category: 'posts',
+        filename: `${Date.now()}-${file.name}`
+      }, user.id)
 
-      // Convert file to base64 for now (bypasses storage RLS issues)
-      const reader = new FileReader()
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = reject
-        reader.readAsDataURL(file)
-      })
-
-      const base64Data = await base64Promise
-      console.log('Converted to base64, length:', base64Data.length)
-      console.log('Base64 preview:', base64Data.substring(0, 100) + '...')
-
-      // For now, just use the base64 data directly
-      const data = { publicUrl: base64Data }
-
-      setMediaUrl(data.publicUrl)
+      console.log('File uploaded to storage:', result.url)
+      setMediaUrl(result.url)
       setMediaType(file.type.startsWith('image/') ? 'image' : 
                   file.type.startsWith('video/') ? 'video' : 'document')
       setShowMediaUpload(false)
-    } catch (err) {
+    } catch (err: any) {
       console.error('File upload error:', err)
-      setError('Failed to upload file. Please try again.')
+      setError(err.message)
     } finally {
       setUploadingMedia(false)
     }
@@ -116,9 +105,9 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
   }
 
   return (
-    <div className="bg-lofi-card rounded-xl p-6 rainbow-border-soft">
+    <div className="bg-lofi-card rounded-xl p-4 sm:p-6 rainbow-border-soft mobile-card">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-space-whale-subheading text-space-whale-navy">
+        <h3 className="text-base sm:text-lg font-space-whale-subheading text-space-whale-navy">
           Edit Post
         </h3>
         <button
@@ -129,7 +118,7 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 mobile-form">
         {/* Content Warning Toggle */}
         <div className="flex items-center space-x-3">
           <button
@@ -157,7 +146,7 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
               value={contentWarning}
               onChange={(e) => setContentWarning(e.target.value)}
               placeholder="e.g., mentions of trauma, self-harm, etc."
-              className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
+              className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent mobile-input"
             />
           </div>
         )}
@@ -171,7 +160,7 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Share your thoughts, art, or creative process..."
-            className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent min-h-[120px] resize-none"
+            className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent min-h-[120px] resize-none mobile-textarea"
             required
           />
         </div>
@@ -186,7 +175,7 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
             value={tags}
             onChange={(e) => setTags(e.target.value)}
             placeholder="e.g., art therapy, nature, healing, poetry"
-            className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
+            className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent mobile-input"
           />
         </div>
 
@@ -202,13 +191,13 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
                 <img
                   src={mediaUrl}
                   alt="Uploaded media"
-                  className="max-w-full h-32 object-cover rounded-lg"
+                  className="max-w-full h-24 sm:h-32 object-cover rounded-lg"
                 />
               ) : mediaType === 'video' ? (
                 <video
                   src={mediaUrl}
                   controls
-                  className="max-w-full h-32 object-cover rounded-lg"
+                  className="max-w-full h-24 sm:h-32 object-cover rounded-lg"
                 />
               ) : (
                 <div className="p-3 bg-gray-100 rounded-lg">
@@ -225,11 +214,11 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="flex space-x-2">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                 <button
                   type="button"
                   onClick={() => setShowMediaUpload(!showMediaUpload)}
-                  className="flex items-center space-x-2 px-3 py-2 bg-space-whale-lavender/20 text-space-whale-purple rounded-lg hover:bg-space-whale-lavender/30 transition-colors"
+                  className="flex items-center justify-center space-x-2 px-3 py-2 bg-space-whale-lavender/20 text-space-whale-purple rounded-lg hover:bg-space-whale-lavender/30 transition-colors w-full sm:w-auto"
                 >
                   <Image className="h-4 w-4" />
                   <span className="text-sm">Add Image</span>
@@ -237,7 +226,7 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
                 <button
                   type="button"
                   onClick={() => setShowMediaUpload(!showMediaUpload)}
-                  className="flex items-center space-x-2 px-3 py-2 bg-space-whale-lavender/20 text-space-whale-purple rounded-lg hover:bg-space-whale-lavender/30 transition-colors"
+                  className="flex items-center justify-center space-x-2 px-3 py-2 bg-space-whale-lavender/20 text-space-whale-purple rounded-lg hover:bg-space-whale-lavender/30 transition-colors w-full sm:w-auto"
                 >
                   <Video className="h-4 w-4" />
                   <span className="text-sm">Add Video</span>
@@ -276,18 +265,18 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end space-x-3 pt-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-space-whale-purple hover:text-space-whale-navy transition-colors"
+            className="px-4 py-2 text-space-whale-purple hover:text-space-whale-navy transition-colors w-full sm:w-auto"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={uploading || !content.trim()}
-            className="btn-lofi flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-lofi flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
           >
             {uploading ? (
               <>

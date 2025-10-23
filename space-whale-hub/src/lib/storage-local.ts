@@ -98,3 +98,4 @@ export async function uploadMultipleMedia(
 
   return Promise.all(uploadPromises)
 }
+

@@ -150,3 +150,4 @@ ON storage.objects
 FOR DELETE
 TO authenticated
 USING (auth.uid()::text = (storage.foldername(name))[1]);
+

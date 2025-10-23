@@ -70,6 +70,8 @@ export async function uploadMedia(
       processedFile = await compressImage(file)
     }
 
+    console.log(`📤 Uploading to ${options.category}: ${fullPath}`)
+
     // Upload to Supabase Storage using service role (bypasses RLS)
     const { data, error } = await supabaseAdmin.storage
       .from(options.category)
@@ -80,13 +82,22 @@ export async function uploadMedia(
 
     if (error) {
       console.error('Storage upload error:', error)
+      console.error('Error details:', {
+        message: error.message,
+        statusCode: error.statusCode,
+        error: error.error
+      })
       throw new Error(`Upload failed: ${error.message}`)
     }
+
+    console.log(`✅ Upload successful:`, data)
 
     // Get public URL
     const { data: urlData } = supabaseAdmin.storage
       .from(options.category)
       .getPublicUrl(fullPath)
+
+    console.log(`🔗 Public URL: ${urlData.publicUrl}`)
 
     return {
       url: urlData.publicUrl,

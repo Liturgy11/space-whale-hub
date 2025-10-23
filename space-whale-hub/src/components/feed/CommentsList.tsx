@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { getComments, updateComment, deleteComment } from '@/lib/database'
+import { updateComment, deleteComment } from '@/lib/database'
 import { MessageCircle, Loader2, Edit, Trash2, Save, X } from 'lucide-react'
 
 interface Comment {
@@ -37,8 +37,25 @@ export default function CommentsList({ postId, refreshTrigger }: CommentsListPro
   const loadComments = async () => {
     try {
       setLoading(true)
-      const data = await getComments(postId)
-      setComments(data)
+      
+      // Use the secure API route instead of direct database function
+      const response = await fetch('/api/get-comments-secure', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          postId: postId
+        })
+      })
+
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to load comments')
+      }
+
+      setComments(result.comments)
     } catch (err: any) {
       setError(err.message)
     } finally {

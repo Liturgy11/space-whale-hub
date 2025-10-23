@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Heart, MessageCircle, MoreHorizontal, Bookmark, Edit, Trash2, X, ZoomIn } from 'lucide-react'
+import { Heart, MessageCircle, MoreHorizontal, Bookmark, Edit, Trash2, X, ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react'
 import CommentForm from './CommentForm'
 import CommentsList from './CommentsList'
 
@@ -41,6 +41,10 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
   const [showCommentForm, setShowCommentForm] = useState(false)
   const [commentsRefreshTrigger, setCommentsRefreshTrigger] = useState(0)
   const [showImageModal, setShowImageModal] = useState(false)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxImage, setLightboxImage] = useState('')
+  const [lightboxImages, setLightboxImages] = useState<string[]>([])
+  const [lightboxIndex, setLightboxIndex] = useState(0)
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -55,12 +59,69 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
 
   const isAuthor = user?.id === post.author.id
 
+  // Lightbox functions for mood board
+  const openImageLightbox = (imageUrl: string, allImages: string[], index: number) => {
+    setLightboxImage(imageUrl)
+    setLightboxImages(allImages)
+    setLightboxIndex(index)
+    setLightboxOpen(true)
+  }
+
+  const closeLightbox = () => {
+    setLightboxOpen(false)
+    setLightboxImage('')
+    setLightboxImages([])
+    setLightboxIndex(0)
+  }
+
+  const navigateLightbox = (direction: 'prev' | 'next') => {
+    if (lightboxImages.length === 0) return
+    
+    let newIndex
+    if (direction === 'prev') {
+      newIndex = lightboxIndex > 0 ? lightboxIndex - 1 : lightboxImages.length - 1
+    } else {
+      newIndex = lightboxIndex < lightboxImages.length - 1 ? lightboxIndex + 1 : 0
+    }
+    
+    setLightboxIndex(newIndex)
+    setLightboxImage(lightboxImages[newIndex])
+  }
+
+  // Handle keyboard navigation and prevent body scroll
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!lightboxOpen) return
+      
+      if (e.key === 'Escape') {
+        closeLightbox()
+      } else if (e.key === 'ArrowLeft') {
+        navigateLightbox('prev')
+      } else if (e.key === 'ArrowRight') {
+        navigateLightbox('next')
+      }
+    }
+
+    // Prevent body scroll when lightbox is open
+    if (lightboxOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = 'unset'
+    }
+  }, [lightboxOpen, lightboxIndex, lightboxImages])
+
   return (
-    <div className="bg-lofi-card rounded-xl shadow-lg p-6 rainbow-border-soft">
+    <div className="bg-lofi-card rounded-xl shadow-lg p-4 sm:p-6 rainbow-border-soft mobile-card">
       {/* Post Header */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-space-whale-purple to-accent-pink flex items-center justify-center">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-gradient-to-br from-space-whale-purple to-accent-pink flex items-center justify-center flex-shrink-0">
             {post.author.avatar_url ? (
               <img
                 src={post.author.avatar_url}
@@ -68,23 +129,23 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-white font-semibold text-sm">
+              <span className="text-white font-semibold text-xs sm:text-sm">
                 {post.author.display_name?.charAt(0) || '?'}
               </span>
             )}
           </div>
-          <div>
-            <h3 className="font-space-whale-subheading text-space-whale-navy">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-space-whale-subheading text-space-whale-navy text-sm sm:text-base truncate">
               {post.author.display_name}
             </h3>
-            <p className="text-sm font-space-whale-body text-space-whale-purple">
+            <p className="text-xs sm:text-sm font-space-whale-body text-space-whale-purple">
               {post.author.pronouns && `${post.author.pronouns} • `}
               {formatDate(post.created_at)}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1 sm:space-x-2">
           {isAuthor && (
             <div className="relative">
               <button
@@ -95,7 +156,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
               </button>
               
               {showOptions && (
-                <div className="absolute right-0 top-8 bg-white dark:bg-gray-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1 z-10">
+                <div className="absolute right-0 top-8 bg-white dark:bg-gray-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1 z-10 min-w-[120px]">
                   <button
                     onClick={() => {
                       onEdit?.(post.id)
@@ -133,9 +194,9 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
 
       {/* Content Warning */}
       {post.content_warning && !showContent && (
-        <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
+        <div className="mb-4 p-3 sm:p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+            <div className="flex-1">
               <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
                 Content Warning: {post.content_warning}
               </p>
@@ -145,7 +206,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
             </div>
             <button
               onClick={() => setShowContent(true)}
-              className="px-3 py-1 bg-yellow-600 text-white text-sm rounded-lg hover:bg-yellow-700 transition-colors"
+              className="px-3 py-2 bg-yellow-600 text-white text-sm rounded-lg hover:bg-yellow-700 transition-colors w-full sm:w-auto"
             >
               Show Content
             </button>
@@ -168,7 +229,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
                   <img
                     src={post.media_url}
                     alt="Post media"
-                    className="max-w-full h-64 object-cover rounded-lg shadow-sm transition-transform group-hover:scale-105"
+                    className="max-w-full h-48 sm:h-64 object-cover rounded-lg shadow-sm transition-transform group-hover:scale-105"
                   />
                   <div className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <ZoomIn className="h-4 w-4 text-white" />
@@ -178,29 +239,73 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
                 <video
                   src={post.media_url}
                   controls
-                  className="max-w-full h-64 object-cover rounded-lg shadow-sm"
+                  className="max-w-full h-48 sm:h-64 object-cover rounded-lg shadow-sm"
                 />
               ) : post.media_type === 'mood' ? (
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900 dark:to-purple-900">
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900 dark:to-purple-900">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-800 rounded-lg flex items-center justify-center">
-                      <span className="text-2xl">😊</span>
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-100 dark:bg-indigo-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <span className="text-xl sm:text-2xl">😊</span>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">Mood Shared</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">User shared their current mood</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 dark:text-white text-sm sm:text-base">Mood Shared</p>
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">User shared their current mood</p>
                     </div>
                   </div>
                 </div>
-              ) : (
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
-                      <span className="text-indigo-600 dark:text-indigo-400 font-semibold">📄</span>
+              ) : post.media_type === 'moodboard' ? (
+                <div className="space-y-4">
+                  <div className="text-sm text-indigo-600 dark:text-indigo-400 font-medium mb-3">
+                    ✨ Mood Board
+                  </div>
+                  {/* Beautiful mood board grid for community posts */}
+                  {post.tags && post.tags.length > 0 ? (
+                    <div className="mood-board-grid">
+                      {post.tags
+                        .filter((imageUrl: string) => imageUrl && (imageUrl.startsWith('data:image/') || imageUrl.startsWith('https://')))
+                        .slice(0, 6) // Show max 6 images in community feed
+                        .map((imageUrl: string, index: number) => (
+                          <div 
+                            key={index} 
+                            className="mood-board-item cursor-pointer"
+                            onClick={() => openImageLightbox(imageUrl, post.tags.filter((url: string) => url && (url.startsWith('data:image/') || url.startsWith('https://'))), index)}
+                          >
+                            <img
+                              src={imageUrl}
+                              alt={`Mood board image ${index + 1}`}
+                              className="mood-board-image"
+                              onError={(e) => {
+                                console.log('Mood board image failed to load in community feed')
+                                e.currentTarget.style.display = 'none'
+                              }}
+                            />
+                          </div>
+                        ))}
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">Media File</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                  ) : (
+                    <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <div className="text-4xl mb-2">✨</div>
+                      <p className="text-gray-600 dark:text-gray-400">Mood board is empty</p>
+                    </div>
+                  )}
+                  {/* Show count if there are more than 6 images */}
+                  {post.tags && post.tags.filter((url: string) => url && (url.startsWith('data:image/') || url.startsWith('https://'))).length > 6 && (
+                    <div className="text-center">
+                      <span className="inline-flex items-center px-3 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-sm rounded-full">
+                        + {post.tags.filter((url: string) => url && (url.startsWith('data:image/') || url.startsWith('https://'))).length - 6} more images
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 bg-gray-50 dark:bg-gray-700">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <span className="text-indigo-600 dark:text-indigo-400 font-semibold text-sm sm:text-base">📄</span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 dark:text-white text-sm sm:text-base">Media File</p>
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
                         {post.media_url.split('/').pop()}
                       </p>
                     </div>
@@ -210,8 +315,8 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
             </div>
           )}
           
-          {/* Tags */}
-          {post.tags && post.tags.length > 0 && (
+          {/* Tags - Hide URLs for mood board posts */}
+          {post.tags && post.tags.length > 0 && post.media_type !== 'moodboard' && (
             <div className="flex flex-wrap gap-2 mt-3">
               {post.tags.map((tag, index) => (
                 <span
@@ -228,16 +333,16 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
 
       {/* Post Actions */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-4 sm:space-x-6">
           <button
             onClick={() => onLike?.(post.id)}
-            className={`flex items-center space-x-2 transition-colors ${
+            className={`flex items-center space-x-1 sm:space-x-2 transition-colors ${
               post.is_liked
                 ? 'text-red-500 hover:text-red-600'
                 : 'text-gray-500 hover:text-red-500'
             }`}
           >
-            <Heart className={`h-5 w-5 ${post.is_liked ? 'fill-current' : ''}`} />
+            <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${post.is_liked ? 'fill-current' : ''}`} />
             {post.likes_count > 0 && (
               <span className="text-xs text-gray-400 font-normal">{post.likes_count}</span>
             )}
@@ -249,11 +354,11 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
               setShowCommentForm(!showComments)
               onComment?.(post.id)
             }}
-            className={`flex items-center space-x-2 transition-colors ${
+            className={`flex items-center space-x-1 sm:space-x-2 transition-colors ${
               showComments ? 'text-indigo-500' : 'text-gray-500 hover:text-indigo-500'
             }`}
           >
-            <MessageCircle className="h-5 w-5" />
+            <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
             {post.comments_count > 0 && (
               <span className="text-xs text-gray-400 font-normal">{post.comments_count}</span>
             )}
@@ -288,17 +393,102 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
       )}
 
       {/* Image Zoom Modal */}
-      {showImageModal && post.media_url && post.media_type === 'image' && (
+      {showImageModal && (
         <div 
-          className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4"
           onClick={() => setShowImageModal(false)}
         >
-          <img
-            src={post.media_url}
-            alt="Post media - enlarged (click to close)"
-            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl cursor-pointer"
-            onClick={() => setShowImageModal(false)}
-          />
+          {post.media_type === 'image' && post.media_url ? (
+            <img
+              src={post.media_url}
+              alt="Post media - enlarged (click to close)"
+              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl cursor-pointer"
+              onClick={() => setShowImageModal(false)}
+            />
+          ) : post.media_type === 'moodboard' && post.tags && post.tags.length > 0 ? (
+            <div className="max-w-6xl max-h-[90vh] w-full">
+              <div className="text-center mb-4">
+                <h3 className="text-xl font-semibold text-white mb-2">✨ Mood Board</h3>
+                <p className="text-white/80">Click outside to close</p>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[70vh] overflow-y-auto">
+                {post.tags
+                  .filter((imageUrl: string) => imageUrl && (imageUrl.startsWith('data:image/') || imageUrl.startsWith('https://')))
+                  .map((imageUrl: string, index: number) => (
+                    <img
+                      key={index}
+                      src={imageUrl}
+                      alt={`Mood board image ${index + 1}`}
+                      className="w-full aspect-square object-cover rounded-lg shadow-lg cursor-pointer hover:scale-105 transition-transform"
+                      onClick={(e) => e.stopPropagation()}
+                      onError={(e) => {
+                        console.log('Mood board image failed to load in modal')
+                        e.currentTarget.style.display = 'none'
+                      }}
+                    />
+                  ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {/* Mood Board Lightbox Modal */}
+      {lightboxOpen && lightboxImage && (
+        <div 
+          className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm flex items-center justify-center z-[9999] p-2 sm:p-4"
+          onClick={closeLightbox}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+        >
+          <div className="relative max-w-4xl max-h-[80vh] w-full flex items-center justify-center">
+            {/* Close button */}
+            <button
+              onClick={closeLightbox}
+              className="absolute top-4 right-4 z-10 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            
+            {/* Navigation arrows - only show if multiple images */}
+            {lightboxImages.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigateLightbox('prev')
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigateLightbox('next')
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
+            
+            {/* Main Image */}
+            <img
+              src={lightboxImage}
+              alt="Mood board image - click to close"
+              className="max-w-3xl max-h-[75vh] object-contain rounded-lg shadow-2xl cursor-pointer"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxHeight: '75vh', maxWidth: '60vw' }}
+            />
+            
+            {/* Image counter - only show if multiple images */}
+            {lightboxImages.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                {lightboxIndex + 1} / {lightboxImages.length}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

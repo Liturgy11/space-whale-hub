@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { uploadMedia } from '@/lib/storage-client'
 import { X, Palette, Upload, Sparkles, Leaf, Zap } from 'lucide-react'
 
 interface WallpaperCustomizerProps {
@@ -53,7 +54,7 @@ export default function WallpaperCustomizer({ onClose, onWallpaperChange }: Wall
 
   const handleCustomUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (!file) return
+    if (!file || !user) return
 
     if (!file.type.startsWith('image/')) {
       alert('Please select an image file')
@@ -62,17 +63,21 @@ export default function WallpaperCustomizer({ onClose, onWallpaperChange }: Wall
 
     setUploading(true)
     try {
-      // Convert to base64 for now (same as mood board approach)
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const base64 = e.target?.result as string
-        setCustomImage(base64)
-        setSelectedWallpaper('')
-        setUploading(false)
-      }
-      reader.readAsDataURL(file)
-    } catch (error) {
+      console.log('Uploading custom wallpaper:', { fileName: file.name, fileSize: file.size, fileType: file.type })
+
+      // Use new storage system instead of base64
+      const result = await uploadMedia(file, {
+        category: 'archive', // Using archive bucket for wallpapers
+        filename: `${user.id}-wallpaper-${Date.now()}`
+      }, user.id)
+
+      console.log('Wallpaper uploaded to storage:', result.url)
+      setCustomImage(result.url)
+      setSelectedWallpaper('')
+    } catch (error: any) {
       console.error('Error uploading custom wallpaper:', error)
+      alert(`Upload failed: ${error.message}`)
+    } finally {
       setUploading(false)
     }
   }
@@ -178,3 +183,4 @@ export default function WallpaperCustomizer({ onClose, onWallpaperChange }: Wall
     </div>
   )
 }
+

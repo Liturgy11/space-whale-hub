@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getPosts, toggleLike, deletePost } from '@/lib/database'
+import { getPosts, deletePost } from '@/lib/database'
 import { useAuth } from '@/contexts/AuthContext'
 import PostCard from './PostCard'
 import EditPostForm from './EditPostForm'
@@ -61,7 +61,23 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
     if (!user) return
     
     try {
-      const result = await toggleLike(user.id, postId)
+      // Use the secure API route instead of direct database function
+      const response = await fetch('/api/toggle-like-secure', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          postId: postId
+        })
+      })
+
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to toggle like')
+      }
       
       // Update the post in the local state
       setPosts(posts.map(post => 

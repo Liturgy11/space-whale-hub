@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { getJournalEntries, deleteJournalEntry, createPost } from '@/lib/database'
-import { Calendar, Heart, Edit, Trash2, Lock, Eye, Share2 } from 'lucide-react'
+import { deleteJournalEntry } from '@/lib/database'
+import { Calendar, Heart, Edit, Trash2, Lock, Eye, Share2, X, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface JournalListProps {
   refreshTrigger?: number
@@ -16,6 +16,19 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   const [error, setError] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [sharingId, setSharingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editContent, setEditContent] = useState('')
+  const [editMood, setEditMood] = useState('')
+  const [editMediaUrl, setEditMediaUrl] = useState('')
+  const [editMediaType, setEditMediaType] = useState('')
+  const [editLoading, setEditLoading] = useState(false)
+  
+  // Lightbox state
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxImage, setLightboxImage] = useState('')
+  const [lightboxImages, setLightboxImages] = useState<string[]>([])
+  const [lightboxIndex, setLightboxIndex] = useState(0)
 
   useEffect(() => {
     if (user) {
@@ -34,18 +47,38 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
 
     try {
       setLoading(true)
-      const data = await getJournalEntries(user.id)
+      
+      // Use the secure API route instead of direct database function
+      const response = await fetch('/api/get-journal-entries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id
+        })
+      })
+
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to load journal entries')
+      }
+
+      const data = result.entries
       console.log('Loaded journal entries:', data)
       console.log('Number of entries:', data?.length || 0)
       
       // Debug media data
-      data?.forEach((entry, index) => {
+      data?.forEach((entry: any, index: number) => {
         if (entry.media_url) {
           console.log(`Entry ${index} media:`, {
             hasMedia: !!entry.media_url,
             mediaType: entry.media_type,
+            mediaUrl: entry.media_url,
             mediaUrlStart: entry.media_url?.substring(0, 50) + '...',
-            isBase64: entry.media_url?.startsWith('data:')
+            isBase64: entry.media_url?.startsWith('data:'),
+            isSupabaseUrl: entry.media_url?.includes('supabase.co')
           })
         }
       })
@@ -76,7 +109,140 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
     }
   }
 
+  const handleEdit = (entry: any) => {
+    setEditingId(entry.id)
+    setEditTitle(entry.title || '')
+    setEditContent(entry.content || '')
+    setEditMood(entry.mood || '')
+    setEditMediaUrl(entry.media_url || '')
+    setEditMediaType(entry.media_type || '')
+  }
+
+  const handleEditCancel = () => {
+    setEditingId(null)
+    setEditTitle('')
+    setEditContent('')
+    setEditMood('')
+    setEditMediaUrl('')
+    setEditMediaType('')
+  }
+
+  // Lightbox functions
+  const openImageLightbox = (imageUrl: string, allImages: string[], index: number) => {
+    console.log('Opening lightbox with:', {
+      imageUrl,
+      allImages,
+      index,
+      imageUrlLength: imageUrl?.length,
+      allImagesLength: allImages?.length
+    })
+    setLightboxImage(imageUrl)
+    setLightboxImages(allImages)
+    setLightboxIndex(index)
+    setLightboxOpen(true)
+  }
+
+  const closeLightbox = () => {
+    setLightboxOpen(false)
+    setLightboxImage('')
+    setLightboxImages([])
+    setLightboxIndex(0)
+  }
+
+  const navigateLightbox = (direction: 'prev' | 'next') => {
+    if (lightboxImages.length === 0) return
+    
+    let newIndex = lightboxIndex
+    if (direction === 'prev') {
+      newIndex = lightboxIndex > 0 ? lightboxIndex - 1 : lightboxImages.length - 1
+    } else {
+      newIndex = lightboxIndex < lightboxImages.length - 1 ? lightboxIndex + 1 : 0
+    }
+    
+    setLightboxIndex(newIndex)
+    setLightboxImage(lightboxImages[newIndex])
+  }
+
+  // Handle keyboard navigation and prevent body scroll
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!lightboxOpen) return
+      
+      if (e.key === 'Escape') {
+        closeLightbox()
+      } else if (e.key === 'ArrowLeft') {
+        navigateLightbox('prev')
+      } else if (e.key === 'ArrowRight') {
+        navigateLightbox('next')
+      }
+    }
+
+    // Prevent body scroll when lightbox is open
+    if (lightboxOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = 'unset'
+    }
+  }, [lightboxOpen, lightboxIndex, lightboxImages])
+
+  const handleEditSave = async () => {
+    if (!user || !editingId || !editContent.trim()) return
+
+    try {
+      setEditLoading(true)
+      
+      // Use the secure API route for updating
+      const response = await fetch('/api/update-journal-entry-secure', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          entryId: editingId,
+          title: editTitle.trim() || undefined,
+          content: editContent.trim(),
+          mood: editMood || undefined,
+          tags: [], // You can add tag functionality later
+          media_url: editMediaUrl || undefined,
+          media_type: editMediaType || undefined,
+          is_private: true,
+          userId: user.id
+        })
+      })
+
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update journal entry')
+      }
+
+      // Update the entry in the local state
+      setEntries(entries.map(entry => 
+        entry.id === editingId 
+          ? { ...entry, ...result.entry }
+          : entry
+      ))
+
+      handleEditCancel()
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
   const handleShareToCommunity = async (entry: any) => {
+    if (!user) {
+      setError('You must be logged in to share to the community')
+      return
+    }
+
     if (!confirm('Share this entry to the Community Orbit? It will be visible to other space whales.')) {
       return
     }
@@ -92,7 +258,27 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
         tags: entry.tags || []
       }
       
-      await createPost(postData)
+      // Use the secure API route instead of direct database function
+      const response = await fetch('/api/create-post-secure', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: postData.content,
+          tags: postData.tags,
+          content_warning: undefined, // You can add content warning functionality later
+          media_url: postData.media_url,
+          media_type: postData.media_type,
+          userId: user.id
+        })
+      })
+
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create community post')
+      }
       
       // Show success message
       alert('✨ Your thoughts are now floating in the Community Orbit! ✨')
@@ -223,7 +409,11 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                   <Share2 className="h-4 w-4" />
                 )}
               </button>
-              <button className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+              <button 
+                onClick={() => handleEdit(entry)}
+                className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                title="Edit entry"
+              >
                 <Edit className="h-4 w-4" />
               </button>
               <button 
@@ -241,11 +431,68 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
           </div>
           
           <div className="prose prose-sm max-w-none">
-            {/* Only show content if it's not a mood board */}
-            {entry.media_type !== 'moodboard' && (
-              <p className="text-space-whale-navy whitespace-pre-wrap line-clamp-4 font-space-whale-body">
-                {entry.content}
-              </p>
+            {/* Edit Form */}
+            {editingId === entry.id ? (
+              <div className="bg-lofi-card rounded-lg p-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-space-whale-navy mb-2">Title (optional)</label>
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
+                    placeholder="Add a title..."
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-space-whale-navy mb-2">Content *</label>
+                  <textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
+                    rows={4}
+                    placeholder="What's on your mind?"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-space-whale-navy mb-2">Mood (optional)</label>
+                  <input
+                    type="text"
+                    value={editMood}
+                    onChange={(e) => setEditMood(e.target.value)}
+                    className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
+                    placeholder="How are you feeling?"
+                  />
+                </div>
+                
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleEditSave}
+                    disabled={editLoading || !editContent.trim()}
+                    className="px-4 py-2 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {editLoading ? 'Saving...' : 'Save Changes'}
+                  </button>
+                  <button
+                    onClick={handleEditCancel}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Only show content if it's not a mood board */}
+                {entry.media_type !== 'moodboard' && (
+                  <p className="text-space-whale-navy whitespace-pre-wrap line-clamp-4 font-space-whale-body">
+                    {entry.content}
+                  </p>
+                )}
+              </>
             )}
             
             {/* Media Display */}
@@ -257,8 +504,9 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                     alt="Journal media"
                     className="max-w-full h-48 object-cover rounded-lg shadow-sm"
                     onError={(e) => {
-                      console.log('Image failed to load:', entry.media_url?.substring(0, 50) + '...')
+                      console.log('❌ Image failed to load:', entry.media_url)
                       console.log('Media type:', entry.media_type)
+                      console.log('Error event:', e)
                       // Hide broken images (old blob URLs)
                       if (entry.media_url?.startsWith('blob:')) {
                         console.log('Hiding broken blob URL image')
@@ -270,45 +518,47 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                     }}
                   />
                 ) : entry.media_type === 'moodboard' ? (
-                  <div className="space-y-3">
-                    <div className="text-sm text-space-whale-purple font-space-whale-body mb-3">
-                      ✨ Mood board with {entry.tags ? entry.tags.filter((url: string) => url.startsWith('data:image/')).length : 1} image{entry.tags && entry.tags.filter((url: string) => url.startsWith('data:image/')).length > 1 ? 's' : ''}
+                  <div className="space-y-4">
+                    <div className="text-sm text-space-whale-purple font-space-whale-body mb-4">
+                      ✨ {entry.tags ? entry.tags.filter((url: string) => url && (url.startsWith('data:image/') || url.startsWith('https://'))).length : 1} image{entry.tags && entry.tags.filter((url: string) => url && (url.startsWith('data:image/') || url.startsWith('https://'))).length > 1 ? 's' : ''}
                     </div>
-                    {/* Show mood board images in a clean grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {entry.tags && entry.tags.length > 0 ? (
-                        // Filter and use only valid image URLs from tags array
-                        entry.tags
-                          .filter((imageUrl: string) => imageUrl.startsWith('data:image/'))
-                          .slice(0, 6)
+                    {/* Beautiful mood board grid */}
+                    {entry.tags && entry.tags.length > 0 ? (
+                      <div className="mood-board-grid">
+                        {entry.tags
+                          .filter((imageUrl: string) => imageUrl && (imageUrl.startsWith('data:image/') || imageUrl.startsWith('https://')))
                           .map((imageUrl: string, index: number) => (
-                            <div key={index} className="aspect-square bg-gradient-to-br from-space-whale-lavender/20 to-accent-pink/20 rounded-lg flex items-center justify-center">
+                            <div 
+                              key={index} 
+                              className="mood-board-item cursor-pointer"
+                              onClick={() => openImageLightbox(imageUrl, entry.tags.filter((url: string) => url && (url.startsWith('data:image/') || url.startsWith('https://'))), index)}
+                            >
                               <img
                                 src={imageUrl}
                                 alt={`Mood board image ${index + 1}`}
-                                className="w-full h-full object-cover rounded-lg"
+                                className="mood-board-image"
                                 onError={(e) => {
                                   console.log('Mood board image failed to load')
                                   e.currentTarget.style.display = 'none'
                                 }}
                               />
                             </div>
-                          ))
-                      ) : (
-                        // Fallback to just the primary image
-                        <div className="aspect-square bg-gradient-to-br from-space-whale-lavender/20 to-accent-pink/20 rounded-lg flex items-center justify-center">
-                          <img
-                            src={entry.media_url}
-                            alt="Mood board primary image"
-                            className="w-full h-full object-cover rounded-lg"
-                            onError={(e) => {
-                              console.log('Mood board image failed to load')
-                              e.currentTarget.style.display = 'none'
-                            }}
-                          />
+                          ))}
+                      </div>
+                    ) : (
+                      // Empty state for mood boards
+                      <div className="mood-board-empty">
+                        <div className="text-center py-12">
+                          <div className="text-6xl mb-4">✨</div>
+                          <p className="text-space-whale-navy/60 font-space-whale-body mb-4">
+                            Your mood board is empty. Add images to begin.
+                          </p>
+                          <button className="px-6 py-3 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-colors font-space-whale-accent">
+                            + Add Images
+                          </button>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                     {/* Show count if there are more than 6 images */}
                     {entry.tags && entry.tags.filter((url: string) => url.startsWith('data:image/')).length > 6 && (
                       <div className="text-center">
@@ -353,7 +603,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
               Read full entry
             </button>
             
-            {entry.tags && entry.tags.length > 0 && (
+            {entry.tags && entry.tags.length > 0 && entry.media_type !== 'moodboard' && (
               <div className="flex flex-wrap gap-1">
                 {entry.tags.slice(0, 3).map((tag: string) => (
                   <span
@@ -373,6 +623,66 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
           </div>
         </div>
       ))}
+      
+
+      {/* Mood Board Image Modal - Simple & Effective like Community Orbit */}
+      {lightboxOpen && lightboxImage && (
+        <div 
+          className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm flex items-center justify-center z-[9999] p-2 sm:p-4"
+          onClick={closeLightbox}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+        >
+          <div className="relative max-w-6xl max-h-[95vh] w-full flex items-center justify-center">
+            {/* Close button */}
+            <button
+              onClick={closeLightbox}
+              className="absolute top-4 right-4 z-10 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            
+            {/* Navigation arrows - only show if multiple images */}
+            {lightboxImages.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigateLightbox('prev')
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigateLightbox('next')
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
+            
+            {/* Main Image */}
+            <img
+              src={lightboxImage}
+              alt="Mood board image - click to close"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-pointer"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxHeight: '90vh', maxWidth: '90vw' }}
+            />
+            
+            {/* Image counter - only show if multiple images */}
+            {lightboxImages.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                {lightboxIndex + 1} / {lightboxImages.length}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

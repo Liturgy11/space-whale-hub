@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { User, Camera, X, Sparkles } from 'lucide-react'
+import { uploadMedia } from '@/lib/storage-client'
 import { supabase } from '@/lib/supabase'
+import { User, Camera, X, Sparkles } from 'lucide-react'
 
 interface AvatarUploadProps {
   onClose?: () => void
@@ -32,25 +33,15 @@ export default function AvatarUpload({ onClose }: AvatarUploadProps) {
       const fileExt = file.name.split('.').pop()
       const fileName = `${user.id}-avatar.${fileExt}`
       
-      // Upload to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: true
-        })
+      // Use new storage system instead of direct storage calls
+      const result = await uploadMedia(file, {
+        category: 'avatars',
+        filename: `${user.id}-avatar`,
+        upsert: true
+      }, user.id)
 
-      if (error) {
-        console.error('Upload error:', error)
-        setSuccess('❌ Upload failed. Please try again.')
-        setUploading(false)
-        return
-      }
-
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName)
+      console.log('Avatar uploaded to storage:', result.url)
+      const publicUrl = result.url
 
       // Update user metadata with new avatar URL
       const { error: updateError } = await supabase.auth.updateUser({

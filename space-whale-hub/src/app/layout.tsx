@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter, Poppins, Quicksand } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import MobileNav from "@/components/MobileNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ const quicksand = Quicksand({
 export const metadata: Metadata = {
   title: "Space Whale Portal - A Sanctuary for Creative Becoming",
   description: "A portal where your sensitivity is honoured, your creativity is sacred, and your becoming is witnessed. A sanctuary for space whales navigating by starlight and whale song.",
+  viewport: "width=device-width, initial-scale=1",
 };
 
 export default function RootLayout({
@@ -49,6 +51,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           {children}
+          <MobileNav />
         </AuthProvider>
       </body>
     </html>

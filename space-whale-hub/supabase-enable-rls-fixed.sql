@@ -122,3 +122,4 @@ ON public.archive_items
 FOR DELETE
 TO authenticated
 USING (auth.uid()::text = user_id);
+

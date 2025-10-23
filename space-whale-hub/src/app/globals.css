@@ -268,3 +268,177 @@ body {
   border-color: rgba(184, 158, 196, 0.5);
   transform: translateY(-1px);
 }
+
+/* Mobile-first responsive design */
+@media (max-width: 768px) {
+  .btn-lofi {
+    @apply px-3 py-2 text-sm;
+    min-height: 44px; /* iOS touch target */
+  }
+  
+  .btn-space-whale {
+    @apply px-4 py-3 text-sm;
+    min-height: 44px;
+  }
+  
+  .btn-space-whale-secondary {
+    @apply px-4 py-3 text-sm;
+    min-height: 44px;
+  }
+}
+
+/* Mobile navigation improvements */
+@media (max-width: 768px) {
+  .mobile-nav {
+    @apply flex-col space-y-2;
+  }
+  
+  .mobile-nav-item {
+    @apply w-full text-left px-4 py-3;
+    min-height: 44px;
+  }
+}
+
+/* Mobile form improvements */
+@media (max-width: 768px) {
+  .mobile-form {
+    @apply px-4 py-3;
+  }
+  
+  .mobile-input {
+    @apply text-base; /* Prevents zoom on iOS */
+    min-height: 44px;
+  }
+  
+  .mobile-textarea {
+    @apply text-base resize-none;
+    min-height: 120px;
+  }
+}
+
+/* Mobile card improvements */
+@media (max-width: 768px) {
+  .mobile-card {
+    @apply mx-2 mb-4;
+  }
+  
+  .mobile-card-content {
+    @apply p-4;
+  }
+}
+
+/* Mobile modal improvements */
+@media (max-width: 768px) {
+  .mobile-modal {
+    @apply m-4 max-h-[90vh] overflow-y-auto;
+  }
+  
+  .mobile-modal-content {
+    @apply p-4;
+  }
+}
+
+/* Mood Board Styles - Pinterest meets Tumblr aesthetic */
+.mood-board-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  padding: 16px 0;
+  width: 100%;
+}
+
+.mood-board-item {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(184, 158, 196, 0.1), rgba(255, 107, 107, 0.1));
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.mood-board-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.mood-board-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  display: block;
+}
+
+.mood-board-image:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.mood-board-empty {
+  text-align: center;
+  padding: 48px 24px;
+  background: linear-gradient(135deg, rgba(184, 158, 196, 0.05), rgba(255, 107, 107, 0.05));
+  border-radius: 16px;
+  border: 2px dashed rgba(184, 158, 196, 0.3);
+}
+
+.mood-board-empty button {
+  background: linear-gradient(135deg, #8b5a9b, #ff6b6b);
+  border: none;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.mood-board-empty button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(139, 90, 155, 0.3);
+}
+
+/* Mood Board Title Input */
+.mood-board-title-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  margin-bottom: 16px;
+  background: white;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mood-board-title-input:focus {
+  outline: none;
+  border-color: #8b5a9b;
+  box-shadow: 0 0 0 3px rgba(139, 90, 155, 0.1);
+}
+
+.mood-board-title-input::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+/* Mobile responsive mood board */
+@media (max-width: 768px) {
+  .mood-board-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    padding: 12px 0;
+  }
+  
+  .mood-board-empty {
+    padding: 32px 16px;
+  }
+}
+
+/* Mobile navigation spacing */
+@media (max-width: 768px) {
+  body {
+    padding-bottom: 80px;
+  }
+}

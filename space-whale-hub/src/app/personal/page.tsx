@@ -79,30 +79,31 @@ function PersonalSpaceContent() {
       <nav className="bg-white/80 backdrop-blur-sm border-b border-space-whale-lavender/20 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <Link href="/" className="flex items-center text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent">
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                Back to Hub
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Back to Hub</span>
+                <span className="sm:hidden">Back</span>
               </Link>
               <div className="flex items-center space-x-2">
                 <Image
                   src="/Space Whale_Social Only.jpg"
                   alt="Space Whale Logo"
-                  width={32}
-                  height={32}
-                  className="rounded-full"
+                  width={28}
+                  height={28}
+                  className="rounded-full sm:w-8 sm:h-8"
                 />
-                <span className="text-xl font-space-whale-heading text-space-whale-navy">Inner Space</span>
+                <span className="text-lg sm:text-xl font-space-whale-heading text-space-whale-navy">Inner Space</span>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <button
                 onClick={() => setShowWallpaperCustomizer(true)}
-                className="flex items-center px-3 py-2 text-space-whale-purple hover:text-space-whale-navy transition-colors font-space-whale-accent"
+                className="flex items-center px-2 py-2 sm:px-3 text-space-whale-purple hover:text-space-whale-navy transition-colors font-space-whale-accent"
                 title="Customize your space"
               >
-                <Settings className="h-5 w-5 mr-2" />
-                Customize
+                <Settings className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+                <span className="hidden sm:inline">Customize</span>
               </button>
               <UserProfile />
             </div>
@@ -110,24 +111,24 @@ function PersonalSpaceContent() {
         </div>
       </nav>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h1 className="text-3xl font-space-whale-heading text-space-whale-navy mb-2">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-4 sm:space-y-0">
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-space-whale-heading text-space-whale-navy mb-2">
                 Welcome home, {user?.user_metadata?.display_name || 'Space Whale'}! 🐋
               </h1>
-              <p className="text-lg font-space-whale-body text-space-whale-navy">
+              <p className="text-base sm:text-lg font-space-whale-body text-space-whale-navy">
                 Your private space for reflection, creativity, and gentle becoming. 
                 A soft place to land and explore what's forming within you.
               </p>
             </div>
             <button
               onClick={() => setShowForm(!showForm)}
-              className="btn-lofi flex items-center"
+              className="btn-lofi flex items-center justify-center w-full sm:w-auto"
             >
-              <Plus className="h-5 w-5 mr-2" />
+              <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               {showForm ? 'Cancel' : 'New Entry'}
             </button>
           </div>
@@ -140,22 +141,22 @@ function PersonalSpaceContent() {
         )}
 
         {/* Simplified Layout */}
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
           {/* Quick Actions - Simplified */}
-          <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
-            <h2 className="text-2xl font-space-whale-subheading text-space-whale-navy mb-6 text-center">What feels right today?</h2>
+          <div className="bg-lofi-card rounded-xl shadow-lg p-4 sm:p-8 rainbow-border-soft mobile-card">
+            <h2 className="text-xl sm:text-2xl font-space-whale-subheading text-space-whale-navy mb-4 sm:mb-6 text-center">What feels right today?</h2>
             
             {/* Reflection Prompt */}
-            <div className="mb-6">
+            <div className="mb-4 sm:mb-6">
               {currentPrompt ? (
-                <div className="p-4 bg-gradient-to-r from-space-whale-lavender/20 to-accent-pink/20 rounded-xl border-l-4 border-space-whale-purple">
-                  <p className="text-lg text-space-whale-navy italic font-space-whale-body">
+                <div className="p-3 sm:p-4 bg-gradient-to-r from-space-whale-lavender/20 to-accent-pink/20 rounded-xl border-l-4 border-space-whale-purple">
+                  <p className="text-base sm:text-lg text-space-whale-navy italic font-space-whale-body">
                     "{currentPrompt}"
                   </p>
                 </div>
               ) : (
-                <div className="p-4 bg-space-whale-lavender/10 rounded-xl">
-                  <p className="text-lg text-space-whale-purple text-center font-space-whale-body">
+                <div className="p-3 sm:p-4 bg-space-whale-lavender/10 rounded-xl">
+                  <p className="text-base sm:text-lg text-space-whale-purple text-center font-space-whale-body">
                     Need a gentle nudge? Get a reflection prompt
                   </p>
                 </div>
@@ -163,30 +164,30 @@ function PersonalSpaceContent() {
               
               <button 
                 onClick={generateRandomPrompt}
-                className="w-full mt-3 px-4 py-2 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-all duration-300 font-space-whale-accent"
+                className="w-full mt-3 px-4 py-3 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-all duration-300 font-space-whale-accent"
               >
                 {currentPrompt ? 'New Prompt' : 'Get Reflection Prompt'}
               </button>
             </div>
             
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <button 
                 onClick={() => setShowForm(!showForm)}
-                className="flex items-center p-6 bg-gradient-to-r from-pink-100 to-purple-100 rounded-xl hover:from-pink-200 hover:to-purple-200 transition-all duration-300 group"
+                className="flex items-center p-4 sm:p-6 bg-gradient-to-r from-pink-100 to-purple-100 rounded-xl hover:from-pink-200 hover:to-purple-200 transition-all duration-300 group"
               >
-                <FileText className="h-8 w-8 text-pink-500 mr-4 group-hover:scale-110 transition-transform" />
+                <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-pink-500 mr-3 sm:mr-4 group-hover:scale-110 transition-transform flex-shrink-0" />
                 <div className="text-left">
-                  <div className="text-lg font-medium text-space-whale-navy">Write something</div>
+                  <div className="text-base sm:text-lg font-medium text-space-whale-navy">Write something</div>
                   <div className="text-sm text-space-whale-purple">words, thoughts, feelings</div>
                 </div>
               </button>
               <button 
                 onClick={() => setShowMoodBoardUpload(true)}
-                className="flex items-center p-6 bg-gradient-to-r from-blue-100 to-teal-100 rounded-xl hover:from-blue-200 hover:to-teal-200 transition-all duration-300 group"
+                className="flex items-center p-4 sm:p-6 bg-gradient-to-r from-blue-100 to-teal-100 rounded-xl hover:from-blue-200 hover:to-teal-200 transition-all duration-300 group"
               >
-                <Camera className="h-8 w-8 text-blue-500 mr-4 group-hover:scale-110 transition-transform" />
+                <Camera className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500 mr-3 sm:mr-4 group-hover:scale-110 transition-transform flex-shrink-0" />
                 <div className="text-left">
-                  <div className="text-lg font-medium text-space-whale-navy">Create mood board</div>
+                  <div className="text-base sm:text-lg font-medium text-space-whale-navy">Create mood board</div>
                   <div className="text-sm text-space-whale-purple">visual inspiration</div>
                 </div>
               </button>
@@ -194,14 +195,14 @@ function PersonalSpaceContent() {
           </div>
 
           {/* Journal Entries - Clean Display */}
-          <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
-            <h2 className="text-2xl font-space-whale-subheading text-space-whale-navy mb-6">Your Journey</h2>
+          <div className="bg-lofi-card rounded-xl shadow-lg p-4 sm:p-8 rainbow-border-soft mobile-card">
+            <h2 className="text-xl sm:text-2xl font-space-whale-subheading text-space-whale-navy mb-4 sm:mb-6">Your Journey</h2>
             <JournalList key={refreshKey} />
           </div>
 
           {/* Storage Test - Temporary for Phase 1 */}
-          <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
-            <h2 className="text-2xl font-space-whale-subheading text-space-whale-navy mb-6">Storage Test</h2>
+          <div className="bg-lofi-card rounded-xl shadow-lg p-4 sm:p-8 rainbow-border-soft mobile-card">
+            <h2 className="text-xl sm:text-2xl font-space-whale-subheading text-space-whale-navy mb-4 sm:mb-6">Storage Test</h2>
             <StorageTest />
           </div>
         </div>
@@ -209,8 +210,8 @@ function PersonalSpaceContent() {
 
       {/* Media Upload Modal */}
       {showMediaUpload && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="w-full max-w-2xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="w-full max-w-2xl mobile-modal">
             <MediaUpload 
               onUploadComplete={(url, type) => {
                 console.log('Media uploaded:', url, type);
@@ -225,36 +226,47 @@ function PersonalSpaceContent() {
 
       {/* Mood Board Upload Modal */}
       {showMoodBoardUpload && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="w-full max-w-4xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="w-full max-w-4xl mobile-modal">
             <MoodBoardUpload 
-              onUploadComplete={async (urls, type) => {
-                console.log('Mood board created:', urls, type);
+              onUploadComplete={async (urls, type, title) => {
+                console.log('Mood board created:', urls, type, title);
                 setShowMoodBoardUpload(false);
                 
                 // Create a journal entry with the mood board images
                 try {
-                  console.log('Starting mood board creation...', { userId: user.id, urlsCount: urls.length });
+                  if (!user) {
+                    console.error('User not authenticated');
+                    return;
+                  }
                   
-                  const { createJournalEntry } = await import('@/lib/database');
+                  console.log('Starting mood board creation...', { userId: user.id, urlsCount: urls.length, title });
                   
-                  // Store all images as a JSON array in the content
-                  const allImagesJson = JSON.stringify(urls);
-                  console.log('Creating journal entry with data:', {
-                    title: 'Mood Board',
-                    content: `Created a mood board with ${urls.length} image${urls.length > 1 ? 's' : ''}`,
-                    media_url: urls[0],
-                    media_type: 'moodboard'
+                  // Use the secure API route instead of direct database function
+                  const response = await fetch('/api/create-journal-entry-secure', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      title: title || 'Mood Board',
+                      content: `Created a mood board with ${urls.length} image${urls.length > 1 ? 's' : ''}`,
+                      mood: undefined,
+                      tags: urls, // Store all image URLs in tags array for display
+                      media_url: urls[0], // Use first image as primary display
+                      media_type: 'moodboard',
+                      is_private: true,
+                      userId: user.id
+                    })
                   });
-                  
-                  const entry = await createJournalEntry(user.id, {
-                    title: 'Mood Board',
-                    content: `Created a mood board with ${urls.length} image${urls.length > 1 ? 's' : ''}`,
-                    media_url: urls[0], // Use first image as primary display
-                    media_type: 'moodboard',
-                    is_private: true,
-                    tags: urls // Store all image URLs in tags array for display
-                  });
+
+                  const result = await response.json();
+
+                  if (!result.success) {
+                    throw new Error(result.error || 'Failed to create mood board journal entry');
+                  }
+
+                  const entry = result.entry;
                   
                   console.log('Mood board journal entry created successfully:', entry);
                   
@@ -265,7 +277,8 @@ function PersonalSpaceContent() {
                   setRefreshKey(prev => prev + 1);
                 } catch (error) {
                   console.error('Error creating mood board journal entry:', error);
-                  alert(`❌ Error creating mood board: ${error.message}`);
+                  const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+                  alert(`❌ Error creating mood board: ${errorMessage}`);
                 }
               }}
               onCancel={() => setShowMoodBoardUpload(false)}

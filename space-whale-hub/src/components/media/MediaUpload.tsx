@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { supabase } from '@/lib/supabase'
+import { uploadMedia } from '@/lib/storage-client'
 import { Upload, X, Image, Video, File, Music, Loader2, Check } from 'lucide-react'
 
 interface MediaUploadProps {
@@ -86,27 +86,20 @@ export default function MediaUpload({ onUploadComplete, onCancel }: MediaUploadP
     setError('')
 
     try {
-      const fileExt = uploadedFile.name.split('.').pop()
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-      const filePath = `${user.id}/personal/${fileName}`
+      console.log('Uploading file for personal media:', { fileName: uploadedFile.name, fileSize: uploadedFile.size, fileType: uploadedFile.type })
 
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('archive') // Using archive bucket for personal media
-        .upload(filePath, uploadedFile)
+      // Use new storage system instead of direct storage calls
+      const result = await uploadMedia(uploadedFile, {
+        category: 'archive',
+        filename: `${Date.now()}-${uploadedFile.name}`
+      }, user.id)
 
-      if (uploadError) throw uploadError
-
-      // Get public URL
-      const { data } = supabase.storage
-        .from('archive')
-        .getPublicUrl(filePath)
-
+      console.log('File uploaded to storage:', result.url)
       setUploadProgress(100)
       
       // Call completion callback
       if (onUploadComplete) {
-        onUploadComplete(data.publicUrl, getFileType(uploadedFile))
+        onUploadComplete(result.url, getFileType(uploadedFile))
       }
 
     } catch (err: any) {

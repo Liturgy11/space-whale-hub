@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Upload, X, Image, Video, FileText, Music, Tag } from 'lucide-react'
 import { createConstellationItem } from '@/lib/database'
-import { supabase } from '@/lib/supabase'
+import { uploadMedia } from '@/lib/storage-client'
 
 interface ArchiveUploadProps {
   onUploadComplete?: () => void
@@ -27,23 +27,16 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
     try {
       setUploading(true)
       
-      // Upload to Supabase Storage
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Date.now()}.${fileExt}`
-      const filePath = `archive/${fileName}`
+      console.log('Uploading file for archive:', { fileName: file.name, fileSize: file.size, fileType: file.type })
 
-      const { error: uploadError } = await supabase.storage
-        .from('archive')
-        .upload(filePath, file)
+      // Use new storage system instead of direct storage calls
+      const result = await uploadMedia(file, {
+        category: 'archive',
+        filename: `${Date.now()}-${file.name}`
+      }, 'system') // Using 'system' as userId for archive uploads
 
-      if (uploadError) throw uploadError
-
-      // Get public URL
-      const { data } = supabase.storage
-        .from('archive')
-        .getPublicUrl(filePath)
-
-      return data.publicUrl
+      console.log('File uploaded to storage:', result.url)
+      return result.url
     } catch (error) {
       console.error('Error uploading file:', error)
       throw error

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { createPost } from '@/lib/database'
-import { uploadMedia } from '@/lib/storage-api'
+import { uploadMedia } from '@/lib/storage-client'
 import { Image, Video, Send, X, AlertTriangle, Loader2 } from 'lucide-react'
 
 interface PostFormProps {
@@ -103,26 +103,26 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
   }
 
   return (
-    <div className="bg-lofi-card rounded-xl p-6 rainbow-border-soft glow-soft">
+    <div className="bg-lofi-card rounded-xl p-4 sm:p-6 rainbow-border-soft glow-soft mobile-card">
       {onCancel && (
         <div className="flex justify-end mb-4">
           <button
             onClick={onCancel}
-            className="text-gray-400 hover:text-space-whale-purple transition-colors"
+            className="text-gray-400 hover:text-space-whale-purple transition-colors p-2"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 mobile-form">
         {/* Content Input */}
         <div>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="What's forming and reforming in you? Share your half-baked wonder, your garden's harvest, or what's taking root..."
-            className="w-full p-4 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent resize-none font-space-whale-body text-space-whale-navy"
+            className="w-full p-3 sm:p-4 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent resize-none font-space-whale-body text-space-whale-navy mobile-textarea"
             rows={4}
             maxLength={2000}
           />
@@ -140,7 +140,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
             value={tags}
             onChange={(e) => setTags(e.target.value)}
             placeholder="Add tags (separated by commas): garden, cocoon, metamorphosis, cycles, pride poetry, art therapy..."
-            className="w-full p-3 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body text-space-whale-navy"
+            className="w-full p-3 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body text-space-whale-navy mobile-input"
             suppressHydrationWarning
           />
           <div className="mt-2">
@@ -188,7 +188,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
               value={contentWarning}
               onChange={(e) => setContentWarning(e.target.value)}
               placeholder="What should people know before reading? (e.g., mentions of trauma, mental health, grief, self-harm, etc.)"
-              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent mobile-input"
             />
           )}
         </div>
@@ -237,7 +237,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-3 sm:space-y-0">
           <div className="flex space-x-2">
             <button
               type="button"
@@ -257,12 +257,12 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
             </button>
           </div>
 
-          <div className="flex space-x-3">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
             {onCancel && (
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-full sm:w-auto"
               >
                 Cancel
               </button>
@@ -270,7 +270,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
             <button
               type="submit"
               disabled={!content.trim() || uploading}
-              className="btn-lofi flex items-center px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="btn-lofi flex items-center justify-center px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full sm:w-auto"
             >
               {uploading ? (
                 <>

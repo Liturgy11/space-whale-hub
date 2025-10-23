@@ -2,11 +2,11 @@
 
 import { useState, useRef } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { uploadMultipleMedia } from '@/lib/storage-api'
+import { uploadMultipleMedia } from '@/lib/storage-client'
 import { Upload, X, Image as ImageIcon, Loader2, Check, Plus, Trash2 } from 'lucide-react'
 
 interface MoodBoardUploadProps {
-  onUploadComplete?: (urls: string[], type: string) => void
+  onUploadComplete?: (urls: string[], type: string, title?: string) => void
   onCancel?: () => void
 }
 
@@ -25,6 +25,7 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
   const [uploading, setUploading] = useState(false)
   const [files, setFiles] = useState<UploadedFile[]>([])
   const [error, setError] = useState('')
+  const [title, setTitle] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleDrag = (e: React.DragEvent) => {
@@ -140,9 +141,9 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
       const urls = results.map(result => result.url)
       console.log('Mood board images uploaded:', urls.length)
       
-      // Call completion callback with storage URLs
+      // Call completion callback with storage URLs and title
       if (onUploadComplete) {
-        onUploadComplete(urls, 'moodboard')
+        onUploadComplete(urls, 'moodboard', title.trim() || undefined)
       }
 
     } catch (err: any) {
@@ -174,6 +175,21 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
             <X className="h-6 w-6" />
           </button>
         )}
+      </div>
+
+      {/* Title Input */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-space-whale-navy mb-2 font-space-whale-body">
+          Title (optional)
+        </label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="e.g., Autumn vibes, Morning ritual, Dreams..."
+          className="mood-board-title-input"
+          maxLength={100}
+        />
       </div>
 
       {files.length === 0 ? (
@@ -233,14 +249,6 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
                   >
                     <Trash2 className="h-5 w-5" />
                   </button>
-                </div>
-                <div className="mt-2">
-                  <p className="text-xs text-space-whale-navy font-space-whale-body truncate">
-                    {fileObj.file.name}
-                  </p>
-                  <p className="text-xs text-space-whale-purple">
-                    {formatFileSize(fileObj.file.size)}
-                  </p>
                 </div>
               </div>
             ))}

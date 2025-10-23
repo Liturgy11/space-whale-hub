@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { createJournalEntry } from '@/lib/database'
-import { uploadMedia } from '@/lib/storage-api'
+import { supabase } from '@/lib/supabase'
+import { uploadMedia } from '@/lib/storage-client'
 import { Loader2, Save, X, Upload, Image, X as XIcon } from 'lucide-react'
 
 interface JournalEntryFormProps {
@@ -12,7 +12,7 @@ interface JournalEntryFormProps {
 }
 
 export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFormProps) {
-  const { user } = useAuth()
+  const { user, session } = useAuth()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [mood, setMood] = useState('')
@@ -66,14 +66,33 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
     setLoading(true)
 
     try {
-      const entry = await createJournalEntry(user.id, {
-        title: title.trim() || undefined,
-        content: content.trim(),
-        mood: mood || undefined,
-        media_url: mediaUrl || undefined,
-        media_type: mediaType || undefined,
-        is_private: true
+      console.log('Creating journal entry for user:', user.id)
+      
+      // Use the secure API route that doesn't require authentication tokens
+      const response = await fetch('/api/create-journal-entry-secure', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: title.trim() || undefined,
+          content: content.trim(),
+          mood: mood || undefined,
+          tags: [], // You can add tag functionality later
+          media_url: mediaUrl || undefined,
+          media_type: mediaType || undefined,
+          is_private: true,
+          userId: user.id
+        })
       })
+
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create journal entry')
+      }
+
+      console.log('Journal entry created successfully:', result.entry)
 
       // Reset form
       setTitle('')
@@ -83,8 +102,9 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
       setMediaType('')
       setShowMediaUpload(false)
 
-      if (onSuccess) onSuccess(entry)
+      if (onSuccess) onSuccess(result.entry)
     } catch (err: any) {
+      console.error('Journal entry creation error:', err)
       setError(err.message)
     } finally {
       setLoading(false)
