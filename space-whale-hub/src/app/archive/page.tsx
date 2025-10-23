@@ -5,9 +5,9 @@ import ArchivePage from "@/components/archive/ArchivePage";
 
 export default function Archive() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-space-whale-lavender/20 via-white to-space-whale-purple/10">
       {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-sm border-b border-space-whale-lavender/20 sticky top-0 z-50">
+      <nav className="bg-gradient-to-r from-space-whale-lavender/80 to-space-whale-purple/80 backdrop-blur-md border-b border-space-whale-purple/30 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4" suppressHydrationWarning>
@@ -32,7 +32,7 @@ export default function Archive() {
                 <input
                   type="text"
                   placeholder="Search by tags: pride poetry, art therapy, neurodivergent..."
-                  className="pl-10 pr-4 py-2 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
+                  className="pl-10 pr-4 py-2 border border-space-whale-lavender/30 rounded-lg bg-white/80 backdrop-blur-sm text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
                   suppressHydrationWarning
                 />
               </div>
