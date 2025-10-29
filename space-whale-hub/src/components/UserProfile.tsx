@@ -1,14 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { User, ChevronDown } from 'lucide-react'
-import SimpleAvatarUpload from './SimpleAvatarUpload'
+import UserSettings from './UserSettings'
 
 export default function UserProfile() {
   const { user, signOut } = useAuth()
-  const [showAvatarUpload, setShowAvatarUpload] = useState(false)
+  const [showUserSettings, setShowUserSettings] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   if (!user) return null
 
@@ -43,12 +49,12 @@ export default function UserProfile() {
           <div className="py-1">
             <button
               onClick={() => {
-                setShowAvatarUpload(true)
+                setShowUserSettings(true)
                 setIsOpen(false)
               }}
               className="w-full text-left px-4 py-2 text-sm text-space-whale-navy hover:bg-space-whale-lavender/20 transition-colors"
             >
-              Update Avatar
+              Profile Settings
             </button>
             <button
               onClick={() => {
@@ -63,9 +69,14 @@ export default function UserProfile() {
         </div>
       )}
 
-      {/* Avatar Upload Modal */}
-      {showAvatarUpload && (
-        <SimpleAvatarUpload onClose={() => setShowAvatarUpload(false)} />
+      {/* User Settings Modal */}
+      {showUserSettings && mounted && createPortal(
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4 overflow-y-auto">
+          <div className="w-full max-w-lg my-8">
+            <UserSettings onClose={() => setShowUserSettings(false)} />
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   )

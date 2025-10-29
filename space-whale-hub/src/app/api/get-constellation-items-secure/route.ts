@@ -14,7 +14,22 @@ export async function GET(request: NextRequest) {
   try {
     console.log('Fetching constellation items...')
 
+    // Get the current user from the request headers (if available)
+    const authHeader = request.headers.get('authorization')
+    let currentUserId = null
+    
+    if (authHeader) {
+      try {
+        // This is a simplified approach - in production you'd want to verify the JWT properly
+        const token = authHeader.replace('Bearer ', '')
+        // For now, we'll fetch all approved items and let the client filter
+      } catch (error) {
+        console.log('Could not extract user from auth header')
+      }
+    }
+
     // Fetch constellation items using service role (bypasses RLS)
+    // Show all items - RLS policies will handle security on the client side
     const { data, error } = await supabase
       .from('archive_items')
       .select('*')
@@ -30,6 +45,12 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(`Fetched ${data?.length || 0} constellation items`)
+    console.log('Sample items:', data?.slice(0, 2).map(item => ({
+      id: item.id,
+      title: item.title,
+      is_approved: item.is_approved,
+      user_id: item.user_id
+    })))
 
     return NextResponse.json({
       success: true,

@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { X, ExternalLink, Calendar, User, Tag, Heart, Share2, Trash2, MessageCircle, Edit3, Save, XCircle } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { X, ExternalLink, Calendar, User, Tag, Heart, Share2, Trash2, MessageCircle, Edit3, Save, XCircle, Loader2, Send, MoreHorizontal } from 'lucide-react'
 import LinkPreview from './LinkPreview'
+import { useAuth } from '@/contexts/AuthContext'
+import { getSignedUrl } from '@/lib/signed-urls'
 
 interface ArchiveItem {
   id: string
@@ -12,6 +14,7 @@ interface ArchiveItem {
   media_url?: string
   artist_name?: string
   tags?: string[]
+  user_id?: string
   created_at: string
 }
 
@@ -21,6 +24,8 @@ interface ArchiveItemModalProps {
   onClose: () => void
   onDelete?: (id: string) => void
   onUpdate?: (updatedItem: ArchiveItem) => void
+  items?: ArchiveItem[]
+  startIndex?: number
 }
 
 interface Comment {
@@ -33,7 +38,9 @@ interface Comment {
   }
 }
 
-export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUpdate }: ArchiveItemModalProps) {
+export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUpdate, items, startIndex = 0 }: ArchiveItemModalProps) {
+  const { user } = useAuth()
+  const [currentIndex, setCurrentIndex] = useState(startIndex)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
   const [isLiking, setIsLiking] = useState(false)
@@ -42,6 +49,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [signedMediaUrl, setSignedMediaUrl] = useState<string>('')
   const [editForm, setEditForm] = useState({
     title: '',
     description: '',
@@ -49,8 +57,69 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
     tags: ''
   })
   const [isSaving, setIsSaving] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement | null>(null)
   
-  if (!item || !isOpen) return null
+  // Close menu when clicking outside (but allow clicks inside menu)
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!showMenu) return
+      const target = event.target as Node
+      if (menuRef.current && menuRef.current.contains(target)) {
+        return // click inside the menu → do nothing
+      }
+      setShowMenu(false)
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showMenu])
+
+  const currentItem: ArchiveItem | null = items && items.length > 0 ? items[currentIndex] : item
+  const touchStartX = useRef<number | null>(null)
+  const touchEndX = useRef<number | null>(null)
+
+  // Generate signed URL when item changes
+  useEffect(() => {
+    if (currentItem?.media_url && currentItem.media_url.includes('supabase')) {
+      getSignedUrl(currentItem.media_url).then(setSignedMediaUrl)
+    } else if (currentItem?.media_url) {
+      setSignedMediaUrl(currentItem.media_url)
+    }
+  }, [currentItem?.media_url])
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!isOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (!items || items.length === 0) return
+      if (e.key === 'ArrowRight') setCurrentIndex((i) => (i + 1) % items.length)
+      if (e.key === 'ArrowLeft') setCurrentIndex((i) => (i - 1 + items.length) % items.length)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isOpen, items])
+
+  // Mobile swipe navigation
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.changedTouches[0].clientX
+  }
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!items || items.length === 0) return
+    touchEndX.current = e.changedTouches[0].clientX
+    if (touchStartX.current === null || touchEndX.current === null) return
+    const delta = touchEndX.current - touchStartX.current
+    const threshold = 40 // minimal px to count as swipe
+    if (delta > threshold) {
+      setCurrentIndex((i) => (i - 1 + items.length) % items.length)
+    } else if (delta < -threshold) {
+      setCurrentIndex((i) => (i + 1) % items.length)
+    }
+    touchStartX.current = null
+    touchEndX.current = null
+  }
+  
+  if (!currentItem || !isOpen) return null
 
   const handleDelete = async () => {
     if (!onDelete) return
@@ -58,12 +127,12 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
     if (confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
       setIsDeleting(true)
       try {
-        const response = await fetch('/api/delete-constellation-item-secure', {
+      const response = await fetch('/api/delete-constellation-item-secure', {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ id: item.id })
+          body: JSON.stringify({ id: currentItem.id })
         })
 
         const result = await response.json()
@@ -72,7 +141,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
           throw new Error(result.error || 'Failed to delete item')
         }
 
-        onDelete(item.id)
+        onDelete(currentItem.id)
         onClose()
       } catch (error) {
         console.error('Error deleting item:', error)
@@ -84,20 +153,21 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
   }
 
   const handleLike = async () => {
+    if (!user) {
+      alert('Please log in to like items')
+      return
+    }
+    
     setIsLiking(true)
     try {
-      // For now, we'll use a placeholder user ID
-      // In a real app, you'd get this from authentication
-      const userId = 'placeholder-user-id'
-      
       const response = await fetch('/api/toggle-archive-like-secure', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          itemId: item.id,
-          userId: userId
+          itemId: currentItem.id,
+          userId: user.id
         })
       })
 
@@ -118,7 +188,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
 
   const loadComments = async () => {
     try {
-      const response = await fetch(`/api/get-archive-comments-secure?itemId=${item.id}`)
+      const response = await fetch(`/api/get-archive-comments-secure?itemId=${currentItem.id}`)
       const result = await response.json()
       
       if (result.success) {
@@ -132,22 +202,23 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newComment.trim()) return
+    
+    if (!user) {
+      alert('Please log in to comment')
+      return
+    }
 
     setIsSubmittingComment(true)
     try {
-      // For now, we'll use a placeholder user ID
-      // In a real app, you'd get this from authentication
-      const userId = 'placeholder-user-id'
-      
       const response = await fetch('/api/create-archive-comment-secure', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          itemId: item.id,
+          itemId: currentItem.id,
           content: newComment.trim(),
-          userId: userId
+          userId: user.id
         })
       })
 
@@ -169,10 +240,10 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
 
   const handleEdit = () => {
     setEditForm({
-      title: item.title || '',
-      description: item.description || '',
-      artist_name: item.artist_name || '',
-      tags: item.tags ? item.tags.join(', ') : ''
+      title: currentItem.title || '',
+      description: currentItem.description || '',
+      artist_name: currentItem.artist_name || '',
+      tags: currentItem.tags ? currentItem.tags.join(', ') : ''
     })
     setIsEditing(true)
   }
@@ -198,7 +269,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          id: item.id,
+          id: currentItem.id,
           title: editForm.title.trim(),
           description: editForm.description.trim(),
           artist_name: editForm.artist_name.trim(),
@@ -214,7 +285,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
 
       // Update the local item with the new data
       const updatedItem = {
-        ...item,
+        ...currentItem,
         title: editForm.title.trim(),
         description: editForm.description.trim(),
         artist_name: editForm.artist_name.trim(),
@@ -249,16 +320,44 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
     }
   }
 
-  const isExternalLink = item.media_url?.startsWith('http') && !item.media_url.includes('supabase')
+  const isExternalLink = currentItem.media_url?.startsWith('http') && !currentItem.media_url.includes('supabase')
+  const isOwner = user && currentItem.user_id && user.id === currentItem.user_id
+  
+  // Debug logging
+  console.log('ArchiveItemModal Debug:', {
+    user: user?.id,
+    itemUserId: currentItem.user_id,
+    isOwner,
+    hasOnUpdate: !!onUpdate,
+    hasOnDelete: !!onDelete
+  })
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-y-auto rainbow-border-soft">
-        <div className="p-6">
+    <div
+      className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 pb-20"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-y-auto rainbow-border-soft relative"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close button - positioned absolutely outside scrollable area */}
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={(e) => { e.stopPropagation(); onClose(); }}
+          className="absolute top-4 right-4 z-50 text-space-whale-purple hover:text-space-whale-navy hover:bg-white/80 transition-colors p-2 rounded-lg"
+        >
+          <X className="h-6 w-6" />
+        </button>
+
+        <div className="p-6 pb-20">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
-              <span className="text-2xl">{getContentTypeIcon(item.content_type)}</span>
+              <span className="text-2xl">{getContentTypeIcon(currentItem.content_type)}</span>
               <div className="flex-1">
                 {isEditing ? (
                   <div className="space-y-3">
@@ -280,17 +379,17 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                 ) : (
                   <>
                     <h2 className="text-2xl font-space-whale-heading text-space-whale-navy">
-                      {item.title}
+                      {currentItem.title}
                     </h2>
                     <div className="flex items-center space-x-4 text-sm text-space-whale-navy/70 font-space-whale-body">
                       <span className="flex items-center">
                         <Calendar className="h-4 w-4 mr-1" />
                         {formatDate(item.created_at)}
                       </span>
-                      {item.artist_name && (
+                      {currentItem.artist_name && (
                         <span className="flex items-center">
                           <User className="h-4 w-4 mr-1" />
-                          {item.artist_name}
+                          {currentItem.artist_name}
                         </span>
                       )}
                     </div>
@@ -298,37 +397,72 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                 )}
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="text-space-whale-purple hover:text-space-whale-navy transition-colors p-2"
-            >
-              <X className="h-6 w-6" />
-            </button>
+            
+            {/* Owner Actions Menu */}
+            {isOwner && onUpdate && (
+              <div className="relative mr-2" ref={menuRef}>
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="p-2 text-space-whale-navy/70 hover:text-space-whale-purple transition-colors rounded-lg hover:bg-space-whale-lavender/10"
+                  title="More actions"
+                >
+                  <MoreHorizontal className="h-5 w-5" />
+                </button>
+                
+                {showMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-space-whale-lavender/20 py-2 z-10">
+                    <button
+                      onClick={() => {
+                        setShowMenu(false)
+                        handleEdit()
+                      }}
+                      className="w-full px-4 py-2 text-left text-space-whale-navy hover:bg-space-whale-lavender/10 flex items-center space-x-2"
+                    >
+                      <Edit3 className="h-4 w-4" />
+                      <span>Edit</span>
+                    </button>
+                    {onDelete && (
+                      <button
+                        onClick={() => {
+                          setShowMenu(false)
+                          handleDelete()
+                        }}
+                        className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span>Delete</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            
           </div>
 
           {/* Media Content - Much Larger */}
           <div className="mb-8">
-            {item.media_url ? (
+            {currentItem.media_url ? (
               isExternalLink ? (
                 <LinkPreview 
-                  url={item.media_url}
-                  title={item.title}
-                  description={item.description}
+                  url={currentItem.media_url}
+                  title={currentItem.title}
+                  description={currentItem.description}
                   className="rounded-xl"
                 />
               ) : (
                 <div className="rounded-xl overflow-hidden shadow-lg">
-                  {item.content_type === 'video' ? (
+                  {currentItem.content_type === 'video' ? (
                     <video 
-                      src={item.media_url} 
-                      className="w-full max-h-[60vh] object-contain"
+                      src={signedMediaUrl || currentItem.media_url} 
+                      className="w-full max-h-[70vh] sm:max-h-[75vh] object-contain"
                       controls
                     />
                   ) : (
                     <img 
-                      src={item.media_url} 
-                      alt={item.title}
-                      className="w-full max-h-[60vh] object-contain"
+                      src={signedMediaUrl || currentItem.media_url} 
+                      alt={currentItem.title}
+                      className="w-full max-h-[70vh] sm:max-h-[75vh] object-contain"
                     />
                   )}
                 </div>
@@ -354,13 +488,13 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                 rows={3}
               />
             </div>
-          ) : item.description ? (
+          ) : currentItem.description ? (
             <div className="mb-4">
               <h3 className="text-lg font-space-whale-heading text-space-whale-navy mb-2">
                 About this creation
               </h3>
               <p className="text-space-whale-navy/80 font-space-whale-body leading-relaxed">
-                {item.description}
+                {currentItem.description}
               </p>
             </div>
           ) : null}
@@ -383,14 +517,14 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                 Separate tags with commas (e.g., "art, nature, creative")
               </p>
             </div>
-          ) : item.tags && item.tags.length > 0 ? (
+          ) : currentItem.tags && currentItem.tags.length > 0 ? (
             <div className="mb-4">
               <h3 className="text-lg font-space-whale-heading text-space-whale-navy mb-2">
                 <Tag className="h-5 w-5 inline mr-1 text-space-whale-purple" />
                 Tags
               </h3>
               <div className="flex flex-wrap gap-2">
-                {item.tags.map((tag, index) => (
+                {currentItem.tags.map((tag, index) => (
                   <span
                     key={index}
                     className="px-3 py-1 bg-space-whale-lavender/20 text-space-whale-purple text-sm rounded-full font-space-whale-body"
@@ -404,28 +538,28 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
 
           {/* Actions */}
           <div className="flex items-center justify-between pt-6 border-t border-space-whale-lavender/30">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6">
               <button 
                 onClick={handleLike}
                 disabled={isLiking}
-                className={`flex items-center px-4 py-2 transition-colors disabled:opacity-50 font-space-whale-body ${
+                className={`p-3 transition-colors disabled:opacity-50 rounded-lg hover:bg-space-whale-lavender/10 ${
                   isLiked 
                     ? 'text-red-500 hover:text-red-600' 
                     : 'text-space-whale-navy/70 hover:text-red-500'
                 }`}
+                title={isLiked ? 'Unlike' : 'Like'}
               >
-                <Heart className={`h-4 w-4 mr-2 ${isLiked ? 'fill-current' : ''}`} />
-                {isLiking ? 'Liking...' : (isLiked ? 'Liked' : 'Like')}
+                <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
               </button>
               <button 
                 onClick={() => {
                   setShowComments(!showComments)
                   if (!showComments) loadComments()
                 }}
-                className="flex items-center px-4 py-2 text-space-whale-navy/70 hover:text-space-whale-purple transition-colors font-space-whale-body"
+                className="p-3 text-space-whale-navy/70 hover:text-space-whale-purple transition-colors rounded-lg hover:bg-space-whale-lavender/10"
+                title={`Comments (${comments.length})`}
               >
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Comments ({comments.length})
+                <MessageCircle className="h-5 w-5" />
               </button>
               <button 
                 onClick={async () => {
@@ -449,57 +583,37 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                     }
                   }
                 }}
-                className="flex items-center px-4 py-2 text-space-whale-navy/70 hover:text-space-whale-purple transition-colors font-space-whale-body"
+                className="p-3 text-space-whale-navy/70 hover:text-space-whale-purple transition-colors rounded-lg hover:bg-space-whale-lavender/10"
+                title="Share"
               >
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
+                <Share2 className="h-5 w-5" />
               </button>
-              {onUpdate && (
-                <>
-                  {isEditing ? (
-                    <button 
-                      onClick={handleEditSave}
-                      disabled={isSaving || !editForm.title.trim()}
-                      className="flex items-center px-4 py-2 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-space-whale-accent"
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      {isSaving ? 'Saving...' : 'Save'}
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={handleEdit}
-                      className="flex items-center px-4 py-2 text-space-whale-navy/70 hover:text-space-whale-purple transition-colors font-space-whale-body"
-                    >
-                      <Edit3 className="h-4 w-4 mr-2" />
-                      Edit
-                    </button>
-                  )}
-                  {isEditing && (
-                    <button 
-                      onClick={handleEditCancel}
-                      className="flex items-center px-4 py-2 text-space-whale-navy/70 hover:text-red-600 transition-colors font-space-whale-body"
-                    >
-                      <XCircle className="h-4 w-4 mr-2" />
-                      Cancel
-                    </button>
-                  )}
-                </>
-              )}
-              {onDelete && (
-                <button 
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  className="flex items-center px-4 py-2 text-space-whale-navy/70 hover:text-red-600 transition-colors disabled:opacity-50 font-space-whale-body"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  {isDeleting ? 'Deleting...' : 'Delete'}
-                </button>
-              )}
             </div>
+            
+            {/* Edit Actions - Only show when editing */}
+            {isEditing && onUpdate && (
+              <div className="flex items-center space-x-3 mt-4">
+                <button 
+                  onClick={handleEditSave}
+                  disabled={isSaving || !editForm.title.trim()}
+                  className="flex items-center px-4 py-2 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-space-whale-accent"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSaving ? 'Saving...' : 'Save'}
+                </button>
+                <button 
+                  onClick={handleEditCancel}
+                  className="flex items-center px-4 py-2 text-space-whale-navy/70 hover:text-red-600 transition-colors rounded-lg hover:bg-space-whale-lavender/10 font-space-whale-body"
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Cancel
+                </button>
+              </div>
+            )}
             
             {isExternalLink && (
               <a
-                href={item.media_url}
+                href={currentItem.media_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center px-6 py-3 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white font-space-whale-accent rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-all duration-300"
@@ -509,6 +623,29 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
               </a>
             )}
           </div>
+
+          {/* Carousel controls when multiple items */}
+          {items && items.length > 1 && (
+            <div className="absolute inset-0 pointer-events-none">
+              <button
+                aria-label="Previous"
+                onClick={() => setCurrentIndex((i) => (i - 1 + items.length) % items.length)}
+                className="pointer-events-auto absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-space-whale-navy rounded-full p-3 sm:p-2 shadow"
+              >
+                ‹
+              </button>
+              <button
+                aria-label="Next"
+                onClick={() => setCurrentIndex((i) => (i + 1) % items.length)}
+                className="pointer-events-auto absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-space-whale-navy rounded-full p-3 sm:p-2 shadow"
+              >
+                ›
+              </button>
+              <div className="pointer-events-none absolute bottom-3 left-0 right-0 text-center text-xs text-space-whale-navy/70 font-space-whale-body">
+                {currentIndex + 1} / {items.length}
+              </div>
+            </div>
+          )}
 
           {/* Comments Section */}
           {showComments && (
@@ -523,49 +660,76 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                   comments.map((comment) => (
                     <div key={comment.id} className="flex space-x-3">
                       <div className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-gradient-to-r from-space-whale-purple to-accent-pink rounded-full flex items-center justify-center text-white text-sm font-space-whale-accent">
-                          {comment.profiles.display_name.charAt(0).toUpperCase()}
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2">
-                          <p className="text-sm font-space-whale-accent text-space-whale-navy">
-                            {comment.profiles.display_name}
-                          </p>
-                          <span className="text-xs text-space-whale-navy/60 font-space-whale-body">
-                            {new Date(comment.created_at).toLocaleDateString()}
+                        <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-r from-space-whale-purple to-accent-pink flex items-center justify-center">
+                          <span className="text-white text-sm font-medium">
+                            {comment.display_name ? comment.display_name.charAt(0).toUpperCase() : 'U'}
                           </span>
                         </div>
-                        <p className="text-sm text-space-whale-navy/80 font-space-whale-body mt-1">
-                          {comment.content}
-                        </p>
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="bg-space-whale-lavender/10 rounded-lg p-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium text-space-whale-navy text-sm font-space-whale-subheading">
+                                {comment.display_name || 'Anonymous'}
+                              </span>
+                              <span className="text-xs text-space-whale-purple font-space-whale-body">
+                                {new Date(comment.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-space-whale-navy text-sm font-space-whale-body whitespace-pre-wrap">
+                            {comment.content}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p className="text-space-whale-navy/60 text-center py-4 font-space-whale-body">
+                  <p className="text-space-whale-navy/60 text-center py-6 font-space-whale-body bg-white/5 rounded-xl border border-space-whale-lavender/10">
                     No comments yet. Be the first to comment!
                   </p>
                 )}
               </div>
 
               {/* Comment Form */}
-              <form onSubmit={handleSubmitComment} className="space-y-3">
-                <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Add a comment..."
-                  className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent resize-none font-space-whale-body text-space-whale-navy"
-                  rows={3}
-                  disabled={isSubmittingComment}
-                />
+              <form onSubmit={handleSubmitComment} className="space-y-4" suppressHydrationWarning>
+                <div>
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Share your thoughts..."
+                    rows={3}
+                    className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors resize-none font-space-whale-body"
+                    maxLength={1000}
+                    disabled={isSubmittingComment}
+                    suppressHydrationWarning
+                  />
+                  <div className="flex justify-between items-center mt-2">
+                    <p className="text-xs text-space-whale-purple font-space-whale-body">
+                      {newComment.length}/1000 characters
+                    </p>
+                  </div>
+                </div>
+
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    disabled={!newComment.trim() || isSubmittingComment}
-                    className="px-4 py-2 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-space-whale-accent"
+                    disabled={isSubmittingComment || !newComment.trim()}
+                    className="flex items-center px-4 py-2 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-space-whale-accent"
                   >
-                    {isSubmittingComment ? 'Posting...' : 'Post Comment'}
+                    {isSubmittingComment ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Posting...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        Comment
+                      </>
+                    )}
                   </button>
                 </div>
               </form>

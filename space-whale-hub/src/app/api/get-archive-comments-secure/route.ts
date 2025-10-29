@@ -23,32 +23,9 @@ export async function GET(request: NextRequest) {
 
     console.log('Fetching comments for archive item:', itemId)
 
-    // Check if the table exists first
-    const { data: tableCheck, error: tableError } = await supabaseAdmin
-      .from('information_schema.tables')
-      .select('table_name')
-      .eq('table_schema', 'public')
-      .eq('table_name', 'archive_comments')
-      .single()
-
-    if (tableError || !tableCheck) {
-      console.log('Archive comments table does not exist yet')
-      return NextResponse.json({ 
-        success: true, 
-        data: [],
-        message: 'Archive comments table not found. Please run the supabase-archive-tables.sql script first.'
-      })
-    }
-
     const { data, error } = await supabaseAdmin
       .from('archive_comments')
-      .select(`
-        *,
-        profiles:user_id (
-          display_name,
-          avatar_url
-        )
-      `)
+      .select('*')
       .eq('item_id', itemId)
       .order('created_at', { ascending: true })
 
@@ -57,8 +34,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 })
     }
 
-    console.log(`Fetched ${data?.length || 0} comments for archive item`)
-    return NextResponse.json({ success: true, data })
+    // Get display names for all comments
+    const commentsWithNames = await Promise.all(
+      (data || []).map(async (comment) => {
+        const { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('display_name')
+          .eq('id', comment.user_id)
+          .single()
+        
+        return {
+          ...comment,
+          display_name: profile?.display_name || 'Anonymous'
+        }
+      })
+    )
+
+    console.log(`Fetched ${commentsWithNames?.length || 0} comments for archive item`)
+    return NextResponse.json({ success: true, data: commentsWithNames })
 
   } catch (error: any) {
     console.error('API error fetching archive comments:', error)

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { supabase } from '@/lib/supabase'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 interface SignUpFormProps {
@@ -15,6 +16,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
   const [confirmPassword, setConfirmPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [pronouns, setPronouns] = useState('')
+  const [inviteCode, setInviteCode] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -45,14 +47,72 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
       return
     }
 
+    if (!inviteCode.trim()) {
+      setError('Invite code is required to join the Space Whale Portal')
+      setLoading(false)
+      return
+    }
+
+    // First validate the invite code
+    try {
+      const validateResponse = await fetch('/api/validate-invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ inviteCode: inviteCode.trim() }),
+      })
+
+      const validateData = await validateResponse.json()
+
+      if (!validateData.valid) {
+        setError('Invalid or expired invite code. Please check your code and try again.')
+        setLoading(false)
+        return
+      }
+    } catch (error) {
+      setError('Failed to validate invite code. Please try again.')
+      setLoading(false)
+      return
+    }
+
+    // Proceed with signup
     const { error } = await signUp(email, password, displayName)
     
     if (error) {
       setError(error.message)
     } else {
-      onSuccess?.()
+      // Use the invite code after successful signup
+      try {
+        // Get the current user ID
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (user?.id) {
+          const useResponse = await fetch('/api/use-invite', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+              inviteCode: inviteCode.trim(),
+              userId: user.id
+            }),
+          })
+
+          const useData = await useResponse.json()
+
+          if (!useData.success) {
+            console.warn('Failed to use invite code:', useData.error)
+            // Don't block signup if invite code usage fails
+          }
+        }
+      } catch (error) {
+        console.warn('Error using invite code:', error)
+        // Don't block signup if invite code usage fails
+      }
     }
-    
+
+    onSuccess?.()
     setLoading(false)
   }
 
@@ -61,10 +121,13 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
       <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-space-whale-heading text-space-whale-navy mb-2">
-            Join the Space Whale Community
+            Welcome to Space Whale Portal
           </h2>
           <p className="font-space-whale-body text-space-whale-purple">
-            Create your account to begin your creative healing journey
+            A sanctuary for creative healing and community care
+          </p>
+          <p className="font-space-whale-body text-space-whale-navy text-sm mt-2">
+            Made with and for ND queers, nature lovers, artists, and seekers building something different together.
           </p>
         </div>
 
@@ -83,6 +146,9 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
               placeholder="What should we call you?"
               suppressHydrationWarning
             />
+            <p className="text-xs font-space-whale-body text-space-whale-purple mt-1">
+              You can change this anytime in your settings
+            </p>
           </div>
 
           <div>
@@ -98,6 +164,25 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
               placeholder="e.g., they/them, she/her, he/him"
               suppressHydrationWarning
             />
+          </div>
+
+          <div>
+            <label htmlFor="inviteCode" className="block text-sm font-space-whale-accent text-space-whale-navy mb-2">
+              Invite Code *
+            </label>
+            <input
+              id="inviteCode"
+              type="text"
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value)}
+              required
+              className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors font-space-whale-body"
+              placeholder="Enter your invite code"
+              suppressHydrationWarning
+            />
+            <p className="text-xs font-space-whale-body text-space-whale-purple mt-1">
+              The Space Whale Portal is invite-only. Contact us if you need an invite code.
+            </p>
           </div>
 
           <div>
@@ -177,9 +262,8 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
 
           <div className="bg-gradient-to-r from-space-whale-lavender/20 to-accent-pink/20 border border-space-whale-lavender/30 rounded-lg p-4">
             <p className="text-sm font-space-whale-body text-space-whale-navy">
-              <strong>Community Guidelines:</strong> By signing up, you agree to create a safe, 
-              trauma-informed, neuroaffirming, and gender-affirming space for all community members. 
-              We celebrate diversity and welcome all identities and experiences.
+              By creating an account, you're agreeing to show up with care, to be accountable when you mess up, 
+              and to trust that we're all doing our best to build something different together. Welcome home. 🐋
             </p>
           </div>
 

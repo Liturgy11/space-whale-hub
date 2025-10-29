@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
     const category = formData.get('category') as string
     const userId = formData.get('userId') as string
     const filename = formData.get('filename') as string
+    const upsert = formData.get('upsert') === 'true'
 
     if (!file || !category || !userId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -33,7 +34,11 @@ export async function POST(request: NextRequest) {
       archive: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'video/mp4', 'video/webm', 'audio/mpeg', 'audio/wav', 'application/pdf']
     }
 
+    console.log(`📁 File validation: type="${file.type}", category="${category}", name="${file.name}"`)
+    console.log(`📁 Allowed types for ${category}:`, allowedTypes[category as keyof typeof allowedTypes])
+
     if (!allowedTypes[category as keyof typeof allowedTypes]?.includes(file.type)) {
+      console.error(`❌ File type ${file.type} not allowed for ${category}`)
       return NextResponse.json({ error: `File type ${file.type} not allowed for ${category}` }, { status: 400 })
     }
 
@@ -47,8 +52,8 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabaseAdmin.storage
       .from(category)
       .upload(fullPath, file, {
-        upsert: false,
-        cacheControl: '3600'
+        upsert: upsert,
+        cacheControl: category === 'avatars' ? '0' : '3600'
       })
 
     if (error) {

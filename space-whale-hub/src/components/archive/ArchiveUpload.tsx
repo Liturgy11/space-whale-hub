@@ -1,15 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Upload, X, Image, Video, FileText, Music, Tag } from 'lucide-react'
 // Removed direct database import - using secure API route instead
 import { uploadMedia } from '@/lib/storage-client'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface ArchiveUploadProps {
   onUploadComplete?: () => void
 }
 
 export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) {
+  const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [formData, setFormData] = useState({
@@ -22,6 +24,8 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
     media_url: '',
     upload_type: 'file' as 'file' | 'link'
   })
+  const [albums, setAlbums] = useState<Array<{ id: string; title: string }>>([])
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string>('')
 
   const handleFileUpload = async (file: File) => {
     try {
@@ -83,7 +87,8 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
           content_type: formData.content_type,
           media_url: mediaUrl,
           artist_name: formData.artist_name,
-          tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+          tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+          user_id: user?.id
         })
       })
 
@@ -93,6 +98,23 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
         throw new Error(result.error || 'Failed to create constellation item')
       }
 
+      // If admin selected an album, link the new item to that album
+      if (user?.email === 'lizwamc@gmail.com' && selectedAlbumId) {
+        try {
+          await fetch('/api/manage-album-items-secure', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              album_id: selectedAlbumId,
+              item_id: result.data.id,
+              added_by: user?.id
+            })
+          })
+        } catch (e) {
+          console.error('Failed to add item to album:', e)
+        }
+      }
+      
       // Reset form
       setFormData({
         title: '',
@@ -104,6 +126,7 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
         media_url: '',
         upload_type: 'file'
       })
+      setSelectedAlbumId('')
       
       setIsOpen(false)
       onUploadComplete?.()
@@ -140,6 +163,24 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
       default: return <Image className="h-5 w-5" />
     }
   }
+
+  const isAdmin = user?.email === 'lizwamc@gmail.com'
+
+  useEffect(() => {
+    const loadAlbums = async () => {
+      if (!isAdmin) return
+      try {
+        const res = await fetch('/api/get-albums-secure')
+        const json = await res.json()
+        if (json.success) {
+          setAlbums((json.data || []).map((a: any) => ({ id: a.id, title: a.title })))
+        }
+      } catch (e) {
+        console.error('Failed to load albums for upload:', e)
+      }
+    }
+    loadAlbums()
+  }, [isAdmin])
 
   return (
     <>
@@ -362,6 +403,25 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
                     suppressHydrationWarning
                   />
                 </div>
+
+                {/* Admin-only: Select Album */}
+                {isAdmin && (
+                  <div>
+                    <label className="block text-sm font-space-whale-accent text-space-whale-navy mb-2">
+                      Add to album (admin)
+                    </label>
+                    <select
+                      value={selectedAlbumId}
+                      onChange={(e) => setSelectedAlbumId(e.target.value)}
+                      className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white/80 backdrop-blur-sm text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body"
+                    >
+                      <option value="">— None —</option>
+                      {albums.map(a => (
+                        <option key={a.id} value={a.id}>{a.title}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 {/* Submit Button */}
                 <div className="flex space-x-4">

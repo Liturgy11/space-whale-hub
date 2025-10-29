@@ -162,19 +162,24 @@ body {
 /* Cosmic background with soft, minimal aesthetic */
 .star-field {
   background-image: 
-    radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, 0.3), transparent),
-    radial-gradient(1px 1px at 40px 70px, rgba(255, 255, 255, 0.2), transparent),
-    radial-gradient(0.5px 0.5px at 90px 40px, rgba(255, 255, 255, 0.4), transparent),
-    radial-gradient(0.5px 0.5px at 130px 80px, rgba(255, 255, 255, 0.3), transparent),
-    radial-gradient(1px 1px at 160px 30px, rgba(255, 255, 255, 0.2), transparent);
+    radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, 0.15), transparent),
+    radial-gradient(1px 1px at 40px 70px, rgba(255, 255, 255, 0.1), transparent),
+    radial-gradient(0.5px 0.5px at 90px 40px, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(0.5px 0.5px at 130px 80px, rgba(255, 255, 255, 0.15), transparent),
+    radial-gradient(1px 1px at 160px 30px, rgba(255, 255, 255, 0.1), transparent);
   background-repeat: repeat;
   background-size: 300px 200px;
-  animation: twinkle 8s ease-in-out infinite alternate;
+  /* Removed animation to prevent fading/milky effect */
 }
 
-@keyframes twinkle {
-  0% { opacity: 0.3; }
-  100% { opacity: 0.8; }
+/* Subtle twinkle animation for other elements if needed */
+.twinkle-gentle {
+  animation: twinkle-gentle 12s ease-in-out infinite alternate;
+}
+
+@keyframes twinkle-gentle {
+  0% { opacity: 0.8; }
+  100% { opacity: 1; }
 }
 
 /* Soft cosmic gradient backgrounds */

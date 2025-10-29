@@ -2,141 +2,142 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { uploadMedia } from '@/lib/storage-client'
 import { supabase } from '@/lib/supabase'
-import { User, Camera, Save, Loader2, X } from 'lucide-react'
+import { User, Camera, X, Sparkles, Edit3, Save, Loader2 } from 'lucide-react'
 
 interface UserSettingsProps {
   onClose?: () => void
 }
 
 export default function UserSettings({ onClose }: UserSettingsProps) {
-  const { user } = useAuth()
+  const { user, updateProfile, refreshUser } = useAuth()
+  const [avatarUrl, setAvatarUrl] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [pronouns, setPronouns] = useState('')
-  const [avatarUrl, setAvatarUrl] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [error, setError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Initialize user data
   useEffect(() => {
     if (user) {
-      loadUserProfile()
-    } else {
-      // If no user, just set loading to false
-      setLoading(false)
+      setAvatarUrl(user.user_metadata?.avatar_url || '')
+      setDisplayName(user.user_metadata?.display_name || '')
+      setPronouns(user.user_metadata?.pronouns || '')
     }
   }, [user])
 
-  const loadUserProfile = async () => {
-    try {
-      setLoading(true)
-      console.log('Loading profile for user:', user?.id)
-      
-      // For now, just use auth user data instead of profiles table
-      setDisplayName(user?.user_metadata?.display_name || '')
-      setPronouns(user?.user_metadata?.pronouns || '')
-      setAvatarUrl(user?.user_metadata?.avatar_url || '')
-      
-    } catch (err: any) {
-      console.error('Error loading profile:', err)
-      // Use defaults
-      setDisplayName('')
-      setPronouns('')
-      setAvatarUrl('')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handleAvatarUpload = async (file: File) => {
-    if (!user) return
-
+    console.log('Avatar upload started:', file.name)
+    setUploading(true)
+    setError('')
+    setSuccess('')
+    
     try {
-      setSaving(true)
+      // Create a unique filename with user ID
       const fileExt = file.name.split('.').pop()
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`
-      const filePath = `avatars/${fileName}`
+      const fileName = `${user.id}-avatar.${fileExt}`
+      
+      console.log('Uploading to storage:', fileName)
+      
+      // Use new storage system
+      const result = await uploadMedia(file, {
+        category: 'avatars',
+        filename: `${user.id}-avatar`,
+        upsert: true
+      }, user.id)
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file)
+      console.log('Upload result:', result)
+      const publicUrl = result.url
+      const bustUrl = `${publicUrl}?v=${Date.now()}`
 
-      if (uploadError) throw uploadError
-
-      const { data } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath)
-
-      setAvatarUrl(data.publicUrl)
-      setSuccess('Avatar updated!')
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleSave = async () => {
-    if (!user) return
-
-    try {
-      setSaving(true)
-      setError('')
-      setSuccess('')
-
-      // For now, just update the local state and show success
-      // TODO: In the future, we can implement proper profile storage
-      console.log('Saving profile:', {
-        displayName: displayName.trim(),
-        pronouns: pronouns.trim(),
-        avatarUrl
+      // Update user metadata with new avatar URL
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { 
+          ...user.user_metadata,
+          avatar_url: bustUrl 
+        }
       })
 
-      setSuccess('Profile updated successfully! (Note: Changes are temporary for now)')
+      if (updateError) {
+        console.error('Profile update error:', updateError)
+        setError('Avatar uploaded but profile update failed.')
+      } else {
+        setAvatarUrl(bustUrl)
+        setSuccess('✨ Avatar updated successfully! ✨')
+        // Ensure global auth user metadata reflects the new avatar
+        await refreshUser()
+        // Auto-close shortly after avatar success
+        if (onClose) {
+          setTimeout(() => onClose(), 800)
+        }
+      }
       
-      // Auto-close after 2 seconds
-      setTimeout(() => {
-        if (onClose) onClose()
-      }, 2000)
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
+      setUploading(false)
+    } catch (error) {
+      console.error('Upload error:', error)
+      setError('Upload failed. Please try again.')
+      setUploading(false)
+    }
+  }
+
+  const handleSaveProfile = async () => {
+    setSaving(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { 
+          ...user.user_metadata,
+          display_name: displayName,
+          pronouns: pronouns
+        }
+      })
+
+      if (updateError) {
+        setError('Failed to update profile. Please try again.')
+      } else {
+        setSuccess('✨ Profile updated successfully! ✨')
+        await refreshUser()
+        if (onClose) {
+          setTimeout(() => onClose(), 800)
+        }
+      }
+      
+      setSaving(false)
+    } catch (error) {
+      console.error('Profile update error:', error)
+      setError('Failed to update profile. Please try again.')
       setSaving(false)
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-space-whale-purple" />
-        <span className="ml-3 text-space-whale-navy font-space-whale-body">Loading profile...</span>
-      </div>
-    )
-  }
-
-  console.log('UserSettings rendering:', { loading, user, avatarUrl, displayName, pronouns })
-
   return (
-    <div className="bg-lofi-card rounded-xl shadow-lg p-6 rainbow-border-soft max-w-2xl mx-auto">
+    <div className="bg-white rounded-xl shadow-lg p-6 w-full border border-space-whale-lavender/20 bg-lofi-card rainbow-border-soft">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-space-whale-heading text-space-whale-navy">Profile Settings</h2>
+        <div className="flex items-center space-x-2">
+          <Sparkles className="h-5 w-5 text-space-whale-purple" />
+          <h2 className="text-xl font-space-whale-heading text-space-whale-navy">Profile Settings</h2>
+        </div>
         {onClose && (
           <button
             onClick={onClose}
-            className="text-space-whale-purple hover:text-space-whale-navy transition-colors"
+            className="text-space-whale-purple hover:text-space-whale-dark-purple transition-colors"
           >
-            <X className="h-6 w-6" />
+            <X className="h-5 w-5" />
           </button>
         )}
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Avatar Section */}
         <div className="text-center">
           <div className="relative inline-block">
-            <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-r from-space-whale-purple to-accent-pink flex items-center justify-center">
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-space-whale-purple via-space-whale-lavender to-accent-pink flex items-center justify-center shadow-lg">
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
@@ -144,19 +145,19 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <User className="h-12 w-12 text-white" />
+                <User className="h-10 w-10 text-white" />
               )}
             </div>
             <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={saving}
-              className="absolute bottom-0 right-0 bg-space-whale-purple text-white rounded-full p-2 hover:bg-space-whale-purple/90 transition-colors disabled:opacity-50"
+              onClick={() => {
+                console.log('Camera button clicked')
+                console.log('File input ref:', fileInputRef.current)
+                fileInputRef.current?.click()
+              }}
+              disabled={uploading}
+              className="absolute bottom-0 right-0 bg-space-whale-purple text-white rounded-full p-2 hover:bg-space-whale-dark-purple transition-all duration-300 disabled:opacity-50 shadow-lg hover:shadow-space-whale-purple/30 min-w-[32px] min-h-[32px] flex items-center justify-center"
             >
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Camera className="h-4 w-4" />
-              )}
+              <Camera className="h-4 w-4" />
             </button>
           </div>
           <input
@@ -170,73 +171,93 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
             }}
             className="hidden"
           />
-          <p className="text-sm text-space-whale-purple mt-2 font-space-whale-body">
-            Click the camera icon to upload a profile picture
+          <p className="text-xs font-space-whale-body text-space-whale-purple mt-1">
+            Click camera icon to change avatar
           </p>
         </div>
 
-        {/* Display Name */}
-        <div>
-          <label className="block text-sm font-medium text-space-whale-navy mb-2 font-space-whale-body">
-            Display Name
-          </label>
-          <input
-            type="text"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors"
-            placeholder="Your display name"
-            maxLength={50}
-          />
-        </div>
-
-        {/* Pronouns */}
-        <div>
-          <label className="block text-sm font-medium text-space-whale-navy mb-2 font-space-whale-body">
-            Pronouns
-          </label>
-          <input
-            type="text"
-            value={pronouns}
-            onChange={(e) => setPronouns(e.target.value)}
-            className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors"
-            placeholder="e.g., they/them, she/her, he/him"
-            maxLength={20}
-          />
-        </div>
-
-        {/* Messages */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <p className="text-red-600 text-sm">{error}</p>
+        {/* Profile Fields */}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-space-whale-accent text-space-whale-navy mb-2">
+              Cosmic Name *
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="w-full px-4 py-3 pr-12 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors font-space-whale-body"
+                placeholder="Your cosmic name"
+              />
+              <Edit3 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-space-whale-purple" />
+            </div>
           </div>
-        )}
 
+          <div>
+            <label className="block text-sm font-space-whale-accent text-space-whale-navy mb-2">
+              Pronouns (optional)
+            </label>
+            <input
+              type="text"
+              value={pronouns}
+              onChange={(e) => setPronouns(e.target.value)}
+              className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors font-space-whale-body"
+              placeholder="e.g., they/them, she/her, he/him"
+            />
+          </div>
+
+        </div>
+
+        {/* Status Messages */}
         {success && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-            <p className="text-green-600 text-sm">{success}</p>
+          <div className="bg-gradient-to-r from-space-whale-lavender/20 to-accent-pink/20 border border-space-whale-lavender/30 rounded-lg p-4">
+            <p className="text-space-whale-navy font-space-whale-body text-center">{success}</p>
           </div>
         )}
 
-        {/* Save Button */}
-        <div className="flex justify-end">
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-600 text-sm font-space-whale-body text-center">{error}</p>
+          </div>
+        )}
+
+        {/* Upload Status */}
+        {uploading && (
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-space-whale-purple mx-auto mb-2"></div>
+            <p className="text-space-whale-navy font-space-whale-body text-sm">Uploading your cosmic energy...</p>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex justify-center space-x-3">
           <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center px-6 py-3 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-space-whale-accent"
+            onClick={handleSaveProfile}
+            disabled={saving || !displayName.trim()}
+            className="btn-space-whale flex items-center"
           >
             {saving ? (
               <>
-                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 Saving...
               </>
             ) : (
               <>
-                <Save className="h-5 w-5 mr-2" />
+                <Save className="h-4 w-4 mr-2" />
                 Save Changes
               </>
             )}
           </button>
+          
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="btn-space-whale-secondary"
+            >
+              Close
+            </button>
+          )}
         </div>
       </div>
     </div>

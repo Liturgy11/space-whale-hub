@@ -1,7 +1,7 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { Home, User, Heart, Archive, Settings, LogOut } from 'lucide-react'
+import { Home, User, Heart, Archive, Settings, LogOut, FolderOpen } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -33,7 +33,14 @@ export default function MobileNav() {
       href: '/archive',
       icon: Archive,
       active: pathname === '/archive'
-    }
+    },
+    // Admin-only Albums
+    ...(user?.email === 'lizwamc@gmail.com' ? [{
+      name: 'Albums',
+      href: '/admin/albums',
+      icon: FolderOpen,
+      active: pathname === '/admin/albums'
+    }] : [])
   ]
 
   if (!user) return null
@@ -59,11 +66,18 @@ export default function MobileNav() {
           )
         })}
         
-        {/* Settings/Profile dropdown */}
-        <div className="flex flex-col items-center space-y-1 px-3 py-2">
-          <Settings className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">More</span>
-        </div>
+        {/* About link */}
+        <Link
+          href="/about"
+          className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-colors ${
+            pathname === '/about'
+              ? 'text-space-whale-purple bg-space-whale-lavender/20'
+              : 'text-gray-600 dark:text-gray-400 hover:text-space-whale-purple'
+          }`}
+        >
+          <Settings className="h-5 w-5" />
+          <span className="text-xs font-medium">About</span>
+        </Link>
       </div>
     </div>
   )

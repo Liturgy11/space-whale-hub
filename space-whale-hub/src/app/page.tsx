@@ -7,12 +7,14 @@ import { Archive, Users, BookOpen, User, Sparkles, Plus, ChevronDown, FileText, 
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UserProfile from "@/components/UserProfile";
 import SetDisplayName from "@/components/SetDisplayName";
+import WelcomeModal from "@/components/WelcomeModal";
 import { useAuth } from "@/contexts/AuthContext";
 
 function HomeContent() {
   const { user } = useAuth();
   const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [showSetDisplayName, setShowSetDisplayName] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const createMenuRef = useRef<HTMLDivElement>(null);
   
   console.log('HomeContent - Current user:', user)
@@ -23,6 +25,42 @@ function HomeContent() {
       setShowSetDisplayName(true);
     }
   }, [user]);
+
+  // Show one-time welcome modal after first login
+  useEffect(() => {
+    if (!user) return;
+
+    const key = `welcome_seen_${user.id}`;
+    const localSeen = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
+    const metadataSeen = user.user_metadata?.welcome_seen_at;
+
+    if (!metadataSeen && !localSeen) {
+      setShowWelcome(true);
+    }
+  }, [user]);
+
+  async function handleWelcomeClose() {
+    try {
+      // Optimistically mark in localStorage
+      if (user && typeof window !== 'undefined') {
+        localStorage.setItem(`welcome_seen_${user.id}`, new Date().toISOString());
+      }
+      // Try to persist to Supabase
+      if (user) {
+        const { supabase } = await import("@/lib/supabase");
+        await supabase.auth.updateUser({
+          data: {
+            ...user.user_metadata,
+            welcome_seen_at: new Date().toISOString(),
+          },
+        });
+      }
+    } catch (_e) {
+      // best-effort; localStorage fallback already set
+    } finally {
+      setShowWelcome(false);
+    }
+  }
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -66,6 +104,20 @@ function HomeContent() {
               <Link href="/personal" className="text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent">
                 Inner Space
               </Link>
+              <Link href="/about" className="text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent">
+                About
+              </Link>
+              {/* Admin-only links */}
+              {user?.email === 'lizwamc@gmail.com' && (
+                <>
+                  <Link href="/admin" className="text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent">
+                    Admin
+                  </Link>
+                  <Link href="/admin/albums" className="text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent">
+                    Albums
+                  </Link>
+                </>
+              )}
             </div>
             <div className="flex items-center space-x-4">
               <UserProfile />
@@ -233,6 +285,11 @@ function HomeContent() {
       {/* Set Display Name Modal */}
       {showSetDisplayName && (
         <SetDisplayName />
+      )}
+
+      {/* Welcome Modal */}
+      {showWelcome && (
+        <WelcomeModal onClose={handleWelcomeClose} />
       )}
     </div>
   );

@@ -22,23 +22,6 @@ export async function POST(request: NextRequest) {
 
     console.log('Toggling like for archive item:', { itemId, userId })
 
-    // Check if the table exists first
-    const { data: tableCheck, error: tableError } = await supabaseAdmin
-      .from('information_schema.tables')
-      .select('table_name')
-      .eq('table_schema', 'public')
-      .eq('table_name', 'archive_likes')
-      .single()
-
-    if (tableError || !tableCheck) {
-      console.log('Archive likes table does not exist yet')
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Archive likes table not found. Please run the supabase-archive-tables.sql script first.',
-        suggestion: 'Go to your Supabase SQL editor and run the supabase-archive-tables.sql script to create the necessary tables.'
-      }, { status: 400 })
-    }
-
     // Check if like already exists
     const { data: existingLike, error: checkError } = await supabaseAdmin
       .from('archive_likes')

@@ -20,6 +20,9 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
 - **ARCHIVE SYSTEM** - Upload and display creative work with link sharing for large files
 - **UNIFIED CREATE BUTTON** - Main page Create button with dropdown for all content types
 - **AUS/UK ENGLISH** - Consistent spelling throughout (honoured, etc.)
+- **MOBILE NAVIGATION** - Beautiful bottom navigation bar for mobile users
+- **ARCHIVE ENHANCEMENTS** - Larger images, edit functionality, delete functionality
+- **DEPLOYMENT READY** - All core features working, mobile optimized, production ready
 
 ### 🎨 Visual Design & Brand Integration (Latest Update)
 - **SPACE WHALE BRAND COLORS** - Integrated throughout with CSS variables
@@ -115,19 +118,71 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
   - Complete UI rendering updates (render from URLs instead of base64)
   - Implement mood board styling improvements
 
+## Recent Achievements (Latest Session) 🎉
+- Onboarding and Safety
+  - One‑time Welcome modal after first login (values-based, UK/AUS spelling)
+  - First‑post gentle note for Community Orbit (content warnings, care/kindness)
+- Community Orbit UX
+  - Header copy aligned to values
+  - Media prioritized in post cards (larger images/videos, tighter padding)
+  - Skeleton loading for feed
+- Archive (Constellation)
+  - Albums detail lightbox upgraded to carousel (keyboard, buttons, swipe on mobile)
+  - Close on background and reliable X button
+  - Skeleton loading for albums grid
+- Profile
+  - Avatar upload streamlined (upsert, cache‑busting, immediate refresh)
+  - Bio removed; focused on name, pronouns, avatar
+- About/Guidelines
+  - Concrete, actionable community guidelines; invite‑only copy; UK/AUS spellings
+- Albums (Constellation)
+  - Public Albums grid on `Archive` showing curated collections
+  - Album detail page with item gallery (images/videos) using signed URLs
+  - Admin-only batch upload to album (multi-file) with auto association
+  - Admin-only album selection in regular upload flow (one-step add-to-album)
+  - Admin-only “Set as cover” from any item + live header update
+  - Admin-only drag-to-reorder within album (persisted `sort_order`)
+  - Clickable items open full `ArchiveItemModal` (likes, comments, owner actions)
+- Storage & Media
+  - Signed URL service (`/api/get-signed-url`) and client utilities
+  - Archive/Album components now render via signed URLs (secure, long‑term)
+  - Fixed batch upload bug to store `media_url` as the actual URL
+- Community Orbit
+  - Posts rendering restored via secure posts endpoint fallback (`/api/get-posts-secure`)
+- Navigation & Admin UX
+  - Back‑to‑Portal link on Album Management
+  - Admin checks centralized (email) for manager links/actions
+  
+All changes are committed and pushed to GitHub.
+
 ## Next Priority Features 🎯
-- **Fix RLS Data Type Issue** - Update policy definitions to use `auth.uid()::text = user_id` conversion
-- **Test File Uploads** - Verify HEIC and other media uploads work with corrected RLS policies
-- **Complete UI Rendering** - Update all components to render from storage URLs instead of base64
-- **Mood Board Styling** - Make mood board grid beautiful and functional
-- **Archive Upload Albums** - Group related creative work together
-- **Tag-Based Search** - Find archive items by tags (pride poetry, art therapy, etc.)
-- **Community Post Tags** - Add tagging system to community feed posts
-- **User Tagging** - Tag other users in posts (future feature)
-- **Private to Community Sharing** - Share private journal entries to community
-- **Archive to Feed Sharing** - Share archive items to community feed
-- **Welcome Message** - New user onboarding with portal introduction
-- **UX Simplification** - Streamline overall user experience
+- Polishing passes
+  - Toast notifications for saves/uploads
+  - Post form: lightweight “Add content warning” chip + badge on cards
+  - Image pinch‑to‑zoom and swipe‑to‑close in archive lightbox
+- Archive
+  - Optional captions/credits per item displayed in lightbox
+  - Share/copy link for album and items
+- Community Orbit
+  - Infinite scroll or pagination; basic tag filters
+- Performance
+  - Shimmer skeleton variant; lazy image preloading in carousels
+- Albums polish (Public)
+  - Add optional captions/credits per item (exhibition friendly)
+  - Public share link buttons for albums
+  - Optional “Albums vs All Items” toggle in Constellation
+  - Cover-first layout option (hero full-width) [optional]
+- Uploads & Data Quality
+  - Normalize any legacy `media_url` values that aren’t plain URLs
+  - Add brief signed‑URL refresh strategy (re-sign on page load)
+- Roles & Access
+  - Convert admin email check to role/allowlist
+  - Optional: allow trusted contributors to add to specific albums
+- Community Orbit
+  - Tags/filters for posts; confirm secure endpoint is default path
+- Deployment
+  - Vercel deploy and production test (mobile/manual)
+  - Run remaining SQL safety scripts and verify RLS
 
 ## Development Phases
 

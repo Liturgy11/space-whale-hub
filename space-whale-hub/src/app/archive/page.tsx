@@ -9,7 +9,7 @@ export default function Archive() {
       {/* Navigation */}
       <nav className="bg-gradient-to-r from-space-whale-lavender/80 to-space-whale-purple/80 backdrop-blur-md border-b border-space-whale-purple/30 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-16" suppressHydrationWarning>
             <div className="flex items-center space-x-4" suppressHydrationWarning>
               <Link href="/" className="flex items-center text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent">
                 <ArrowLeft className="h-5 w-5 mr-2" />
@@ -27,19 +27,7 @@ export default function Archive() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="relative">
-                <Search className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-space-whale-purple" />
-                <input
-                  type="text"
-                  placeholder="Search by tags: pride poetry, art therapy, neurodivergent..."
-                  className="pl-10 pr-4 py-2 border border-space-whale-lavender/30 rounded-lg bg-white/80 backdrop-blur-sm text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
-                  suppressHydrationWarning
-                />
-              </div>
-              <button className="btn-lofi flex items-center">
-                <Filter className="h-4 w-4 mr-2" />
-                Filter
-              </button>
+              {/* Search moved to ArchivePage component */}
             </div>
           </div>
         </div>

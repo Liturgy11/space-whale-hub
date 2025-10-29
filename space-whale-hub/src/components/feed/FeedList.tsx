@@ -48,6 +48,18 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
   const loadPosts = async () => {
     try {
       setLoading(true)
+      // Try secure API first (service role), fallback to client getPosts
+      try {
+        const res = await fetch('/api/get-posts-secure')
+        if (res.ok) {
+          const json = await res.json()
+          if (json.success) {
+            setPosts(json.data)
+            return
+          }
+        }
+      } catch (_) {}
+
       const postsData = await getPosts()
       setPosts(postsData)
     } catch (err: unknown) {

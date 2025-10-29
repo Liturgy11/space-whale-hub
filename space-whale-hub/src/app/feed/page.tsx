@@ -2,16 +2,56 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Plus, Filter, Search, RefreshCw } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UserProfile from "@/components/UserProfile";
 import PostForm from "@/components/feed/PostForm";
 import FeedList from "@/components/feed/FeedList";
+import { useAuth } from "@/contexts/AuthContext";
+import FirstPostModal from "@/components/FirstPostModal";
 
 function CommunityFeedContent() {
+  const { user } = useAuth();
   const [showPostForm, setShowPostForm] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [showFirstPostNote, setShowFirstPostNote] = useState(false);
+  useEffect(() => {
+    // No-op, but ensures we respond to user changes if needed
+  }, [user]);
+
+  function hasAcknowledged(): boolean {
+    if (!user) return true; // if unknown, don't block
+    const key = `first_post_ack_${user.id}`;
+    const local = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
+    return Boolean(user.user_metadata?.first_post_ack_at || local);
+  }
+
+  async function acknowledgeFirstPost() {
+    if (!user) return;
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`first_post_ack_${user.id}`, new Date().toISOString());
+      }
+      const { supabase } = await import("@/lib/supabase");
+      await supabase.auth.updateUser({
+        data: {
+          ...user.user_metadata,
+          first_post_ack_at: new Date().toISOString(),
+        },
+      });
+    } catch (_e) {
+      // localStorage fallback already set
+    }
+  }
+
+  async function handleShareClick() {
+    if (!hasAcknowledged()) {
+      setShowFirstPostNote(true);
+      return;
+    }
+    setShowPostForm(true);
+  }
 
 
   return (
@@ -60,13 +100,13 @@ function CommunityFeedContent() {
             </button>
           </div>
           <p className="text-base sm:text-lg font-space-whale-body text-space-whale-navy mb-4 sm:mb-6">
-            Share what&apos;s forming and reforming in you. Connect with fellow space whales navigating by starlight and whale song.
+            Share your art, poetry, reflections, and inspiration. A cosy place to share and witness each other.
           </p>
           
           {/* Share Button */}
           <div className="mb-6 sm:mb-8">
             <button 
-              onClick={() => setShowPostForm(true)}
+              onClick={handleShareClick}
               className="btn-lofi flex items-center justify-center w-full sm:w-auto"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -88,6 +128,18 @@ function CommunityFeedContent() {
             />
           </div>
         )}
+
+      {/* First Post Gentle Note */}
+      {showFirstPostNote && (
+        <FirstPostModal
+          onConfirm={async () => {
+            await acknowledgeFirstPost();
+            setShowFirstPostNote(false);
+            setShowPostForm(true);
+          }}
+          onClose={() => setShowFirstPostNote(false)}
+        />
+      )}
 
         {/* Feed List */}
         <FeedList refreshTrigger={refreshTrigger} />

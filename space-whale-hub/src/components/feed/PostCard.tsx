@@ -117,7 +117,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
   }, [lightboxOpen, lightboxIndex, lightboxImages])
 
   return (
-    <div className="bg-lofi-card rounded-xl shadow-lg p-4 sm:p-6 rainbow-border-soft mobile-card">
+    <div className="bg-lofi-card rounded-xl shadow-lg p-3 sm:p-4 rainbow-border-soft mobile-card">
       {/* Post Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2 sm:space-x-3">
@@ -216,20 +216,20 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
 
       {/* Post Content */}
       {showContent && (
-        <div className="mb-4">
+        <div className="mb-3">
           <p className="text-space-whale-navy font-space-whale-body whitespace-pre-wrap">
             {post.content}
           </p>
           
           {/* Media Display */}
           {post.media_url && (
-            <div className="mt-4">
+            <div className="mt-3">
               {post.media_type === 'image' ? (
                 <div className="relative group cursor-pointer" onClick={() => setShowImageModal(true)}>
                   <img
                     src={post.media_url}
                     alt="Post media"
-                    className="max-w-full h-48 sm:h-64 object-cover rounded-lg shadow-sm transition-transform group-hover:scale-105"
+                    className="w-full h-72 sm:h-96 object-cover rounded-xl shadow-md transition-transform group-hover:scale-[1.02]"
                   />
                   <div className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <ZoomIn className="h-4 w-4 text-white" />
@@ -239,7 +239,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
                 <video
                   src={post.media_url}
                   controls
-                  className="max-w-full h-48 sm:h-64 object-cover rounded-lg shadow-sm"
+                  className="w-full h-72 sm:h-96 object-cover rounded-xl shadow-md"
                 />
               ) : post.media_type === 'mood' ? (
                 <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900 dark:to-purple-900">

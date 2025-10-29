@@ -35,6 +35,9 @@ export async function uploadMedia(
   if (options.filename) {
     formData.append('filename', options.filename)
   }
+  if (options.upsert !== undefined) {
+    formData.append('upsert', options.upsert.toString())
+  }
 
   try {
     const response = await fetch('/api/upload-storage', {
