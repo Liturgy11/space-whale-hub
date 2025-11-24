@@ -193,17 +193,17 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
 
   if (posts.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
-        <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-2xl">🐋</span>
+      <div className="bg-lofi-card rounded-xl shadow-lg p-8 sm:p-12 text-center rainbow-border-soft">
+        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-space-whale-lavender/30 to-accent-pink/30 rounded-full flex items-center justify-center mx-auto mb-6 animate-float">
+          <span className="text-4xl sm:text-5xl">🐋</span>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+        <h3 className="text-xl sm:text-2xl font-space-whale-heading text-space-whale-navy mb-3">
           No posts yet
         </h3>
-        <p className="text-gray-600 dark:text-gray-300 mb-4">
+        <p className="text-base sm:text-lg text-space-whale-navy/80 font-space-whale-body mb-4 max-w-md mx-auto">
           Be the first to share something with the community!
         </p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-space-whale-purple/70 font-space-whale-body">
           Share your thoughts, art, or creative process to get started.
         </p>
       </div>

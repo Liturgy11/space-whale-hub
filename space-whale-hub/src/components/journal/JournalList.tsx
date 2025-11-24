@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { deleteJournalEntry } from '@/lib/database'
-import { Calendar, Heart, Edit, Trash2, Lock, Eye, Share2, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Calendar, Heart, Edit, Trash2, Lock, Eye, Share2, X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react'
 
 interface JournalListProps {
   refreshTrigger?: number
@@ -292,23 +292,12 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    const now = new Date()
     
-    // Check if it's the same day
-    const isSameDay = date.toDateString() === now.toDateString()
-    if (isSameDay) return 'Today'
-    
-    const diffTime = Math.abs(now.getTime() - date.getTime())
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-
-    if (diffDays === 1) return 'Yesterday'
-    if (diffDays < 7) return `${diffDays} days ago`
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
-    
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    // Always show the actual date with year (UK/AUS format: day month year)
+    return date.toLocaleDateString('en-GB', { 
+      day: 'numeric',
+      month: 'long', 
+      year: 'numeric'
     })
   }
 
@@ -353,13 +342,13 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
 
   if (entries.length === 0) {
     return (
-      <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-        <div className="text-6xl mb-4">📝</div>
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No entries yet</h3>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">
-          Start your journey by creating your first journal entry
+      <div className="text-center py-12 sm:py-16 bg-lofi-card rounded-xl shadow-lg rainbow-border-soft">
+        <div className="text-6xl sm:text-7xl mb-4 animate-float">🐋</div>
+        <h3 className="text-xl sm:text-2xl font-space-whale-heading text-space-whale-navy mb-3">No entries yet</h3>
+        <p className="text-base sm:text-lg text-space-whale-navy/80 font-space-whale-body mb-6 max-w-md mx-auto">
+          Start your journey by creating your first journal entry. Your inner space is waiting.
         </p>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-space-whale-purple/70 font-space-whale-body">
           <p>Your journal is a safe space for reflection and growth</p>
         </div>
       </div>
@@ -396,35 +385,39 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
               </div>
             </div>
             
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
               <button 
                 onClick={() => handleShareToCommunity(entry)}
                 disabled={sharingId === entry.id}
-                className="p-2 text-gray-400 hover:text-pink-500 transition-colors disabled:opacity-50"
+                className="p-2.5 text-gray-400 hover:text-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-all duration-200 rounded-lg active:scale-95 disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Share to Community Orbit"
+                aria-label="Share to Community Orbit"
               >
                 {sharingId === entry.id ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-pink-500"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-pink-500"></div>
                 ) : (
-                  <Share2 className="h-4 w-4" />
+                  <Share2 className="h-5 w-5" />
                 )}
               </button>
               <button 
                 onClick={() => handleEdit(entry)}
-                className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                className="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/20 transition-all duration-200 rounded-lg active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Edit entry"
+                aria-label="Edit entry"
               >
-                <Edit className="h-4 w-4" />
+                <Edit className="h-5 w-5" />
               </button>
               <button 
                 onClick={() => handleDelete(entry.id)}
                 disabled={deletingId === entry.id}
-                className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+                className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-all duration-200 rounded-lg active:scale-95 disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                title="Delete entry"
+                aria-label="Delete entry"
               >
                 {deletingId === entry.id ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600"></div>
                 ) : (
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-5 w-5" />
                 )}
               </button>
             </div>
@@ -488,7 +481,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
               <>
                 {/* Only show content if it's not a mood board */}
                 {entry.media_type !== 'moodboard' && (
-                  <p className="text-space-whale-navy whitespace-pre-wrap line-clamp-4 font-space-whale-body">
+                  <p className="text-space-whale-navy whitespace-pre-wrap font-space-whale-body mb-3">
                     {entry.content}
                   </p>
                 )}
@@ -497,26 +490,31 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
             
             {/* Media Display */}
             {entry.media_url && (
-              <div className="mt-4">
+              <div className="mt-3">
                 {entry.media_type === 'image' ? (
-                  <img
-                    src={entry.media_url}
-                    alt="Journal media"
-                    className="max-w-full h-48 object-cover rounded-lg shadow-sm"
-                    onError={(e) => {
-                      console.log('❌ Image failed to load:', entry.media_url)
-                      console.log('Media type:', entry.media_type)
-                      console.log('Error event:', e)
-                      // Hide broken images (old blob URLs)
-                      if (entry.media_url?.startsWith('blob:')) {
-                        console.log('Hiding broken blob URL image')
-                        e.currentTarget.style.display = 'none'
-                      }
-                    }}
-                    onLoad={() => {
-                      console.log('Image loaded successfully:', entry.media_url?.substring(0, 50) + '...')
-                    }}
-                  />
+                  <div className="relative group cursor-pointer" onClick={() => setShowImageModal(true)}>
+                    <img
+                      src={entry.media_url}
+                      alt="Journal media"
+                      className="w-full h-72 sm:h-96 object-cover rounded-xl shadow-md transition-transform group-hover:scale-[1.02]"
+                      onError={(e) => {
+                        console.log('❌ Image failed to load:', entry.media_url)
+                        console.log('Media type:', entry.media_type)
+                        console.log('Error event:', e)
+                        // Hide broken images (old blob URLs)
+                        if (entry.media_url?.startsWith('blob:')) {
+                          console.log('Hiding broken blob URL image')
+                          e.currentTarget.style.display = 'none'
+                        }
+                      }}
+                      onLoad={() => {
+                        console.log('Image loaded successfully:', entry.media_url?.substring(0, 50) + '...')
+                      }}
+                    />
+                    <div className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ZoomIn className="h-4 w-4 text-white" />
+                    </div>
+                  </div>
                 ) : entry.media_type === 'moodboard' ? (
                   <div className="space-y-4">
                     <div className="text-sm text-space-whale-purple font-space-whale-body mb-4">
@@ -572,7 +570,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                   <video
                     src={entry.media_url}
                     controls
-                    className="max-w-full h-48 object-cover rounded-lg shadow-sm"
+                    className="w-full h-72 sm:h-96 object-cover rounded-xl shadow-md"
                   />
                 ) : (
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">

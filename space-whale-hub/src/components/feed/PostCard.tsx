@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Heart, MessageCircle, MoreHorizontal, Bookmark, Edit, Trash2, X, ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Heart, MessageCircle, MoreHorizontal, Bookmark, Edit, Trash2, X, ZoomIn, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react'
 import CommentForm from './CommentForm'
 import CommentsList from './CommentsList'
 
@@ -120,7 +120,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
     <div className="bg-lofi-card rounded-xl shadow-lg p-3 sm:p-4 rainbow-border-soft mobile-card">
       {/* Post Header */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-2 sm:space-x-3">
+        <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-gradient-to-br from-space-whale-purple to-accent-pink flex items-center justify-center flex-shrink-0">
             {post.author.avatar_url ? (
               <img
@@ -135,9 +135,17 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="font-space-whale-subheading text-space-whale-navy text-sm sm:text-base truncate">
-              {post.author.display_name}
-            </h3>
+            <div className="flex items-center space-x-2">
+              <h3 className="font-space-whale-subheading text-space-whale-navy text-sm sm:text-base truncate">
+                {post.author.display_name}
+              </h3>
+              {post.content_warning && (
+                <span className="inline-flex items-center space-x-1 px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-full text-xs font-medium flex-shrink-0">
+                  <AlertCircle className="h-3 w-3" />
+                  <span>CW</span>
+                </span>
+              )}
+            </div>
             <p className="text-xs sm:text-sm font-space-whale-body text-space-whale-purple">
               {post.author.pronouns && `${post.author.pronouns} • `}
               {formatDate(post.created_at)}
@@ -333,18 +341,19 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
 
       {/* Post Actions */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-4 sm:space-x-6">
+        <div className="flex items-center space-x-2 sm:space-x-6">
           <button
             onClick={() => onLike?.(post.id)}
-            className={`flex items-center space-x-1 sm:space-x-2 transition-colors ${
+            className={`flex items-center space-x-1.5 sm:space-x-2 transition-all duration-200 p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-95 ${
               post.is_liked
                 ? 'text-red-500 hover:text-red-600'
                 : 'text-gray-500 hover:text-red-500'
             }`}
+            aria-label={post.is_liked ? 'Unlike' : 'Like'}
           >
-            <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${post.is_liked ? 'fill-current' : ''}`} />
+            <Heart className={`h-5 w-5 sm:h-5 sm:w-5 transition-transform ${post.is_liked ? 'fill-current scale-110' : ''}`} />
             {post.likes_count > 0 && (
-              <span className="text-xs text-gray-400 font-normal">{post.likes_count}</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">{post.likes_count}</span>
             )}
           </button>
 
@@ -354,13 +363,14 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
               setShowCommentForm(!showComments)
               onComment?.(post.id)
             }}
-            className={`flex items-center space-x-1 sm:space-x-2 transition-colors ${
+            className={`flex items-center space-x-1.5 sm:space-x-2 transition-all duration-200 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-95 ${
               showComments ? 'text-indigo-500' : 'text-gray-500 hover:text-indigo-500'
             }`}
+            aria-label="Comments"
           >
-            <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+            <MessageCircle className={`h-5 w-5 sm:h-5 sm:w-5 ${showComments ? 'fill-current' : ''}`} />
             {post.comments_count > 0 && (
-              <span className="text-xs text-gray-400 font-normal">{post.comments_count}</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">{post.comments_count}</span>
             )}
           </button>
 
