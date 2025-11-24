@@ -1,26 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// Check if service role key is available
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+// Force dynamic rendering - don't evaluate at build time
+export const dynamic = 'force-dynamic'
 
-if (!serviceRoleKey) {
-  console.warn('SUPABASE_SERVICE_ROLE_KEY not found. Uploads will use regular client.')
-}
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-// Create admin client with service role key (if available)
-const supabaseAdmin = serviceRoleKey ? createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  serviceRoleKey,
-  {
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Missing Supabase environment variables')
+  }
+
+  return createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     }
-  }
-) : null
+  })
+}
 
 export async function POST(request: NextRequest) {
+  const supabaseAdmin = getSupabaseAdmin()
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File
@@ -49,11 +50,8 @@ export async function POST(request: NextRequest) {
     const folderPath = folder ? `${userId}/${category}/${folder}` : `${userId}/${category}`
     const fullPath = `${folderPath}/${filename}`
 
-    // Upload using admin client (bypasses RLS) or fallback to regular client
-    const client = supabaseAdmin || createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    // Upload using admin client (bypasses RLS)
+    const client = supabaseAdmin
 
     const { data, error } = await client.storage
       .from(category)
