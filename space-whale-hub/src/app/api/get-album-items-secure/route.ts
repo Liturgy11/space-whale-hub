@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+// Force dynamic rendering - don't evaluate at build time
+export const dynamic = 'force-dynamic'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseAdmin = createClient(
@@ -13,6 +15,7 @@ const supabaseAdmin = createClient(
 )
 
 export async function GET(request: NextRequest) {
+  const supabaseAdmin = getSupabaseAdmin()
   try {
     const { searchParams } = new URL(request.url)
     const albumId = searchParams.get('albumId')
@@ -94,4 +97,6 @@ export async function GET(request: NextRequest) {
     }, { status: 500 })
   }
 }
+
+
 

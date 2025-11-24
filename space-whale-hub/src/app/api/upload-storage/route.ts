@@ -1,19 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// Force dynamic rendering - don't evaluate at build time
+export const dynamic = 'force-dynamic'
+
 // Server-side storage operations using service role
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Missing Supabase environment variables')
+  }
+
+  return createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     }
-  }
-)
+  })
+}
 
 export async function POST(request: NextRequest) {
+  const supabaseAdmin = getSupabaseAdmin()
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File
@@ -42,8 +51,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `File type ${file.type} not allowed for ${category}` }, { status: 400 })
     }
 
+    // Sanitize filename - remove/replace spaces and special characters
+    const sanitizeFilename = (name: string): string => {
+      // Get file extension
+      const ext = name.substring(name.lastIndexOf('.'))
+      // Get base name without extension
+      const baseName = name.substring(0, name.lastIndexOf('.')) || name
+      // Replace spaces and special characters with underscores, keep only alphanumeric, hyphens, and underscores
+      const sanitized = baseName
+        .replace(/\s+/g, '_') // Replace spaces with underscores
+        .replace(/[^a-zA-Z0-9_-]/g, '_') // Replace special chars with underscores
+        .replace(/_+/g, '_') // Replace multiple underscores with single
+        .replace(/^_+|_+$/g, '') // Remove leading/trailing underscores
+      return sanitized + ext
+    }
+
     // Generate filename
-    const finalFilename = filename || `${Date.now()}-${file.name}`
+    const originalFilename = filename || `${Date.now()}-${file.name}`
+    const finalFilename = sanitizeFilename(originalFilename)
     const fullPath = `${userId}/${category}/${finalFilename}`
 
     console.log(`📤 Server upload: ${category}/${fullPath}`)

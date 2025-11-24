@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-)
+// Force dynamic rendering - don't evaluate at build time
+export const dynamic = 'force-dynamic'
 
-async function getLikeCount(postId: string) {
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Missing Supabase environment variables')
+  }
+
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  })
+}
+
+async function getLikeCount(postId: string, supabaseAdmin: ReturnType<typeof getSupabaseAdmin>) {
   const { count } = await supabaseAdmin
     .from('likes')
     .select('*', { count: 'exact', head: true })
@@ -15,7 +25,7 @@ async function getLikeCount(postId: string) {
   return count || 0
 }
 
-async function getCommentCount(postId: string) {
+async function getCommentCount(postId: string, supabaseAdmin: ReturnType<typeof getSupabaseAdmin>) {
   const { count } = await supabaseAdmin
     .from('comments')
     .select('*', { count: 'exact', head: true })
@@ -24,6 +34,7 @@ async function getCommentCount(postId: string) {
 }
 
 export async function GET(_request: NextRequest) {
+  const supabaseAdmin = getSupabaseAdmin()
   try {
     const { data: posts, error } = await supabaseAdmin
       .from('posts')
@@ -63,8 +74,8 @@ export async function GET(_request: NextRequest) {
         pronouns: profileMap.get(post.user_id)?.pronouns || null,
         avatar_url: profileMap.get(post.user_id)?.avatar_url || null,
       },
-      likes_count: await getLikeCount(post.id),
-      comments_count: await getCommentCount(post.id),
+      likes_count: await getLikeCount(post.id, supabaseAdmin),
+      comments_count: await getCommentCount(post.id, supabaseAdmin),
       is_liked: false // computed client-side when user is known
     })))
 
@@ -74,6 +85,8 @@ export async function GET(_request: NextRequest) {
     return NextResponse.json({ success: false, error: e.message }, { status: 500 })
   }
 }
+
+
 
 
 
