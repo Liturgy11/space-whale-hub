@@ -119,6 +119,62 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
   - Implement mood board styling improvements
 
 ## Recent Achievements (Latest Session) 🎉
+
+### Deployment Fixes & Infrastructure (Today)
+- ✅ **Fixed critical deployment issues**
+  - Fixed hardcoded Supabase URL in `supabase.ts` to use environment variables
+  - Added proper error handling for missing env vars in all API routes
+  - Fixed typo in environment variable name (`XT_PUBLIC_SUPABASE_URL` → `NEXT_PUBLIC_SUPABASE_URL`)
+  - Improved error messages to guide deployment configuration
+- ✅ **Fixed albums not displaying in archive**
+  - Improved albums API count query syntax
+  - Enhanced error handling and logging in ArchivePage
+  - Fixed useEffect dependency to wait for client mount
+  - Added comprehensive logging for debugging
+- ✅ **Fixed personal space Supabase URL issues**
+  - Removed unused supabase import from JournalEntryForm
+  - All API routes now properly check for environment variables
+
+### UI/UX Improvements (Today)
+- ✅ **Simplified web copy throughout**
+  - Removed redundant and verbose text from forms
+  - Shortened placeholders to be more concise
+  - Removed unnecessary helper text
+  - Made UI more scannable and less cluttered
+- ✅ **Enhanced PostForm**
+  - Removed suggested tags section to reduce clutter
+  - Simplified tag input with cleaner placeholder
+  - Added drag-and-drop functionality for media upload
+- ✅ **Improved Personal Space**
+  - Enhanced "What feels right today?" section with better visual design
+  - Changed "Write" to "Journal" for more accurate labeling
+  - Updated icons (PenTool, Images, Sparkles) for more playful aesthetic
+  - Vertical card layout with icon containers and better hover effects
+- ✅ **Fixed journal list layout**
+  - Fixed horizontal scrolling issues on mobile
+  - Ensured icons stay within bounds with proper flex wrapping
+  - Improved responsive layout (stacks on mobile, horizontal on desktop)
+  - Better text wrapping and spacing
+
+### Performance Optimizations (Today)
+- ✅ **Image loading optimizations**
+  - Added lazy loading to all below-the-fold images
+  - Added async decoding for better performance
+  - Added width/height attributes to prevent layout shift
+  - Improved initial page load and reduced bandwidth usage
+
+### Visual Enhancements (Today)
+- ✅ **Enhanced mood board display in Community Orbit**
+  - Created engaging collage layout with hero image
+  - First image displayed large, remaining in compact grid
+  - Better visual hierarchy and engagement
+  - Smooth hover effects and remaining count overlay
+- ✅ **Fixed mood board modal sizing**
+  - Matched personal space modal to Community Orbit sizing
+  - Reduced image size from max-w-6xl to max-w-4xl
+  - Less purple space, more focused display
+
+### Previous Achievements
 - Onboarding and Safety
   - One‑time Welcome modal after first login (values-based, UK/AUS spelling)
   - First‑post gentle note for Community Orbit (content warnings, care/kindness)
@@ -140,7 +196,7 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
   - Album detail page with item gallery (images/videos) using signed URLs
   - Admin-only batch upload to album (multi-file) with auto association
   - Admin-only album selection in regular upload flow (one-step add-to-album)
-  - Admin-only “Set as cover” from any item + live header update
+  - Admin-only "Set as cover" from any item + live header update
   - Admin-only drag-to-reorder within album (persisted `sort_order`)
   - Clickable items open full `ArchiveItemModal` (likes, comments, owner actions)
 - Storage & Media
@@ -156,33 +212,53 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
 All changes are committed and pushed to GitHub.
 
 ## Next Priority Features 🎯
-- Polishing passes
-  - Toast notifications for saves/uploads
-  - Post form: lightweight “Add content warning” chip + badge on cards
-  - Image pinch‑to‑zoom and swipe‑to‑close in archive lightbox
-- Archive
+
+### Immediate Next Steps (High Priority)
+1. **Deployment Verification**
+   - ✅ Environment variables properly configured
+   - Test all features in production deployment
+   - Verify albums display correctly
+   - Verify personal space loads without errors
+   - Monitor for any remaining environment variable issues
+
+2. **UX Polish & Refinement**
+   - Continue simplifying web copy where needed
+   - Review and refine any remaining verbose text
+   - Ensure consistent, minimal copy throughout
+   - Consider adding loading skeletons for better perceived performance
+
+3. **Mobile Experience**
+   - Test all features on mobile devices
+   - Verify scrolling works smoothly everywhere
+   - Ensure all modals are properly sized on mobile
+   - Check touch targets are adequate
+
+### Medium Priority
+- **Archive Enhancements**
   - Optional captions/credits per item displayed in lightbox
   - Share/copy link for album and items
-- Community Orbit
-  - Infinite scroll or pagination; basic tag filters
-- Performance
-  - Shimmer skeleton variant; lazy image preloading in carousels
-- Albums polish (Public)
-  - Add optional captions/credits per item (exhibition friendly)
   - Public share link buttons for albums
-  - Optional “Albums vs All Items” toggle in Constellation
-  - Cover-first layout option (hero full-width) [optional]
-- Uploads & Data Quality
-  - Normalize any legacy `media_url` values that aren’t plain URLs
+  - Optional "Albums vs All Items" toggle in Constellation
+- **Community Orbit**
+  - Infinite scroll or pagination
+  - Basic tag filters
+  - Tags/filters for posts
+- **Performance**
+  - Shimmer skeleton variant
+  - Lazy image preloading in carousels
+  - Further optimize image loading strategies
+- **Uploads & Data Quality**
+  - Normalize any legacy `media_url` values that aren't plain URLs
   - Add brief signed‑URL refresh strategy (re-sign on page load)
-- Roles & Access
+- **Roles & Access**
   - Convert admin email check to role/allowlist
   - Optional: allow trusted contributors to add to specific albums
-- Community Orbit
-  - Tags/filters for posts; confirm secure endpoint is default path
-- Deployment
-  - Vercel deploy and production test (mobile/manual)
-  - Run remaining SQL safety scripts and verify RLS
+
+### Lower Priority / Future Enhancements
+- Post form: lightweight "Add content warning" chip + badge on cards
+- Image pinch‑to‑zoom and swipe‑to‑close in archive lightbox
+- Toast notifications for saves/uploads (partially implemented)
+- Cover-first layout option (hero full-width) for albums
 
 ## Development Phases
 
