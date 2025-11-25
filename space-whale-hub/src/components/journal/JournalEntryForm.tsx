@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { supabase } from '@/lib/supabase'
 import { uploadMedia } from '@/lib/storage-client'
 import { Loader2, Save, X, Upload, Image, X as XIcon } from 'lucide-react'
 

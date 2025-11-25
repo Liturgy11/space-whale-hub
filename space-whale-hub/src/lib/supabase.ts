@@ -4,11 +4,11 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qrmdgbzmdtv
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 if (!supabaseUrl) {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable. Please check your .env.local file.')
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable. Please set it in your deployment environment variables (Vercel, etc.) or .env.local file.')
 }
 
 if (!supabaseAnonKey) {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable. Please check your .env.local file.')
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable. Please set it in your deployment environment variables (Vercel, etc.) or .env.local file.')
 }
 
 // Custom storage that handles quota errors and prevents large values

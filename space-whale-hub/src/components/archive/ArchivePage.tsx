@@ -52,26 +52,37 @@ export default function ArchivePage() {
   const loadConstellationItems = async () => {
     try {
       setLoading(true)
-      console.log('Loading albums from /api/get-albums-secure...')
+      console.log('[ArchivePage] Loading albums from /api/get-albums-secure...')
       
       // Fetch albums for public Constellation view
-      const response = await fetch('/api/get-albums-secure')
+      const response = await fetch('/api/get-albums-secure', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store' // Ensure fresh data
+      })
+      
+      console.log('[ArchivePage] Response status:', response.status, response.statusText)
       
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('API response not OK:', response.status, errorText)
-        throw new Error(`Failed to fetch albums: ${response.status} ${response.statusText}`)
+        console.error('[ArchivePage] API response not OK:', response.status, errorText)
+        throw new Error(`Failed to fetch albums: ${response.status} ${response.statusText}. ${errorText}`)
       }
       
       const result = await response.json()
-      console.log('Albums API response:', result)
+      console.log('[ArchivePage] Albums API response:', result)
 
       if (!result.success) {
-        console.error('API returned error:', result.error, result.details)
+        console.error('[ArchivePage] API returned error:', result.error, result.details)
         throw new Error(result.error || 'Failed to fetch albums')
       }
 
-      const list: AlbumCardData[] = (result.data || []).map((a: any) => ({
+      const data = result.data || []
+      console.log('[ArchivePage] Raw albums data:', data)
+
+      const list: AlbumCardData[] = data.map((a: any) => ({
         id: a.id,
         title: a.title,
         description: a.description,
@@ -81,7 +92,7 @@ export default function ArchivePage() {
         item_count: a.item_count || 0,
       }))
 
-      console.log(`Loaded ${list.length} albums`)
+      console.log(`[ArchivePage] Loaded ${list.length} albums:`, list.map(a => ({ id: a.id, title: a.title, item_count: a.item_count })))
       setAlbums(list)
       setFilteredAlbums(list)
 
@@ -91,13 +102,19 @@ export default function ArchivePage() {
         .filter((url: string | undefined) => url && url.includes('supabase')) as string[]
 
       if (coverUrls.length > 0) {
-        console.log(`Signing ${coverUrls.length} cover image URLs`)
-        const signedUrlResults = await getSignedUrls(coverUrls)
-        const urlMap = createSignedUrlMap(signedUrlResults)
-        setSignedUrlMap(urlMap)
+        console.log(`[ArchivePage] Signing ${coverUrls.length} cover image URLs`)
+        try {
+          const signedUrlResults = await getSignedUrls(coverUrls)
+          const urlMap = createSignedUrlMap(signedUrlResults)
+          setSignedUrlMap(urlMap)
+        } catch (signError) {
+          console.warn('[ArchivePage] Error signing URLs:', signError)
+          // Don't fail the whole load if signing fails
+        }
       }
     } catch (error) {
-      console.error('Error fetching constellation items:', error)
+      console.error('[ArchivePage] Error fetching constellation items:', error)
+      console.error('[ArchivePage] Error details:', error instanceof Error ? error.message : error)
       // Set empty arrays on error so UI shows "no albums" instead of infinite loading
       setAlbums([])
       setFilteredAlbums([])
@@ -117,8 +134,10 @@ export default function ArchivePage() {
   }
 
   useEffect(() => {
-    loadConstellationItems()
-  }, [])
+    if (isClient) {
+      loadConstellationItems()
+    }
+  }, [isClient])
 
   const handleUploadComplete = () => {
     // Refresh list after upload (albums may change if covers set later)
