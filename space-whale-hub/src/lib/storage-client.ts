@@ -85,6 +85,11 @@ export async function uploadMultipleMedia(
 export function getMediaUrl(path: string, bucket: MediaCategory): string {
   // This is a simple URL construction - in production you might want to use
   // a more sophisticated approach
-  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qrmdgbzmdtvqcuzfkwar.supabase.co'
+  
+  if (!baseUrl) {
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL is required for media URLs')
+  }
+  
   return `${baseUrl}/storage/v1/object/public/${bucket}/${path}`
 }

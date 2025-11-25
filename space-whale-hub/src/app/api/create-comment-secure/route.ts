@@ -16,10 +16,20 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json({
+        success: false,
+        error: 'Server configuration error: Missing Supabase environment variables'
+      }, { status: 500 })
+    }
+
     // Create a Supabase client with service role (bypasses RLS)
     const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      supabaseUrl,
+      supabaseServiceKey,
       {
         auth: {
           autoRefreshToken: false,

@@ -52,11 +52,22 @@ export default function ArchivePage() {
   const loadConstellationItems = async () => {
     try {
       setLoading(true)
+      console.log('Loading albums from /api/get-albums-secure...')
+      
       // Fetch albums for public Constellation view
       const response = await fetch('/api/get-albums-secure')
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('API response not OK:', response.status, errorText)
+        throw new Error(`Failed to fetch albums: ${response.status} ${response.statusText}`)
+      }
+      
       const result = await response.json()
+      console.log('Albums API response:', result)
 
       if (!result.success) {
+        console.error('API returned error:', result.error, result.details)
         throw new Error(result.error || 'Failed to fetch albums')
       }
 
@@ -70,6 +81,7 @@ export default function ArchivePage() {
         item_count: a.item_count || 0,
       }))
 
+      console.log(`Loaded ${list.length} albums`)
       setAlbums(list)
       setFilteredAlbums(list)
 
@@ -79,12 +91,16 @@ export default function ArchivePage() {
         .filter((url: string | undefined) => url && url.includes('supabase')) as string[]
 
       if (coverUrls.length > 0) {
+        console.log(`Signing ${coverUrls.length} cover image URLs`)
         const signedUrlResults = await getSignedUrls(coverUrls)
         const urlMap = createSignedUrlMap(signedUrlResults)
         setSignedUrlMap(urlMap)
       }
     } catch (error) {
       console.error('Error fetching constellation items:', error)
+      // Set empty arrays on error so UI shows "no albums" instead of infinite loading
+      setAlbums([])
+      setFilteredAlbums([])
     } finally {
       setLoading(false)
     }

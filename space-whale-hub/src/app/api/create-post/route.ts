@@ -19,10 +19,20 @@ export async function POST(request: Request) {
       }, { status: 401 })
     }
 
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json({
+        success: false,
+        error: 'Server configuration error: Missing Supabase environment variables'
+      }, { status: 500 })
+    }
+
     // Create a Supabase client with the access token
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl,
+      supabaseAnonKey,
       {
         global: {
           headers: {

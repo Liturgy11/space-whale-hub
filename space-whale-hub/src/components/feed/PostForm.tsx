@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { createPost } from '@/lib/database'
 import { uploadMedia } from '@/lib/storage-client'
-import { Image, Video, Send, X, AlertTriangle, Loader2 } from 'lucide-react'
+import { Image, Video, Send, X, AlertTriangle, Loader2, AlertCircle } from 'lucide-react'
+import { toast } from '@/components/ui/Toast'
 
 interface PostFormProps {
   onPostCreated?: () => void
@@ -23,12 +24,22 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
   const [uploadingMedia, setUploadingMedia] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
+  const [isDragging, setIsDragging] = useState(false)
 
   const handleFileUpload = async (file: File) => {
     if (!user) return
 
+    // Validate file type
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+      const errorMsg = 'Please upload an image or video file'
+      setError(errorMsg)
+      toast(errorMsg, 'error')
+      return
+    }
+
     setUploadingMedia(true)
     setError('')
+    setIsDragging(false)
 
     try {
       console.log('Uploading file for community post:', { fileName: file.name, fileSize: file.size, fileType: file.type })
@@ -43,11 +54,40 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
       setMediaUrl(result.url)
       setMediaType(file.type.startsWith('image/') ? 'image' : 'video')
       setShowMediaUpload(false)
+      toast('Media uploaded successfully', 'success')
     } catch (err: any) {
       console.error('File upload error:', err)
       setError(err.message)
+      toast(err.message || 'Failed to upload media', 'error')
     } finally {
       setUploadingMedia(false)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!uploadingMedia) {
+      setIsDragging(true)
+    }
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    if (uploadingMedia) return
+
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      handleFileUpload(files[0])
     }
   }
 
@@ -92,11 +132,14 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
       setMediaType('')
       setShowMediaUpload(false)
       
+      toast('Post shared successfully!', 'success')
+      
       if (onPostCreated) {
         onPostCreated()
       }
     } catch (err: any) {
       setError(err.message)
+      toast(err.message || 'Failed to create post', 'error')
     } finally {
       setUploading(false)
     }
@@ -168,19 +211,32 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
           </p>
         </div>
 
-        {/* Content Warning */}
+        {/* Content Warning Chip */}
         <div className="space-y-3">
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={hasContentWarning}
-              onChange={(e) => setHasContentWarning(e.target.checked)}
-              className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-            />
-            <span className="text-sm text-gray-700 dark:text-gray-300">
-              This post contains content that may be sensitive or triggering
-            </span>
-          </label>
+          <button
+            type="button"
+            onClick={() => setHasContentWarning(!hasContentWarning)}
+            className={`
+              inline-flex items-center space-x-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors
+              ${hasContentWarning
+                ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-300 dark:border-yellow-700'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }
+            `}
+          >
+            <AlertCircle className={`h-4 w-4 ${hasContentWarning ? 'text-yellow-600 dark:text-yellow-400' : ''}`} />
+            <span>{hasContentWarning ? 'Content Warning Added' : 'Add Content Warning'}</span>
+            {hasContentWarning && (
+              <X 
+                className="h-3 w-3 ml-1" 
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setHasContentWarning(false)
+                  setContentWarning('')
+                }}
+              />
+            )}
+          </button>
           
           {hasContentWarning && (
             <input
@@ -188,7 +244,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
               value={contentWarning}
               onChange={(e) => setContentWarning(e.target.value)}
               placeholder="What should people know before reading? (e.g., mentions of trauma, mental health, grief, self-harm, etc.)"
-              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent mobile-input"
+              className="w-full p-3 border border-yellow-300 dark:border-yellow-700 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent mobile-input bg-yellow-50/50 dark:bg-yellow-900/10"
             />
           )}
         </div>
@@ -303,10 +359,19 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
                 </button>
               </div>
               
-              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
-                <Image className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  isDragging
+                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                    : 'border-gray-300 dark:border-gray-600'
+                } ${uploadingMedia ? 'opacity-50 pointer-events-none' : ''}`}
+              >
+                <Image className={`h-12 w-12 mx-auto mb-4 ${isDragging ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'}`} />
                 <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  Upload your creative content
+                  {isDragging ? 'Drop your file here' : 'Upload your creative content'}
                 </h4>
                 <p className="text-gray-600 dark:text-gray-300 mb-4">
                   Drag and drop files here, or click to browse
@@ -321,13 +386,14 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
                   accept="image/*,video/*"
                   className="hidden"
                   id="media-upload"
+                  disabled={uploadingMedia}
                 />
                 <label
                   htmlFor="media-upload"
-                  className={`inline-block px-6 py-3 rounded-lg transition-colors cursor-pointer ${
+                  className={`inline-block px-6 py-3 rounded-lg transition-colors ${
                     uploadingMedia 
                       ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                      : 'bg-indigo-600 text-white hover:bg-indigo-700 cursor-pointer'
                   }`}
                 >
                   {uploadingMedia ? (

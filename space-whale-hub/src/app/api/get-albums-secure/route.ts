@@ -21,17 +21,14 @@ function getSupabaseAdmin() {
 }
 
 export async function GET(request: NextRequest) {
-  const supabaseAdmin = getSupabaseAdmin()
   try {
+    const supabaseAdmin = getSupabaseAdmin()
     console.log('Fetching albums...')
 
-    // Fetch albums with item counts using service role (bypasses RLS)
+    // First, fetch all albums
     const { data: albums, error: albumsError } = await supabaseAdmin
       .from('albums')
-      .select(`
-        *,
-        album_items(count)
-      `)
+      .select('*')
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false })
 
@@ -44,11 +41,33 @@ export async function GET(request: NextRequest) {
       }, { status: 500 })
     }
 
-    // Transform the data to include item counts
-    const albumsWithCounts = albums?.map(album => ({
-      ...album,
-      item_count: album.album_items?.[0]?.count || 0
-    })) || []
+    if (!albums || albums.length === 0) {
+      console.log('No albums found')
+      return NextResponse.json({
+        success: true,
+        data: [],
+        message: 'No albums found'
+      })
+    }
+
+    // Fetch item counts for each album
+    const albumsWithCounts = await Promise.all(
+      albums.map(async (album) => {
+        const { count, error: countError } = await supabaseAdmin
+          .from('album_items')
+          .select('id', { count: 'exact', head: true })
+          .eq('album_id', album.id)
+
+        if (countError) {
+          console.warn(`Error counting items for album ${album.id}:`, countError)
+        }
+
+        return {
+          ...album,
+          item_count: count || 0
+        }
+      })
+    )
 
     console.log(`Fetched ${albumsWithCounts.length} albums`)
 
@@ -60,10 +79,11 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Get albums API error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-      details: error
+      error: errorMessage,
+      details: error instanceof Error ? { message: error.message, stack: error.stack } : error
     }, { status: 500 })
   }
 }
