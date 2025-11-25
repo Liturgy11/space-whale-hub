@@ -633,14 +633,13 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       ))}
       
 
-      {/* Mood Board Image Modal - Simple & Effective like Community Orbit */}
+      {/* Mood Board Image Modal - Matches Community Orbit style */}
       {lightboxOpen && lightboxImage && (
         <div 
           className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm flex items-center justify-center z-[9999] p-2 sm:p-4"
           onClick={closeLightbox}
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
         >
-          <div className="relative max-w-6xl max-h-[95vh] w-full flex items-center justify-center">
+          <div className="relative max-w-4xl max-h-[80vh] w-full flex items-center justify-center">
             {/* Close button */}
             <button
               onClick={closeLightbox}
@@ -673,15 +672,15 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
               </>
             )}
             
-            {/* Main Image */}
+            {/* Main Image - smaller relative to modal, matches Community Orbit */}
             <img
               src={lightboxImage}
               alt="Mood board image - click to close"
-              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-pointer"
+              className="max-w-3xl max-h-[75vh] object-contain rounded-lg shadow-2xl cursor-pointer"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxHeight: '75vh', maxWidth: '60vw' }}
               loading="eager"
               decoding="async"
-              onClick={(e) => e.stopPropagation()}
-              style={{ maxHeight: '90vh', maxWidth: '90vw' }}
             />
             
             {/* Image counter - only show if multiple images */}
