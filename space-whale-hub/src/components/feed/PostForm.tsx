@@ -182,32 +182,12 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
             type="text"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
-            placeholder="Add tags (separated by commas): garden, cocoon, metamorphosis, cycles, pride poetry, art therapy..."
+            placeholder="Add tags (optional, separated by commas)"
             className="w-full p-3 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body text-space-whale-navy mobile-input"
             suppressHydrationWarning
           />
-          <div className="mt-2">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Suggested tags:</p>
-            <div className="flex flex-wrap gap-2">
-              {['pride poetry', 'art therapy', 'neurodivergent', 'healing', 'garden', 'cocoon', 'metamorphosis', 'cycles', 'embodied', 'somatic', 'trauma-informed', 'space whale', 'cosmic', 'inner space'].map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => {
-                    const currentTags = tags ? tags.split(',').map(t => t.trim()) : []
-                    if (!currentTags.includes(tag)) {
-                      setTags([...currentTags, tag].join(', '))
-                    }
-                  }}
-                  className="px-2 py-1 text-xs bg-space-whale-lavender/20 text-space-whale-purple rounded-full hover:bg-space-whale-lavender/30 transition-colors font-space-whale-body"
-                >
-                  + {tag}
-                </button>
-              ))}
-            </div>
-          </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Tags help others find your post
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Optional: Tags help others find your post
           </p>
         </div>
 
