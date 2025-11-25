@@ -347,7 +347,51 @@ body {
   }
 }
 
-/* Mood Board Styles - Pinterest meets Tumblr aesthetic */
+/* Mood Board Styles - Enhanced collage layout */
+.mood-board-collage {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  width: 100%;
+}
+
+.mood-board-hero {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.mood-board-thumb {
+  width: 100%;
+  height: 120px;
+}
+
+.mood-board-more {
+  width: 100%;
+  height: 120px;
+}
+
+/* Responsive grid for 2+ images */
+@media (min-width: 640px) {
+  .mood-board-collage {
+    grid-template-columns: 2fr 1fr;
+    gap: 8px;
+  }
+  
+  .mood-board-hero {
+    grid-row: 1 / 3;
+    height: 100%;
+  }
+  
+  .mood-board-thumb {
+    height: 140px;
+  }
+  
+  .mood-board-more {
+    height: 140px;
+  }
+}
+
+/* Legacy support for old mood-board-grid class */
 .mood-board-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));

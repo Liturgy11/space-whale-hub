@@ -264,46 +264,106 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
                   </div>
                 </div>
               ) : post.media_type === 'moodboard' ? (
-                <div className="space-y-4">
-                  <div className="text-sm text-indigo-600 dark:text-indigo-400 font-medium mb-3">
-                    ✨ Mood Board
+                <div className="space-y-3">
+                  {/* Mood Board Header */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">✨</span>
+                    <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">Mood Board</span>
                   </div>
-                  {/* Beautiful mood board grid for community posts */}
+                  
+                  {/* Enhanced mood board display */}
                   {post.tags && post.tags.length > 0 ? (
-                    <div className="mood-board-grid">
-                      {post.tags
-                        .filter((imageUrl: string) => imageUrl && (imageUrl.startsWith('data:image/') || imageUrl.startsWith('https://')))
-                        .slice(0, 6) // Show max 6 images in community feed
-                        .map((imageUrl: string, index: number) => (
-                          <div 
-                            key={index} 
-                            className="mood-board-item cursor-pointer"
-                            onClick={() => openImageLightbox(imageUrl, post.tags.filter((url: string) => url && (url.startsWith('data:image/') || url.startsWith('https://'))), index)}
-                          >
-                            <img
-                              src={imageUrl}
-                              alt={`Mood board image ${index + 1}`}
-                              className="mood-board-image"
-                              onError={(e) => {
-                                console.log('Mood board image failed to load in community feed')
-                                e.currentTarget.style.display = 'none'
-                              }}
-                            />
+                    <div className="relative">
+                      {(() => {
+                        const imageUrls = post.tags.filter((url: string) => url && (url.startsWith('data:image/') || url.startsWith('https://')))
+                        const displayImages = imageUrls.slice(0, 6)
+                        const remainingCount = imageUrls.length - 6
+                        
+                        return (
+                          <div className="mood-board-collage">
+                            {displayImages.map((imageUrl: string, index: number) => {
+                              // First image gets larger treatment
+                              if (index === 0) {
+                                return (
+                                  <div 
+                                    key={index}
+                                    className="mood-board-hero cursor-pointer group"
+                                    onClick={() => openImageLightbox(imageUrl, imageUrls, index)}
+                                  >
+                                    <div className="relative overflow-hidden rounded-xl">
+                                      <img
+                                        src={imageUrl}
+                                        alt={`Mood board image ${index + 1}`}
+                                        className="w-full h-64 sm:h-80 object-cover transition-transform duration-300 group-hover:scale-105"
+                                        loading="lazy"
+                                        decoding="async"
+                                        onError={(e) => {
+                                          console.log('Mood board image failed to load')
+                                          e.currentTarget.style.display = 'none'
+                                        }}
+                                      />
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </div>
+                                  </div>
+                                )
+                              }
+                              
+                              // Remaining images in a grid
+                              return (
+                                <div 
+                                  key={index}
+                                  className="mood-board-thumb cursor-pointer group"
+                                  onClick={() => openImageLightbox(imageUrl, imageUrls, index)}
+                                >
+                                  <div className="relative overflow-hidden rounded-lg border-2 border-white/50 shadow-md">
+                                    <img
+                                      src={imageUrl}
+                                      alt={`Mood board image ${index + 1}`}
+                                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                      loading="lazy"
+                                      decoding="async"
+                                      onError={(e) => {
+                                        console.log('Mood board image failed to load')
+                                        e.currentTarget.style.display = 'none'
+                                      }}
+                                    />
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                                  </div>
+                                </div>
+                              )
+                            })}
+                            
+                            {/* Show remaining count overlay on last image */}
+                            {remainingCount > 0 && (
+                              <div 
+                                className="mood-board-more cursor-pointer group"
+                                onClick={() => openImageLightbox(imageUrls[5], imageUrls, 5)}
+                              >
+                                <div className="relative overflow-hidden rounded-lg border-2 border-white/50 shadow-md">
+                                  <img
+                                    src={imageUrls[5]}
+                                    alt="More images"
+                                    className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
+                                    loading="lazy"
+                                    decoding="async"
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/80 to-purple-600/80 flex items-center justify-center">
+                                    <div className="text-center">
+                                      <div className="text-2xl font-bold text-white mb-1">+{remainingCount}</div>
+                                      <div className="text-xs text-white/90">more</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        ))}
+                        )
+                      })()}
                     </div>
                   ) : (
-                    <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div className="text-center py-12 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl border-2 border-dashed border-indigo-200 dark:border-indigo-800">
                       <div className="text-4xl mb-2">✨</div>
                       <p className="text-gray-600 dark:text-gray-400">Mood board is empty</p>
-                    </div>
-                  )}
-                  {/* Show count if there are more than 6 images */}
-                  {post.tags && post.tags.filter((url: string) => url && (url.startsWith('data:image/') || url.startsWith('https://'))).length > 6 && (
-                    <div className="text-center">
-                      <span className="inline-flex items-center px-3 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-sm rounded-full">
-                        + {post.tags.filter((url: string) => url && (url.startsWith('data:image/') || url.startsWith('https://'))).length - 6} more images
-                      </span>
                     </div>
                   )}
                 </div>
