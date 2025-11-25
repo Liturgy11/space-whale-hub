@@ -672,6 +672,8 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
               src={lightboxImage}
               alt="Mood board image - click to close"
               className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-pointer"
+              loading="eager"
+              decoding="async"
               onClick={(e) => e.stopPropagation()}
               style={{ maxHeight: '90vh', maxWidth: '90vw' }}
             />
