@@ -12,7 +12,6 @@ import JournalList from "@/components/journal/JournalList";
 import MediaUpload from "@/components/media/MediaUpload";
 import MoodBoardUpload from "@/components/media/MoodBoardUpload";
 import WallpaperCustomizer from "@/components/personal/WallpaperCustomizer";
-import StorageTest from "@/components/StorageTest";
 
 function PersonalSpaceContent() {
   const { user } = useAuth();
@@ -147,48 +146,56 @@ function PersonalSpaceContent() {
             <h2 className="text-xl sm:text-2xl font-space-whale-subheading text-space-whale-navy mb-4 sm:mb-6 text-center">What feels right today?</h2>
             
             {/* Reflection Prompt */}
-            <div className="mb-4 sm:mb-6">
+            <div className="mb-6 sm:mb-8">
               {currentPrompt ? (
-                <div className="p-3 sm:p-4 bg-gradient-to-r from-space-whale-lavender/20 to-accent-pink/20 rounded-xl border-l-4 border-space-whale-purple">
-                  <p className="text-base sm:text-lg text-space-whale-navy italic font-space-whale-body">
+                <div className="p-4 sm:p-5 bg-gradient-to-br from-space-whale-lavender/30 via-accent-pink/20 to-space-whale-purple/20 rounded-2xl border-2 border-space-whale-purple/20 shadow-lg relative overflow-hidden">
+                  <div className="absolute top-2 right-2">
+                    <Sparkle className="h-5 w-5 text-space-whale-purple/40" />
+                  </div>
+                  <p className="text-base sm:text-lg text-space-whale-navy italic font-space-whale-body relative z-10">
                     "{currentPrompt}"
                   </p>
                 </div>
               ) : (
-                <div className="p-3 sm:p-4 bg-space-whale-lavender/10 rounded-xl">
+                <div className="p-4 sm:p-5 bg-gradient-to-br from-space-whale-lavender/10 to-accent-pink/10 rounded-2xl border border-space-whale-lavender/20">
                   <p className="text-base sm:text-lg text-space-whale-purple text-center font-space-whale-body">
-                    Need a gentle nudge? Get a reflection prompt
+                    Need a gentle nudge?
                   </p>
                 </div>
               )}
               
               <button 
                 onClick={generateRandomPrompt}
-                className="w-full mt-3 px-4 py-3 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-all duration-300 font-space-whale-accent"
+                className="w-full mt-4 px-6 py-3.5 bg-gradient-to-r from-space-whale-purple via-accent-pink to-space-whale-purple bg-size-200 bg-pos-0 hover:bg-pos-100 text-white rounded-2xl hover:shadow-xl transition-all duration-500 font-space-whale-accent flex items-center justify-center gap-2 group"
               >
-                {currentPrompt ? 'New Prompt' : 'Get Reflection Prompt'}
+                <Sparkles className="h-4 w-4 group-hover:rotate-12 transition-transform" />
+                <span>{currentPrompt ? 'New Prompt' : 'Get Reflection Prompt'}</span>
               </button>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
               <button 
                 onClick={() => setShowForm(!showForm)}
-                className="flex items-center p-4 sm:p-6 bg-gradient-to-r from-pink-100 to-purple-100 rounded-xl hover:from-pink-200 hover:to-purple-200 transition-all duration-300 group"
+                className="flex flex-col items-center justify-center p-6 sm:p-8 bg-gradient-to-br from-pink-50 via-purple-50 to-pink-50 rounded-2xl hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group border-2 border-pink-200/50 hover:border-pink-300"
               >
-                <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-pink-500 mr-3 sm:mr-4 group-hover:scale-110 transition-transform flex-shrink-0" />
-                <div className="text-left">
-                  <div className="text-base sm:text-lg font-medium text-space-whale-navy">Write something</div>
-                  <div className="text-sm text-space-whale-purple">words, thoughts, feelings</div>
+                <div className="mb-4 p-4 bg-gradient-to-br from-pink-200 to-purple-200 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                  <PenTool className="h-8 w-8 sm:h-10 sm:w-10 text-pink-600" />
+                </div>
+                <div className="text-center">
+                  <div className="text-lg sm:text-xl font-semibold text-space-whale-navy mb-1">Write</div>
+                  <div className="text-sm text-space-whale-purple/70">words, thoughts, feelings</div>
                 </div>
               </button>
               <button 
                 onClick={() => setShowMoodBoardUpload(true)}
-                className="flex items-center p-4 sm:p-6 bg-gradient-to-r from-blue-100 to-teal-100 rounded-xl hover:from-blue-200 hover:to-teal-200 transition-all duration-300 group"
+                className="flex flex-col items-center justify-center p-6 sm:p-8 bg-gradient-to-br from-blue-50 via-teal-50 to-blue-50 rounded-2xl hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group border-2 border-blue-200/50 hover:border-blue-300"
               >
-                <Camera className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500 mr-3 sm:mr-4 group-hover:scale-110 transition-transform flex-shrink-0" />
-                <div className="text-left">
-                  <div className="text-base sm:text-lg font-medium text-space-whale-navy">Create mood board</div>
-                  <div className="text-sm text-space-whale-purple">visual inspiration</div>
+                <div className="mb-4 p-4 bg-gradient-to-br from-blue-200 to-teal-200 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                  <Images className="h-8 w-8 sm:h-10 sm:w-10 text-blue-600" />
+                </div>
+                <div className="text-center">
+                  <div className="text-lg sm:text-xl font-semibold text-space-whale-navy mb-1">Mood Board</div>
+                  <div className="text-sm text-space-whale-purple/70">visual inspiration</div>
                 </div>
               </button>
             </div>
@@ -200,11 +207,6 @@ function PersonalSpaceContent() {
             <JournalList key={refreshKey} />
           </div>
 
-          {/* Storage Test - Temporary for Phase 1 */}
-          <div className="bg-lofi-card rounded-xl shadow-lg p-4 sm:p-8 rainbow-border-soft mobile-card">
-            <h2 className="text-xl sm:text-2xl font-space-whale-subheading text-space-whale-navy mb-4 sm:mb-6">Storage Test</h2>
-            <StorageTest />
-          </div>
         </div>
       </main>
 
