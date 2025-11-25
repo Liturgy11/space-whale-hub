@@ -650,7 +650,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
               <textarea
                 value={editForm.description}
                 onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Describe this creation..."
+                placeholder="Description..."
                 className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent resize-none font-space-whale-body text-space-whale-navy"
                 rows={3}
               />
@@ -677,7 +677,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                 type="text"
                 value={editForm.tags}
                 onChange={(e) => setEditForm(prev => ({ ...prev, tags: e.target.value }))}
-                placeholder="Enter tags separated by commas..."
+                placeholder="Tags..."
                 className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body text-space-whale-navy"
               />
               <p className="text-xs text-space-whale-navy/60 mt-1 font-space-whale-body">
@@ -867,7 +867,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                   <textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Share your thoughts..."
+                    placeholder="Add a comment..."
                     rows={3}
                     className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors resize-none font-space-whale-body"
                     maxLength={1000}

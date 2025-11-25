@@ -235,7 +235,7 @@ export default function ArchivePage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder="Search albums by title, description, or location..."
+                placeholder="Search albums..."
                 className="w-full pl-10 pr-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white/80 backdrop-blur-sm text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body"
               />
             </div>

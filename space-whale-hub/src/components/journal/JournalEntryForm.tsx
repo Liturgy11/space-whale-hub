@@ -206,12 +206,12 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
             required
             rows={8}
             className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors resize-none"
-            placeholder="Write freely... this space is just for you. Share your thoughts, feelings, experiences, or anything that's on your mind."
+            placeholder="Write freely..."
             maxLength={10000}
           />
           <div className="flex justify-between items-center mt-2">
             <p className="text-xs text-space-whale-purple font-space-whale-body">
-              🔒 Private by default - only you can see this
+              🔒 Private
             </p>
             <span className="text-xs text-space-whale-purple">
               {content.length}/10,000 characters

@@ -361,12 +361,12 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
                 {/* Description */}
                 <div>
                   <label className="block text-sm font-space-whale-accent text-space-whale-navy mb-2">
-                    Tell us about it (optional)
+                    Description (optional)
                   </label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="What's the story behind this creation? What does it mean to you?"
+                    placeholder="Tell us about it..."
                     rows={3}
                     className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white/80 backdrop-blur-sm text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body"
                     suppressHydrationWarning
@@ -382,7 +382,7 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
                     type="text"
                     value={formData.artist_name}
                     onChange={(e) => setFormData(prev => ({ ...prev, artist_name: e.target.value }))}
-                    placeholder="How would you like to be credited?"
+                    placeholder="Your name"
                     className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white/80 backdrop-blur-sm text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body"
                     suppressHydrationWarning
                   />

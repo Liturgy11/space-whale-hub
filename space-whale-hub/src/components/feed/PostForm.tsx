@@ -164,7 +164,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="What's forming and reforming in you? Share your half-baked wonder, your garden's harvest, or what's taking root..."
+            placeholder="What's forming in you?"
             className="w-full p-3 sm:p-4 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent resize-none font-space-whale-body text-space-whale-navy mobile-textarea"
             rows={4}
             maxLength={2000}
@@ -182,13 +182,10 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
             type="text"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
-            placeholder="Add tags (optional, separated by commas)"
+            placeholder="Tags (optional)"
             className="w-full p-3 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body text-space-whale-navy mobile-input"
             suppressHydrationWarning
           />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Optional: Tags help others find your post
-          </p>
         </div>
 
         {/* Content Warning Chip */}
@@ -223,7 +220,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
               type="text"
               value={contentWarning}
               onChange={(e) => setContentWarning(e.target.value)}
-              placeholder="What should people know before reading? (e.g., mentions of trauma, mental health, grief, self-harm, etc.)"
+              placeholder="Brief content warning"
               className="w-full p-3 border border-yellow-300 dark:border-yellow-700 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent mobile-input bg-yellow-50/50 dark:bg-yellow-900/10"
             />
           )}
@@ -241,7 +238,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
                 )}
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">
-                    {mediaType === 'image' ? 'Image' : 'Video'} attached
+                    {mediaType === 'image' ? 'Image' : 'Video'}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {mediaUrl.split('/').pop()}
@@ -351,10 +348,10 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
               >
                 <Image className={`h-12 w-12 mx-auto mb-4 ${isDragging ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'}`} />
                 <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  {isDragging ? 'Drop your file here' : 'Upload your creative content'}
+                  {isDragging ? 'Drop file here' : 'Upload media'}
                 </h4>
                 <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  Drag and drop files here, or click to browse
+                  Drag and drop or click to browse
                 </p>
                 <input
                   type="file"
@@ -385,9 +382,6 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
                     'Choose File'
                   )}
                 </label>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-                  Supports images and videos
-                </p>
               </div>
             </div>
           </div>
