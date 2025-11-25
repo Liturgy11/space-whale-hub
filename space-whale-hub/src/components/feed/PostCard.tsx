@@ -238,6 +238,8 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
                     src={post.media_url}
                     alt="Post media"
                     className="w-full h-72 sm:h-96 object-cover rounded-xl shadow-md transition-transform group-hover:scale-[1.02]"
+                    loading="lazy"
+                    decoding="async"
                   />
                   <div className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <ZoomIn className="h-4 w-4 text-white" />

@@ -497,6 +497,8 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                       src={entry.media_url}
                       alt="Journal media"
                       className="w-full h-72 sm:h-96 object-cover rounded-xl shadow-md transition-transform group-hover:scale-[1.02]"
+                      loading="lazy"
+                      decoding="async"
                       onError={(e) => {
                         console.log('❌ Image failed to load:', entry.media_url)
                         console.log('Media type:', entry.media_type)
@@ -535,6 +537,8 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                                 src={imageUrl}
                                 alt={`Mood board image ${index + 1}`}
                                 className="mood-board-image"
+                                loading="lazy"
+                                decoding="async"
                                 onError={(e) => {
                                   console.log('Mood board image failed to load')
                                   e.currentTarget.style.display = 'none'

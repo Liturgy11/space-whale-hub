@@ -202,6 +202,10 @@ export default function AlbumDetailPage() {
                           src={signedUrlMap[item.media_url] || item.media_url}
                           alt={item.title}
                           className="w-full h-60 object-contain bg-space-whale-lavender/10"
+                          loading="lazy"
+                          decoding="async"
+                          width={400}
+                          height={240}
                         />
                       )}
 

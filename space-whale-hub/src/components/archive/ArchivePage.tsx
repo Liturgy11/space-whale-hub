@@ -254,6 +254,10 @@ export default function ArchivePage() {
                         src={signedUrlMap[album.cover_image_url] || album.cover_image_url}
                         alt={album.title}
                         className="w-full h-60 object-cover rounded-t-xl"
+                        loading="lazy"
+                        decoding="async"
+                        width={400}
+                        height={240}
                         onError={(e) => {
                           e.currentTarget.style.display = 'none'
                           e.currentTarget.parentElement!.innerHTML = `

@@ -5,6 +5,7 @@ import { X, ExternalLink, Calendar, User, Tag, Heart, Share2, Trash2, MessageCir
 import LinkPreview from './LinkPreview'
 import { useAuth } from '@/contexts/AuthContext'
 import { getSignedUrl } from '@/lib/signed-urls'
+import { toast } from '@/components/ui/Toast'
 
 interface ArchiveItem {
   id: string
@@ -78,6 +79,15 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
   const currentItem: ArchiveItem | null = items && items.length > 0 ? items[currentIndex] : item
   const touchStartX = useRef<number | null>(null)
   const touchEndX = useRef<number | null>(null)
+  
+  // Pinch-to-zoom state
+  const [scale, setScale] = useState(1)
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [isZoomed, setIsZoomed] = useState(false)
+  const lastTouchDistance = useRef<number | null>(null)
+  const lastTouchCenter = useRef<{ x: number; y: number } | null>(null)
+  const imageRef = useRef<HTMLImageElement | null>(null)
+  const lastTapTime = useRef<number>(0)
 
   // Generate signed URL when item changes
   useEffect(() => {
@@ -88,35 +98,138 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
     }
   }, [currentItem?.media_url])
 
+  // Reset zoom when item changes
+  useEffect(() => {
+    setScale(1)
+    setPosition({ x: 0, y: 0 })
+    setIsZoomed(false)
+  }, [currentItem?.id])
+
   // Keyboard navigation
   useEffect(() => {
     if (!isOpen) return
     const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isZoomed) {
+        resetZoom()
+        return
+      }
       if (!items || items.length === 0) return
-      if (e.key === 'ArrowRight') setCurrentIndex((i) => (i + 1) % items.length)
-      if (e.key === 'ArrowLeft') setCurrentIndex((i) => (i - 1 + items.length) % items.length)
+      if (e.key === 'ArrowRight') {
+        resetZoom()
+        setCurrentIndex((i) => (i + 1) % items.length)
+      }
+      if (e.key === 'ArrowLeft') {
+        resetZoom()
+        setCurrentIndex((i) => (i - 1 + items.length) % items.length)
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [isOpen, items])
+  }, [isOpen, items, isZoomed])
 
-  // Mobile swipe navigation
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.changedTouches[0].clientX
+  // Calculate distance between two touches
+  const getTouchDistance = (touch1: Touch, touch2: Touch) => {
+    const dx = touch2.clientX - touch1.clientX
+    const dy = touch2.clientY - touch1.clientY
+    return Math.sqrt(dx * dx + dy * dy)
   }
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!items || items.length === 0) return
-    touchEndX.current = e.changedTouches[0].clientX
-    if (touchStartX.current === null || touchEndX.current === null) return
-    const delta = touchEndX.current - touchStartX.current
-    const threshold = 40 // minimal px to count as swipe
-    if (delta > threshold) {
-      setCurrentIndex((i) => (i - 1 + items.length) % items.length)
-    } else if (delta < -threshold) {
-      setCurrentIndex((i) => (i + 1) % items.length)
+
+  // Calculate center point between two touches
+  const getTouchCenter = (touch1: Touch, touch2: Touch) => {
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2,
+      y: (touch1.clientY + touch2.clientY) / 2
     }
-    touchStartX.current = null
-    touchEndX.current = null
+  }
+
+  // Reset zoom
+  const resetZoom = () => {
+    setScale(1)
+    setPosition({ x: 0, y: 0 })
+    setIsZoomed(false)
+  }
+
+  // Mobile swipe navigation and pinch-to-zoom
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      // Single touch - prepare for swipe
+      touchStartX.current = e.touches[0].clientX
+      
+      // Double tap to zoom
+      const currentTime = Date.now()
+      const tapLength = currentTime - lastTapTime.current
+      if (tapLength < 300 && tapLength > 0) {
+        // Double tap detected
+        if (isZoomed) {
+          resetZoom()
+        } else {
+          setScale(2)
+          setIsZoomed(true)
+        }
+      }
+      lastTapTime.current = currentTime
+    } else if (e.touches.length === 2) {
+      // Two touches - pinch gesture
+      const distance = getTouchDistance(e.touches[0], e.touches[1])
+      const center = getTouchCenter(e.touches[0], e.touches[1])
+      lastTouchDistance.current = distance
+      lastTouchCenter.current = center
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && lastTouchDistance.current !== null && lastTouchCenter.current !== null) {
+      // Pinch gesture
+      e.preventDefault()
+      e.stopPropagation()
+      const distance = getTouchDistance(e.touches[0], e.touches[1])
+      const center = getTouchCenter(e.touches[0], e.touches[1])
+      
+      const scaleChange = distance / lastTouchDistance.current
+      setScale((prevScale) => {
+        const newScale = Math.max(1, Math.min(5, prevScale * scaleChange))
+        if (newScale > 1) {
+          setIsZoomed(true)
+        } else {
+          setIsZoomed(false)
+        }
+        return newScale
+      })
+      
+      lastTouchDistance.current = distance
+      lastTouchCenter.current = center
+    }
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (e.touches.length === 0) {
+      // All touches ended
+      if (e.changedTouches.length === 1 && !isZoomed && touchStartX.current !== null) {
+        // Single touch swipe (only if not zoomed)
+        if (!items || items.length === 0) {
+          touchStartX.current = null
+          touchEndX.current = null
+          return
+        }
+        touchEndX.current = e.changedTouches[0].clientX
+        if (touchStartX.current !== null && touchEndX.current !== null) {
+          const delta = touchEndX.current - touchStartX.current
+          const threshold = 40 // minimal px to count as swipe
+          if (delta > threshold) {
+            resetZoom()
+            setCurrentIndex((i) => (i - 1 + items.length) % items.length)
+          } else if (delta < -threshold) {
+            resetZoom()
+            setCurrentIndex((i) => (i + 1) % items.length)
+          }
+        }
+      }
+      
+      touchStartX.current = null
+      touchEndX.current = null
+      lastTouchDistance.current = null
+      lastTouchCenter.current = null
+    }
   }
   
   if (!currentItem || !isOpen) return null
@@ -142,10 +255,11 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
         }
 
         onDelete(currentItem.id)
+        toast('Item deleted successfully', 'success')
         onClose()
       } catch (error) {
         console.error('Error deleting item:', error)
-        alert('Failed to delete item. Please try again.')
+        toast('Failed to delete item', 'error')
       } finally {
         setIsDeleting(false)
       }
@@ -178,9 +292,10 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
       }
 
       setIsLiked(result.liked)
+      toast(result.liked ? 'Liked!' : 'Unliked', 'success', 2000)
     } catch (error) {
       console.error('Error toggling like:', error)
-      alert('Failed to toggle like. Please try again.')
+      toast('Failed to toggle like', 'error')
     } finally {
       setIsLiking(false)
     }
@@ -229,10 +344,11 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
       }
 
       setNewComment('')
+      toast('Comment posted!', 'success')
       loadComments() // Refresh comments
     } catch (error) {
       console.error('Error creating comment:', error)
-      alert('Failed to create comment. Please try again.')
+      toast('Failed to create comment', 'error')
     } finally {
       setIsSubmittingComment(false)
     }
@@ -294,9 +410,10 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
 
       onUpdate(updatedItem)
       setIsEditing(false)
+      toast('Item updated successfully', 'success')
     } catch (error) {
       console.error('Error updating item:', error)
-      alert('Failed to update item. Please try again.')
+      toast('Failed to update item', 'error')
     } finally {
       setIsSaving(false)
     }
@@ -332,15 +449,39 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
     hasOnDelete: !!onDelete
   })
 
+  // Handle swipe-to-close on background
+  const backgroundTouchStart = useRef<number | null>(null)
+  const backgroundTouchEnd = useRef<number | null>(null)
+
+  const handleBackgroundTouchStart = (e: React.TouchEvent) => {
+    if (e.target === e.currentTarget) {
+      backgroundTouchStart.current = e.touches[0].clientY
+    }
+  }
+
+  const handleBackgroundTouchEnd = (e: React.TouchEvent) => {
+    if (e.target === e.currentTarget && backgroundTouchStart.current !== null) {
+      backgroundTouchEnd.current = e.changedTouches[0].clientY
+      if (backgroundTouchStart.current !== null && backgroundTouchEnd.current !== null) {
+        const delta = backgroundTouchEnd.current - backgroundTouchStart.current
+        if (delta > 100) { // Swipe down to close
+          onClose()
+        }
+      }
+      backgroundTouchStart.current = null
+      backgroundTouchEnd.current = null
+    }
+  }
+
   return (
     <div
       className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 pb-20"
       onClick={onClose}
+      onTouchStart={handleBackgroundTouchStart}
+      onTouchEnd={handleBackgroundTouchEnd}
     >
       <div
         className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-y-auto rainbow-border-soft relative"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button - positioned absolutely outside scrollable area */}
@@ -451,7 +592,13 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                   className="rounded-xl"
                 />
               ) : (
-                <div className="rounded-xl overflow-hidden shadow-lg">
+                <div 
+                  className="rounded-xl overflow-hidden shadow-lg relative"
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  style={{ touchAction: isZoomed ? 'none' : 'pan-y' }}
+                >
                   {currentItem.content_type === 'video' ? (
                     <video 
                       src={signedMediaUrl || currentItem.media_url} 
@@ -459,11 +606,31 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                       controls
                     />
                   ) : (
-                    <img 
-                      src={signedMediaUrl || currentItem.media_url} 
-                      alt={currentItem.title}
-                      className="w-full max-h-[70vh] sm:max-h-[75vh] object-contain"
-                    />
+                    <div className="relative w-full max-h-[70vh] sm:max-h-[75vh] overflow-hidden flex items-center justify-center">
+                      <img 
+                        ref={imageRef}
+                        src={signedMediaUrl || currentItem.media_url} 
+                        alt={currentItem.title}
+                        className="max-w-full max-h-[70vh] sm:max-h-[75vh] object-contain transition-transform duration-200"
+                        loading="lazy"
+                        decoding="async"
+                        style={{
+                          transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
+                          transformOrigin: 'center center',
+                          cursor: isZoomed ? 'grab' : 'zoom-in',
+                          touchAction: 'none'
+                        }}
+                        draggable={false}
+                      />
+                      {isZoomed && (
+                        <button
+                          onClick={resetZoom}
+                          className="absolute top-2 left-2 bg-black/50 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-black/70 transition-colors z-10"
+                        >
+                          Reset Zoom
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               )
@@ -573,15 +740,16 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                     } catch (error) {
                       console.log('Share cancelled or failed')
                     }
-                  } else {
-                    // Fallback: copy to clipboard
-                    try {
-                      await navigator.clipboard.writeText(`${item.title} - ${window.location.href}`)
-                      alert('Link copied to clipboard!')
-                    } catch (error) {
-                      console.error('Failed to copy to clipboard')
+                    } else {
+                      // Fallback: copy to clipboard
+                      try {
+                        await navigator.clipboard.writeText(`${item.title} - ${window.location.href}`)
+                        toast('Link copied to clipboard!', 'success', 2000)
+                      } catch (error) {
+                        console.error('Failed to copy to clipboard')
+                        toast('Failed to copy link', 'error')
+                      }
                     }
-                  }
                 }}
                 className="p-3 text-space-whale-navy/70 hover:text-space-whale-purple transition-colors rounded-lg hover:bg-space-whale-lavender/10"
                 title="Share"
