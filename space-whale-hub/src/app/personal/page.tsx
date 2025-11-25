@@ -202,9 +202,11 @@ function PersonalSpaceContent() {
           </div>
 
           {/* Journal Entries - Clean Display */}
-          <div className="bg-lofi-card rounded-xl shadow-lg p-4 sm:p-8 rainbow-border-soft mobile-card">
+          <div className="bg-lofi-card rounded-xl shadow-lg p-4 sm:p-8 rainbow-border-soft mobile-card overflow-hidden">
             <h2 className="text-xl sm:text-2xl font-space-whale-subheading text-space-whale-navy mb-4 sm:mb-6">Your Journey</h2>
-            <JournalList key={refreshKey} />
+            <div className="overflow-x-hidden">
+              <JournalList key={refreshKey} />
+            </div>
           </div>
 
         </div>

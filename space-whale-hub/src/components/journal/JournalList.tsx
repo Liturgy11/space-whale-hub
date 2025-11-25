@@ -356,68 +356,74 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-x-hidden">
       {entries.map((entry) => (
-        <div key={entry.id} className="bg-lofi-card rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 rainbow-border-soft">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex-1">
-              <div className="flex items-center space-x-3 mb-2">
-                <h3 className="text-xl font-space-whale-subheading text-space-whale-navy">
+        <div key={entry.id} className="bg-lofi-card rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-all duration-300 rainbow-border-soft overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <h3 className="text-lg sm:text-xl font-space-whale-subheading text-space-whale-navy break-words">
                   {entry.title || 'Untitled Entry'}
                 </h3>
-                <div className="flex items-center space-x-2">
-                  <Lock className="h-4 w-4 text-space-whale-purple" />
+                <div className="flex items-center space-x-1 flex-shrink-0">
+                  <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-space-whale-purple" />
                   <span className="text-xs text-space-whale-purple font-space-whale-body">Private</span>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-4 text-sm text-space-whale-purple font-space-whale-body">
-                <div className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-1" />
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-space-whale-purple font-space-whale-body">
+                <div className="flex items-center flex-shrink-0">
+                  <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
                   {formatDate(entry.created_at)}
                 </div>
                 {entry.mood && (
-                  <div className="flex items-center">
+                  <div className="flex items-center flex-shrink-0">
                     <span className="mr-1">{getMoodEmoji(entry.mood)}</span>
                     <span className="capitalize">{entry.mood}</span>
+                  </div>
+                )}
+                {entry.tags && entry.tags.length > 0 && entry.media_type === 'moodboard' && (
+                  <div className="flex items-center flex-shrink-0">
+                    <span className="mr-1">✨</span>
+                    <span>{entry.tags.filter((url: string) => url && (url.startsWith('data:image/') || url.startsWith('https://'))).length} images</span>
                   </div>
                 )}
               </div>
             </div>
             
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center justify-end sm:justify-start space-x-1 flex-shrink-0">
               <button 
                 onClick={() => handleShareToCommunity(entry)}
                 disabled={sharingId === entry.id}
-                className="p-2.5 text-gray-400 hover:text-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-all duration-200 rounded-lg active:scale-95 disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-2 text-gray-400 hover:text-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-all duration-200 rounded-lg active:scale-95 disabled:opacity-50 min-w-[40px] min-h-[40px] sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center"
                 title="Share to Community Orbit"
                 aria-label="Share to Community Orbit"
               >
                 {sharingId === entry.id ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-pink-500"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-pink-500"></div>
                 ) : (
-                  <Share2 className="h-5 w-5" />
+                  <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
                 )}
               </button>
               <button 
                 onClick={() => handleEdit(entry)}
-                className="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/20 transition-all duration-200 rounded-lg active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/20 transition-all duration-200 rounded-lg active:scale-95 min-w-[40px] min-h-[40px] sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center"
                 title="Edit entry"
                 aria-label="Edit entry"
               >
-                <Edit className="h-5 w-5" />
+                <Edit className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
               <button 
                 onClick={() => handleDelete(entry.id)}
                 disabled={deletingId === entry.id}
-                className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-all duration-200 rounded-lg active:scale-95 disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-all duration-200 rounded-lg active:scale-95 disabled:opacity-50 min-w-[40px] min-h-[40px] sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center"
                 title="Delete entry"
                 aria-label="Delete entry"
               >
                 {deletingId === entry.id ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-red-600"></div>
                 ) : (
-                  <Trash2 className="h-5 w-5" />
+                  <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
                 )}
               </button>
             </div>
