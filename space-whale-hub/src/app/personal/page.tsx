@@ -182,7 +182,7 @@ function PersonalSpaceContent() {
                   <PenTool className="h-8 w-8 sm:h-10 sm:w-10 text-pink-600" />
                 </div>
                 <div className="text-center">
-                  <div className="text-lg sm:text-xl font-semibold text-space-whale-navy mb-1">Write</div>
+                  <div className="text-lg sm:text-xl font-semibold text-space-whale-navy mb-1">Journal</div>
                   <div className="text-sm text-space-whale-purple/70">words, thoughts, feelings</div>
                 </div>
               </button>
