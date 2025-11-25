@@ -9,7 +9,10 @@ function getSupabaseAdmin() {
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase environment variables')
+    const missing = []
+    if (!supabaseUrl) missing.push('NEXT_PUBLIC_SUPABASE_URL')
+    if (!supabaseServiceKey) missing.push('SUPABASE_SERVICE_ROLE_KEY')
+    throw new Error(`Missing Supabase environment variables: ${missing.join(', ')}. Please set them in your deployment environment variables (Vercel, etc.) or .env.local file.`)
   }
 
   return createClient(supabaseUrl, supabaseServiceKey, {
@@ -29,6 +32,20 @@ export async function POST(request: NextRequest) {
         success: false,
         error: 'User ID is required'
       }, { status: 400 })
+    }
+
+    // Check environment variables before creating client
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      const missing = []
+      if (!supabaseUrl) missing.push('NEXT_PUBLIC_SUPABASE_URL')
+      if (!supabaseServiceKey) missing.push('SUPABASE_SERVICE_ROLE_KEY')
+      return NextResponse.json({
+        success: false,
+        error: `Server configuration error: Missing Supabase environment variables: ${missing.join(', ')}. Please set them in your deployment environment variables.`
+      }, { status: 500 })
     }
 
     // Create a Supabase client with service role (bypasses RLS)
