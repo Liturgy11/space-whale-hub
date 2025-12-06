@@ -11,6 +11,8 @@ interface AuthContextType {
   signUp: (email: string, password: string, displayName: string) => Promise<{ error: any }>
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signOut: () => Promise<void>
+  resetPassword: (email: string) => Promise<{ error: any }>
+  updatePassword: (newPassword: string) => Promise<{ error: any }>
   updateProfile: (updates: { display_name?: string; pronouns?: string; bio?: string }) => Promise<{ error: any }>
   clearInvalidSession: () => Promise<void>
   refreshUser: () => Promise<void>
@@ -192,6 +194,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
   }
 
+  const resetPassword = async (email: string) => {
+    try {
+      // Use the current origin (works for both localhost and production)
+      const redirectUrl = `${window.location.origin}/auth/reset-password`
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
+      })
+      return { error }
+    } catch (err: any) {
+      console.error('Reset password error:', err)
+      return { 
+        error: { 
+          message: err.message || 'Failed to send password reset email. Please try again.',
+          name: err.name 
+        } 
+      }
+    }
+  }
+
+  const updatePassword = async (newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      })
+      return { error }
+    } catch (err: any) {
+      console.error('Update password error:', err)
+      return { 
+        error: { 
+          message: err.message || 'Failed to update password. Please try again.',
+          name: err.name 
+        } 
+      }
+    }
+  }
+
   const clearInvalidSession = async () => {
     // Clear any invalid session data from localStorage
     localStorage.removeItem('sb-qrmdgbzmdtvqcuzfkwar-auth-token')
@@ -229,6 +267,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signIn,
     signOut,
+    resetPassword,
+    updatePassword,
     updateProfile,
     clearInvalidSession,
     refreshUser,

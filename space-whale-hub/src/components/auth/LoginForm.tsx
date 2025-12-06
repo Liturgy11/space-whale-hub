@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import ForgotPasswordForm from './ForgotPasswordForm'
 
 interface LoginFormProps {
   onSuccess?: () => void
@@ -16,6 +17,7 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [mounted, setMounted] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
 
   const { signIn } = useAuth()
 
@@ -71,6 +73,10 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
         </div>
       </div>
     )
+  }
+
+  if (showForgotPassword) {
+    return <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />
   }
 
   return (
@@ -152,7 +158,10 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
         </div>
 
         <div className="mt-6 text-center">
-          <button className="text-sm font-space-whale-body text-space-whale-purple hover:text-space-whale-dark-purple transition-colors">
+          <button 
+            onClick={() => setShowForgotPassword(true)}
+            className="text-sm font-space-whale-body text-space-whale-purple hover:text-space-whale-dark-purple transition-colors"
+          >
             Forgot your password?
           </button>
         </div>
