@@ -140,6 +140,8 @@ function ResetPasswordContent() {
       // Supabase's verification endpoint expects 'token' parameter, not 'code'
       if (code && typeof window !== 'undefined') {
         console.log('Code found in query params - attempting to redirect through Supabase verification')
+        console.log('Full URL before redirect:', window.location.href)
+        
         // Construct the Supabase verification URL
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qrmdgbzmdtvqcuzfkwar.supabase.co'
         const redirectTo = encodeURIComponent(window.location.origin + '/auth/reset-password')
@@ -148,6 +150,8 @@ function ResetPasswordContent() {
         const verifyUrl = `${supabaseUrl}/auth/v1/verify?token=${code}&type=recovery&redirect_to=${redirectTo}`
         
         console.log('Redirecting to Supabase verification:', verifyUrl)
+        console.log('Code/token being used:', code.substring(0, 20) + '...')
+        
         // Redirect to Supabase's verification endpoint, which will then redirect back with hash fragments
         // If the token is invalid/expired, Supabase will redirect back with error parameters
         window.location.href = verifyUrl
