@@ -47,6 +47,9 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
       return
     }
 
+    // TEMPORARILY DISABLED: Invite code requirement for testing
+    // TODO: Re-enable invite code requirement before production
+    /*
     if (!inviteCode.trim()) {
       setError('Invite code is required to join the Space Whale Portal')
       setLoading(false)
@@ -75,6 +78,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
       setLoading(false)
       return
     }
+    */
 
     // Proceed with signup
     const { error } = await signUp(email, password, displayName)
@@ -82,6 +86,9 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
     if (error) {
       setError(error.message)
     } else {
+      // TEMPORARILY DISABLED: Invite code usage
+      // TODO: Re-enable invite code usage before production
+      /*
       // Use the invite code after successful signup
       try {
         // Get the current user ID
@@ -110,6 +117,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
         console.warn('Error using invite code:', error)
         // Don't block signup if invite code usage fails
       }
+      */
     }
 
     onSuccess?.()
@@ -161,6 +169,9 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
             />
           </div>
 
+          {/* TEMPORARILY DISABLED: Invite code field for testing */}
+          {/* TODO: Re-enable invite code field before production */}
+          {/*
           <div>
             <label htmlFor="inviteCode" className="block text-sm font-space-whale-accent text-space-whale-navy mb-2">
               Invite Code *
@@ -178,6 +189,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
               The Space Whale Portal is invite-only. Contact us if you need an invite code.
             </p>
           </div>
+          */}
 
           <div>
             <label htmlFor="email" className="block text-sm font-space-whale-accent text-space-whale-navy mb-2">
