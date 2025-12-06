@@ -98,9 +98,16 @@ function ResetPasswordContent() {
       }
 
       // We have a code in query params
-      // Supabase password reset links should redirect through Supabase servers first
-      // which then redirect to your app with hash fragments. If we're getting query params,
-      // it might mean the redirect URL doesn't match exactly, or Supabase is using a different flow.
+      // IMPORTANT: Supabase password reset links should redirect through Supabase servers first
+      // (https://[project].supabase.co/auth/v1/verify?token=...&type=recovery&redirect_to=...)
+      // which then redirects to your app with hash fragments (#access_token=...).
+      // 
+      // If we're getting query parameters directly, it likely means:
+      // 1. The email template is using a custom format instead of {{ .ConfirmationURL }}
+      // 2. The redirect URL doesn't match exactly (but your config looks correct)
+      // 
+      // The Supabase client's detectSessionInUrl only works with hash fragments, not query params.
+      // Query param codes need to go through Supabase's verification endpoint first.
       
       // Check if there's a hash fragment we should be using instead
       if (typeof window !== 'undefined' && window.location.hash) {
@@ -112,6 +119,21 @@ function ResetPasswordContent() {
           setInitializing(false)
           return
         }
+      }
+      
+      // If we have a code in query params, we need to redirect through Supabase's verification
+      // endpoint first. The code should be a token that needs verification.
+      if (code && typeof window !== 'undefined') {
+        console.log('Code found in query params - attempting to redirect through Supabase verification')
+        // Construct the Supabase verification URL
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qrmdgbzmdtvqcuzfkwar.supabase.co'
+        const redirectTo = encodeURIComponent(window.location.origin + '/auth/reset-password')
+        const verifyUrl = `${supabaseUrl}/auth/v1/verify?token=${code}&type=recovery&redirect_to=${redirectTo}`
+        
+        console.log('Redirecting to Supabase verification:', verifyUrl)
+        // Redirect to Supabase's verification endpoint, which will then redirect back with hash fragments
+        window.location.href = verifyUrl
+        return // Don't continue - we're redirecting
       }
 
       // Listen for auth state changes - Supabase should process the code automatically
