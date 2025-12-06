@@ -138,18 +138,19 @@ function ResetPasswordContent() {
       // If we have a code in query params, try to verify it directly with verifyOtp
       // The code from Supabase password reset emails can be verified using verifyOtp
       if (code && typeof window !== 'undefined') {
-        console.log('Code found in query params - attempting to verify with verifyOtp')
+        console.log('Code found in query params - attempting to verify')
         console.log('Full URL:', window.location.href)
         console.log('Code being used:', code.substring(0, 20) + '...')
         
-        // Try to verify the OTP code directly
-        // For password recovery, we use type='recovery' and the code from the email
-        // Note: verifyOtp requires an email, but for recovery we can try without it first
+        // IMPORTANT: Don't redirect if we already have error parameters in the URL
+        // This prevents infinite redirect loops and ensures errors are shown on this page
+        if (finalError || finalErrorCode) {
+          console.log('Error already detected, not redirecting to verification endpoint')
+          // Error handling already done above, just return
+          return
+        }
+        
         try {
-          // First, try to get the email from the URL if it's there, otherwise we'll need to extract it
-          // Actually, for password recovery, Supabase should handle the code automatically
-          // Let's wait a bit and see if Supabase processes it, or try verifyOtp with recovery type
-          
           // Wait a moment for Supabase to potentially process it automatically
           await new Promise(resolve => setTimeout(resolve, 1000))
           
@@ -162,14 +163,17 @@ function ResetPasswordContent() {
           }
           
           // If no session, the code might need to go through Supabase's verification endpoint
-          // Redirect through Supabase's verification endpoint
+          // BUT: Only redirect if we don't already have errors, and make sure redirect_to matches exactly
           const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qrmdgbzmdtvqcuzfkwar.supabase.co'
-          const redirectTo = encodeURIComponent(window.location.origin + '/auth/reset-password')
+          // Use the exact current URL as redirect_to to preserve any parameters
+          const currentUrl = window.location.origin + '/auth/reset-password'
+          const redirectTo = encodeURIComponent(currentUrl)
           
           // Try with 'token' parameter
           const verifyUrl = `${supabaseUrl}/auth/v1/verify?token=${code}&type=recovery&redirect_to=${redirectTo}`
           
           console.log('No auto-session found, redirecting to Supabase verification:', verifyUrl)
+          console.log('Redirect target:', currentUrl)
           window.location.href = verifyUrl
           return
         } catch (err) {
