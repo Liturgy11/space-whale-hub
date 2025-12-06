@@ -135,27 +135,47 @@ function ResetPasswordContent() {
         }
       }
       
-      // If we have a code in query params, we need to redirect through Supabase's verification
-      // endpoint first. The code parameter from Supabase emails is actually a token.
-      // Supabase's verification endpoint expects 'token' parameter, not 'code'
+      // If we have a code in query params, try to verify it directly with verifyOtp
+      // The code from Supabase password reset emails can be verified using verifyOtp
       if (code && typeof window !== 'undefined') {
-        console.log('Code found in query params - attempting to redirect through Supabase verification')
-        console.log('Full URL before redirect:', window.location.href)
+        console.log('Code found in query params - attempting to verify with verifyOtp')
+        console.log('Full URL:', window.location.href)
+        console.log('Code being used:', code.substring(0, 20) + '...')
         
-        // Construct the Supabase verification URL
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qrmdgbzmdtvqcuzfkwar.supabase.co'
-        const redirectTo = encodeURIComponent(window.location.origin + '/auth/reset-password')
-        
-        // Use 'token' parameter (the code we received is actually a token)
-        const verifyUrl = `${supabaseUrl}/auth/v1/verify?token=${code}&type=recovery&redirect_to=${redirectTo}`
-        
-        console.log('Redirecting to Supabase verification:', verifyUrl)
-        console.log('Code/token being used:', code.substring(0, 20) + '...')
-        
-        // Redirect to Supabase's verification endpoint, which will then redirect back with hash fragments
-        // If the token is invalid/expired, Supabase will redirect back with error parameters
-        window.location.href = verifyUrl
-        return // Don't continue - we're redirecting
+        // Try to verify the OTP code directly
+        // For password recovery, we use type='recovery' and the code from the email
+        // Note: verifyOtp requires an email, but for recovery we can try without it first
+        try {
+          // First, try to get the email from the URL if it's there, otherwise we'll need to extract it
+          // Actually, for password recovery, Supabase should handle the code automatically
+          // Let's wait a bit and see if Supabase processes it, or try verifyOtp with recovery type
+          
+          // Wait a moment for Supabase to potentially process it automatically
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          
+          // Check if session was established
+          const { data: { session: checkSession } } = await supabase.auth.getSession()
+          if (checkSession) {
+            console.log('Session established automatically')
+            setInitializing(false)
+            return
+          }
+          
+          // If no session, the code might need to go through Supabase's verification endpoint
+          // Redirect through Supabase's verification endpoint
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qrmdgbzmdtvqcuzfkwar.supabase.co'
+          const redirectTo = encodeURIComponent(window.location.origin + '/auth/reset-password')
+          
+          // Try with 'token' parameter
+          const verifyUrl = `${supabaseUrl}/auth/v1/verify?token=${code}&type=recovery&redirect_to=${redirectTo}`
+          
+          console.log('No auto-session found, redirecting to Supabase verification:', verifyUrl)
+          window.location.href = verifyUrl
+          return
+        } catch (err) {
+          console.error('Error verifying code:', err)
+          // Fall through to error handling
+        }
       }
 
       // Listen for auth state changes - Supabase should process the code automatically
