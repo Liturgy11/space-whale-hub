@@ -41,21 +41,35 @@ function ResetPasswordContent() {
       const errorCode = searchParams.get('error_code')
       const errorDescription = searchParams.get('error_description')
       
-      // Also check hash fragments for errors
+      // Also check hash fragments for errors (Supabase redirects with hash fragments)
       let hashError = null
+      let hashErrorCode = null
+      let hashErrorDescription = null
       if (typeof window !== 'undefined' && window.location.hash) {
         const hashParams = new URLSearchParams(window.location.hash.substring(1))
-        hashError = hashParams.get('error') || hashParams.get('error_code')
+        hashError = hashParams.get('error')
+        hashErrorCode = hashParams.get('error_code')
+        hashErrorDescription = hashParams.get('error_description')
       }
       
-      if (errorParam || errorCode || hashError) {
-        console.log('Error detected in URL:', { errorParam, errorCode, errorDescription, hashError })
-        if (errorCode === 'otp_expired' || hashError === 'otp_expired') {
-          setError('This reset link has expired. Please request a new password reset email.')
-        } else if (errorParam === 'access_denied' || hashError === 'access_denied') {
+      // Use hash fragment errors if present (they take precedence), otherwise use query params
+      const finalError = hashError || errorParam
+      const finalErrorCode = hashErrorCode || errorCode
+      const finalErrorDescription = hashErrorDescription || errorDescription
+      
+      if (finalError || finalErrorCode) {
+        console.log('Error detected in URL:', { 
+          error: finalError, 
+          errorCode: finalErrorCode, 
+          errorDescription: finalErrorDescription,
+          source: hashError ? 'hash' : 'query'
+        })
+        if (finalErrorCode === 'otp_expired') {
+          setError('This reset link has expired. Password reset links are only valid for a limited time. Please request a new password reset email.')
+        } else if (finalError === 'access_denied' || finalErrorCode === 'access_denied') {
           setError('Access denied. This reset link is invalid or has expired. Please request a new password reset email.')
         } else {
-          setError(errorDescription?.replace(/\+/g, ' ') || 'This reset link is invalid or has expired. Please request a new password reset email.')
+          setError(finalErrorDescription?.replace(/\+/g, ' ') || 'This reset link is invalid or has expired. Please request a new password reset email.')
         }
         setInitializing(false)
         return
@@ -320,22 +334,22 @@ function ResetPasswordContent() {
           {error && !initializing ? (
             <div className="text-center">
               <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-4">
-                <p className="text-red-600 text-sm mb-4">{error}</p>
-                <div className="space-y-2">
+                <p className="text-red-600 text-sm mb-4 font-space-whale-body">{error}</p>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => router.push('/auth?forgot=true')}
+                    className="block w-full bg-gradient-to-r from-space-whale-purple to-accent-pink text-white font-space-whale-accent py-3 px-4 rounded-lg hover:from-space-whale-dark-purple hover:to-accent-pink/90 transition-all duration-300 shadow-lg hover:shadow-space-whale-purple/30"
+                  >
+                    Request New Reset Link
+                  </button>
                   <button
                     onClick={() => router.push('/auth')}
-                    className="block w-full text-space-whale-purple hover:text-space-whale-dark-purple font-space-whale-body underline"
+                    className="block w-full text-space-whale-purple hover:text-space-whale-dark-purple font-space-whale-body text-sm underline"
                   >
                     Return to sign in
                   </button>
-                  <p className="text-space-whale-navy/70 text-sm">
-                    or{' '}
-                    <button
-                      onClick={() => router.push('/auth?forgot=true')}
-                      className="text-space-whale-purple hover:text-space-whale-dark-purple font-space-whale-body underline"
-                    >
-                      request a new reset link
-                    </button>
+                  <p className="text-space-whale-navy/60 text-xs mt-3">
+                    Note: If you've requested multiple reset emails recently, you may need to wait a few minutes before requesting another one.
                   </p>
                 </div>
               </div>
