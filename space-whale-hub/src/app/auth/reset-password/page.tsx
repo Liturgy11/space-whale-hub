@@ -29,10 +29,18 @@ function ResetPasswordContent() {
     // 1. Hash fragments (automatically processed) - e.g., #access_token=...
     // 2. Query parameters (need manual processing) - e.g., ?code=...
     const initializeReset = async () => {
+      // Log the current URL for debugging
+      if (typeof window !== 'undefined') {
+        console.log('Reset password page URL:', window.location.href)
+        console.log('Hash:', window.location.hash)
+        console.log('Search params:', window.location.search)
+      }
+
       // First, check if we already have a session
       let { data: { session } } = await supabase.auth.getSession()
       
       if (session) {
+        console.log('Session already exists')
         // Already have a recovery session
         setInitializing(false)
         return
@@ -44,6 +52,7 @@ function ResetPasswordContent() {
       
       const { data: { session: hashSession } } = await supabase.auth.getSession()
       if (hashSession) {
+        console.log('Hash session found')
         setInitializing(false)
         return
       }
@@ -52,8 +61,12 @@ function ResetPasswordContent() {
       const code = searchParams.get('code')
       const type = searchParams.get('type')
       
-      if (!code) {
+      console.log('Code from URL:', code)
+      console.log('Type from URL:', type)
+      
+      if (!code && !type) {
         // No code in URL - invalid link
+        console.log('No code or type found in URL')
         setError('Invalid reset link. Please request a new password reset email.')
         setInitializing(false)
         return
