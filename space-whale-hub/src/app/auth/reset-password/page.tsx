@@ -98,49 +98,72 @@ function ResetPasswordContent() {
       }
 
       // We have a code in query params
-      // Supabase client processes hash fragments automatically, but query params
-      // might need the page to be reloaded or the URL to be in a specific format
+      // Supabase password reset links should redirect through Supabase servers first
+      // which then redirect to your app with hash fragments. If we're getting query params,
+      // it might mean the redirect URL doesn't match exactly, or Supabase is using a different flow.
+      
       // Check if there's a hash fragment we should be using instead
       if (typeof window !== 'undefined' && window.location.hash) {
         // Hash fragment exists - Supabase will process it
         await new Promise(resolve => setTimeout(resolve, 1000))
         const { data: { session: hashSession2 } } = await supabase.auth.getSession()
         if (hashSession2) {
+          console.log('Hash session found after waiting')
           setInitializing(false)
           return
         }
       }
 
-      // Listen for auth state changes
+      // Listen for auth state changes - Supabase should process the code automatically
       let sessionEstablished = false
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
         console.log('Auth state change:', event, session ? 'has session' : 'no session')
         if (event === 'PASSWORD_RECOVERY' && session) {
+          console.log('PASSWORD_RECOVERY event detected with session')
+          sessionEstablished = true
+          setError('')
+          setInitializing(false)
+        } else if (event === 'SIGNED_IN' && session) {
+          // Sometimes password recovery creates a SIGNED_IN event
+          console.log('SIGNED_IN event detected - might be recovery session')
           sessionEstablished = true
           setError('')
           setInitializing(false)
         } else if (session && !sessionEstablished) {
+          console.log('Session detected from auth state change')
           sessionEstablished = true
           setError('')
           setInitializing(false)
         }
       })
 
-      // Give Supabase time to process the code
-      // Note: Query parameter codes might not be automatically processed
-      // If this doesn't work, the redirect URL in Supabase settings might need to match exactly
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Give Supabase more time to process the code from query params
+      // The Supabase client should automatically detect and process recovery codes
+      // Wait in increments to check for session
+      for (let i = 0; i < 5; i++) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        const { data: { session: checkSession } } = await supabase.auth.getSession()
+        if (checkSession) {
+          console.log('Session found after waiting', i + 1, 'seconds')
+          sessionEstablished = true
+          setError('')
+          setInitializing(false)
+          subscription.unsubscribe()
+          return
+        }
+      }
       
-      // Check session again
+      // Final check after all waiting
       const { data: { session: finalSession } } = await supabase.auth.getSession()
       
       if (finalSession) {
+        console.log('Final session check: session exists')
         setError('')
         sessionEstablished = true
         setInitializing(false)
       } else if (!sessionEstablished) {
-        // No session established - the code might be expired or invalid
-        // OR the redirect URL might not match Supabase configuration
+        // No session established - the code might be expired, invalid, or the redirect URL doesn't match
+        console.log('No session established after waiting. Code might be invalid or redirect URL mismatch.')
         setError('This reset link is invalid or has expired. Please request a new password reset email.')
         setInitializing(false)
       }
@@ -148,7 +171,7 @@ function ResetPasswordContent() {
       // Clean up subscription
       setTimeout(() => {
         subscription.unsubscribe()
-      }, 5000)
+      }, 1000)
     }
 
     initializeReset()
