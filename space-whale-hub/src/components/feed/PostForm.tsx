@@ -42,15 +42,11 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
     setIsDragging(false)
 
     try {
-      console.log('Uploading file for community post:', { fileName: file.name, fileSize: file.size, fileType: file.type })
-
       // Use new storage system instead of base64
       const result = await uploadMedia(file, {
         category: 'posts',
         filename: `${Date.now()}-${file.name}`
       }, user.id)
-
-      console.log('File uploaded to storage:', result.url)
       setMediaUrl(result.url)
       setMediaType(file.type.startsWith('image/') ? 'image' : 'video')
       setShowMediaUpload(false)
@@ -112,7 +108,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
           }),
         })
       } catch (profileError) {
-        console.log('Profile creation failed, continuing anyway:', profileError)
+        // Profile creation failed, but continue with post creation
       }
 
       // Then create the post
@@ -184,7 +180,6 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
             onChange={(e) => setTags(e.target.value)}
             placeholder="Tags (optional)"
             className="w-full p-3 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body text-space-whale-navy mobile-input"
-            suppressHydrationWarning
           />
         </div>
 
@@ -229,32 +224,41 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
         {/* Media Display */}
         {mediaUrl && (
           <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                {mediaType === 'image' ? (
-                  <Image className="h-6 w-6 text-indigo-600" />
-                ) : (
-                  <Video className="h-6 w-6 text-indigo-600" />
-                )}
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {mediaType === 'image' ? 'Image' : 'Video'}
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {mediaUrl.split('/').pop()}
-                  </p>
+            <div className="flex items-start space-x-3">
+              {mediaType === 'image' ? (
+                <img 
+                  src={mediaUrl} 
+                  alt="Uploaded media" 
+                  className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                />
+              ) : (
+                <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Video className="h-8 w-8 text-indigo-600" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 dark:text-white truncate">
+                      {mediaType === 'image' ? 'Image' : 'Video'}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                      {mediaUrl.split('/').pop()}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMediaUrl('')
+                      setMediaType('')
+                    }}
+                    className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 ml-2 flex-shrink-0"
+                    aria-label="Remove media"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setMediaUrl('')
-                  setMediaType('')
-                }}
-                className="text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-              >
-                <X className="h-5 w-5" />
-              </button>
             </div>
           </div>
         )}
@@ -278,15 +282,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
               className="flex items-center px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
             >
               <Image className="h-4 w-4 mr-1" />
-              Image
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowMediaUpload(true)}
-              className="flex items-center px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-            >
-              <Video className="h-4 w-4 mr-1" />
-              Video
+              Add Media
             </button>
           </div>
 
@@ -303,7 +299,8 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
             <button
               type="submit"
               disabled={!content.trim() || uploading}
-              className="btn-lofi flex items-center justify-center px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full sm:w-auto"
+              className="btn-lofi flex items-center justify-center px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-space-whale-purple focus:ring-offset-2"
+              aria-label={uploading ? 'Posting...' : 'Share post'}
             >
               {uploading ? (
                 <>
@@ -344,7 +341,21 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
                   isDragging
                     ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
                     : 'border-gray-300 dark:border-gray-600'
-                } ${uploadingMedia ? 'opacity-50 pointer-events-none' : ''}`}
+                } ${uploadingMedia ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}
+                onClick={() => {
+                  if (!uploadingMedia) {
+                    document.getElementById('media-upload')?.click()
+                  }
+                }}
+                role="button"
+                tabIndex={uploadingMedia ? -1 : 0}
+                onKeyDown={(e) => {
+                  if (!uploadingMedia && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault()
+                    document.getElementById('media-upload')?.click()
+                  }
+                }}
+                aria-label="Upload media by clicking or dragging and dropping"
               >
                 <Image className={`h-12 w-12 mx-auto mb-4 ${isDragging ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'}`} />
                 <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
@@ -369,7 +380,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
                   htmlFor="media-upload"
                   className={`inline-block px-6 py-3 rounded-lg transition-colors ${
                     uploadingMedia 
-                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed pointer-events-none' 
                       : 'bg-indigo-600 text-white hover:bg-indigo-700 cursor-pointer'
                   }`}
                 >

@@ -224,7 +224,7 @@ function HomeContent() {
                 <Star className="h-12 w-12 text-purple-600 mb-4 mx-auto float-gentle" />
                 <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">Constellation</h3>
                 <p className="text-space-whale-navy text-sm font-space-whale-body">
-                  Witness what's been harvested - pride poetry, workshop wisdom, and creative offerings from fellow space whales. Each piece a star in our shared sky.
+                  Archive of Space Whale events - pride poetry, community workshops, and creative gatherings.
                 </p>
               </div>
             </Link>
@@ -234,7 +234,7 @@ function HomeContent() {
                 <Orbit className="h-12 w-12 text-yellow-500 mb-4 mx-auto float-gentle" />
                 <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">Community Orbit</h3>
                 <p className="text-space-whale-navy text-sm font-space-whale-body">
-                  The community stream - share your art, poetry, and reflections. Connect with ND queers, nature lovers, and seekers navigating toward healing and liberation.
+                  The community stream. Connect with ND queers, nature lovers, artists, and seekers.
                 </p>
               </div>
             </Link>
@@ -244,7 +244,7 @@ function HomeContent() {
                 <CircleDotDashed className="h-12 w-12 text-purple-500 mb-4 mx-auto float-gentle group-hover:text-purple-600" />
                 <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">Deep Space</h3>
                 <p className="text-space-whale-navy text-sm font-space-whale-body">
-                  Workshops and creative offerings to support your journey. Explore at your pace - art therapy resources, online groups, and spaces to grow together.
+                  Workshops and creative offerings to support your journey. Explore resources, online groups, and spaces to grow together.
                 </p>
               </div>
             </Link>
@@ -254,7 +254,7 @@ function HomeContent() {
                 <Eye className="h-12 w-12 text-yellow-600 mb-4 mx-auto float-gentle" />
                 <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">Inner Space</h3>
                 <p className="text-space-whale-navy text-sm font-space-whale-body">
-                  Your personal cosmos - journal, create mood boards, look back on your journey. Private by default. Optional mood and habit tracking to help you witness your own patterns.
+                  Your private journal for reflection and creativity. Write, collect inspiration, and explore prompts.
                 </p>
               </div>
             </Link>

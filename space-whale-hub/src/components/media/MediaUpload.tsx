@@ -86,15 +86,11 @@ export default function MediaUpload({ onUploadComplete, onCancel }: MediaUploadP
     setError('')
 
     try {
-      console.log('Uploading file for personal media:', { fileName: uploadedFile.name, fileSize: uploadedFile.size, fileType: uploadedFile.type })
-
       // Use new storage system instead of direct storage calls
       const result = await uploadMedia(uploadedFile, {
         category: 'archive',
         filename: `${Date.now()}-${uploadedFile.name}`
       }, user.id)
-
-      console.log('File uploaded to storage:', result.url)
       setUploadProgress(100)
       
       // Call completion callback

@@ -7,6 +7,7 @@ import { ArrowLeft, Calendar, MapPin, GripVertical } from 'lucide-react'
 import { getSignedUrls, createSignedUrlMap } from '@/lib/signed-urls'
 import ArchiveItemModal from '@/components/archive/ArchiveItemModal'
 import { useAuth } from '@/contexts/AuthContext'
+import { toast } from '@/components/ui/Toast'
 
 interface ArchiveItem {
   id: string
@@ -239,9 +240,9 @@ export default function AlbumDetailPage() {
                               const json = await res.json()
                               if (!json.success) throw new Error(json.error)
                               setAlbum(prev => prev ? { ...prev, cover_image_url: item.media_url } : prev)
-                            } catch (err) {
+                            } catch (err: any) {
                               console.error('Failed to set cover:', err)
-                              alert('Failed to set album cover')
+                              toast(err.message || 'Failed to set album cover', 'error')
                             }
                           }}
                         >

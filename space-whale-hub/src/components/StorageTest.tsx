@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { toast } from '@/components/ui/Toast'
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 
 export default function StorageTest() {
@@ -11,7 +12,7 @@ export default function StorageTest() {
 
   const runStorageTest = async () => {
     if (!user?.id) {
-      alert('Please log in to test storage')
+      toast('Please log in to test storage', 'info')
       return
     }
 

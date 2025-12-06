@@ -5,6 +5,7 @@ import { Upload, X, Image, Video, FileText, Music, Tag } from 'lucide-react'
 // Removed direct database import - using secure API route instead
 import { uploadMedia } from '@/lib/storage-client'
 import { useAuth } from '@/contexts/AuthContext'
+import { toast } from '@/components/ui/Toast'
 
 interface ArchiveUploadProps {
   onUploadComplete?: () => void
@@ -31,15 +32,11 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
     try {
       setUploading(true)
       
-      console.log('Uploading file for archive:', { fileName: file.name, fileSize: file.size, fileType: file.type })
-
       // Use new storage system instead of direct storage calls
       const result = await uploadMedia(file, {
         category: 'archive',
         filename: `${Date.now()}-${file.name}`
       }, 'archive-uploads') // Using 'archive-uploads' as userId for archive uploads
-
-      console.log('File uploaded to storage:', result.url)
       return result.url
     } catch (error) {
       console.error('Error uploading file:', error)
@@ -53,12 +50,12 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
     e.preventDefault()
     
     if (formData.upload_type === 'file' && !formData.file) {
-      alert('Please select a file to upload')
+      toast('Please select a file to upload', 'error')
       return
     }
     
     if (formData.upload_type === 'link' && !formData.media_url) {
-      alert('Please enter a link to your content')
+      toast('Please enter a link to your content', 'error')
       return
     }
 
@@ -131,9 +128,9 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
       setIsOpen(false)
       onUploadComplete?.()
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating archive item:', error)
-      alert('Error uploading artwork. Please try again.')
+      toast(error.message || 'Error uploading artwork. Please try again.', 'error')
     } finally {
       setUploading(false)
     }
@@ -145,7 +142,7 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
       // Check file size (50MB limit)
       const maxSize = 50 * 1024 * 1024 // 50MB in bytes
       if (file.size > maxSize) {
-        alert(`File is too large. Maximum size is 50MB. Your file is ${(file.size / (1024 * 1024)).toFixed(1)}MB.`)
+        toast(`File is too large. Maximum size is 50MB. Your file is ${(file.size / (1024 * 1024)).toFixed(1)}MB.`, 'error')
         e.target.value = '' // Clear the input
         return
       }
@@ -333,7 +330,6 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
                       onChange={(e) => setFormData(prev => ({ ...prev, media_url: e.target.value }))}
                       placeholder="https://cloudflare.stream/your-video or https://youtube.com/watch?v=..."
                       className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white/80 backdrop-blur-sm text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body"
-                      suppressHydrationWarning
                       required
                     />
                     <p className="text-xs text-space-whale-navy/60 font-space-whale-body mt-1">
@@ -353,7 +349,6 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                     placeholder="A title for your creation..."
                     className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white/80 backdrop-blur-sm text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body"
-                    suppressHydrationWarning
                     required
                   />
                 </div>
@@ -369,7 +364,6 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
                     placeholder="Tell us about it..."
                     rows={3}
                     className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white/80 backdrop-blur-sm text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body"
-                    suppressHydrationWarning
                   />
                 </div>
 
@@ -384,7 +378,6 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
                     onChange={(e) => setFormData(prev => ({ ...prev, artist_name: e.target.value }))}
                     placeholder="Your name"
                     className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white/80 backdrop-blur-sm text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body"
-                    suppressHydrationWarning
                   />
                 </div>
 
@@ -400,7 +393,6 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
                     onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
                     placeholder="garden, cocoon, metamorphosis, whenua, cycles... (separated by commas)"
                     className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white/80 backdrop-blur-sm text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body"
-                    suppressHydrationWarning
                   />
                 </div>
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit3, Trash2, Calendar, MapPin, Image as ImageIcon, FolderOpen, Upload, X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
+import { toast } from '@/components/ui/Toast'
 
 interface Album {
   id: string
@@ -91,9 +92,9 @@ export default function AlbumManager() {
       })
       setIsCreating(false)
       loadAlbums()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating album:', error)
-      alert('Failed to create album. Please try again.')
+      toast(error.message || 'Failed to create album. Please try again.', 'error')
     }
   }
 
@@ -143,9 +144,9 @@ export default function AlbumManager() {
         sort_order: 0
       })
       loadAlbums()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating album:', error)
-      alert('Failed to update album. Please try again.')
+      toast(error.message || 'Failed to update album. Please try again.', 'error')
     }
   }
 
@@ -170,9 +171,9 @@ export default function AlbumManager() {
       }
 
       loadAlbums()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting album:', error)
-      alert('Failed to delete album. Please try again.')
+      toast(error.message || 'Failed to delete album. Please try again.', 'error')
     }
   }
 
@@ -236,10 +237,10 @@ export default function AlbumManager() {
       setShowBatchUpload(false)
       setSelectedAlbum(null)
       loadAlbums()
-      alert(`Successfully uploaded ${files.length} files to ${selectedAlbum.title}!`)
-    } catch (error) {
+      toast(`Successfully uploaded ${files.length} files to ${selectedAlbum.title}!`, 'success')
+    } catch (error: any) {
       console.error('Error batch uploading:', error)
-      alert('Failed to upload files. Please try again.')
+      toast(error.message || 'Failed to upload files. Please try again.', 'error')
     } finally {
       setUploadingFiles(false)
     }

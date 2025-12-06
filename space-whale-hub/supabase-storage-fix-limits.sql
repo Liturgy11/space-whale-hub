@@ -35,3 +35,7 @@ UPDATE storage.buckets
 SET allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'video/mp4', 'video/webm', 'audio/mpeg', 'audio/wav', 'application/pdf']
 WHERE id = 'archive' AND EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'archive');
 
+
+
+
+

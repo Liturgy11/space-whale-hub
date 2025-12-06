@@ -1,7 +1,7 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { Home, User, Heart, Archive, Settings, LogOut, FolderOpen } from 'lucide-react'
+import { Home, User, Heart, Archive, Info, LogOut, FolderOpen } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -75,7 +75,7 @@ export default function MobileNav() {
               : 'text-gray-600 dark:text-gray-400 hover:text-space-whale-purple'
           }`}
         >
-          <Settings className="h-5 w-5" />
+          <Info className="h-5 w-5" />
           <span className="text-xs font-medium">About</span>
         </Link>
       </div>

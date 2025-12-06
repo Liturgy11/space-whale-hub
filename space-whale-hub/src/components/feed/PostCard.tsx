@@ -15,6 +15,7 @@ interface Post {
   media_type?: string
   created_at: string
   author: {
+    id: string
     display_name: string
     pronouns?: string
     avatar_url?: string
@@ -31,9 +32,11 @@ interface PostCardProps {
   onEdit?: (postId: string) => void
   onDelete?: (postId: string) => void
   onBookmark?: (postId: string) => void
+  isDeleting?: boolean
+  onCancelDelete?: () => void
 }
 
-export default function PostCard({ post, onLike, onComment, onEdit, onDelete, onBookmark }: PostCardProps) {
+export default function PostCard({ post, onLike, onComment, onEdit, onDelete, onBookmark, isDeleting = false, onCancelDelete }: PostCardProps) {
   const { user } = useAuth()
   const [showContent, setShowContent] = useState(!post.content_warning)
   const [showOptions, setShowOptions] = useState(false)
@@ -158,34 +161,74 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
             <div className="relative">
               <button
                 onClick={() => setShowOptions(!showOptions)}
-                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-space-whale-purple focus:ring-offset-2 rounded"
+                aria-label="Post options"
+                aria-expanded={showOptions}
+                aria-haspopup="true"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </button>
               
               {showOptions && (
-                <div className="absolute right-0 top-8 bg-white dark:bg-gray-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1 z-10 min-w-[120px]">
-                  <button
-                    onClick={() => {
-                      onEdit?.(post.id)
-                      setShowOptions(false)
-                    }}
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => {
-                      onDelete?.(post.id)
-                      setShowOptions(false)
-                    }}
-                    className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </button>
-                </div>
+                <>
+                  <div 
+                    className="fixed inset-0 z-[5]" 
+                    onClick={() => setShowOptions(false)}
+                    aria-hidden="true"
+                  />
+                  <div className="absolute right-0 top-8 bg-white dark:bg-gray-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1 z-10 min-w-[120px]">
+                    <button
+                      onClick={() => {
+                        onEdit?.(post.id)
+                        setShowOptions(false)
+                      }}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                      aria-label="Edit post"
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit
+                    </button>
+                    {isDeleting ? (
+                      <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-600">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">Delete this post?</p>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => {
+                              onDelete?.(post.id)
+                              setShowOptions(false)
+                            }}
+                            className="flex-1 px-3 py-1.5 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                            aria-label="Confirm delete"
+                          >
+                            Delete
+                          </button>
+                          <button
+                            onClick={() => {
+                              onCancelDelete?.()
+                              setShowOptions(false)
+                            }}
+                            className="flex-1 px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                            aria-label="Cancel delete"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          onDelete?.(post.id)
+                          setShowOptions(false)
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        aria-label="Delete post"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           )}
@@ -194,6 +237,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
             onClick={() => onBookmark?.(post.id)}
             className="p-2 text-gray-400 hover:text-yellow-500 transition-colors"
             title="Save for later"
+            aria-label="Bookmark post"
           >
             <Bookmark className="h-4 w-4" />
           </button>
@@ -214,7 +258,8 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
             </div>
             <button
               onClick={() => setShowContent(true)}
-              className="px-3 py-2 bg-yellow-600 text-white text-sm rounded-lg hover:bg-yellow-700 transition-colors w-full sm:w-auto"
+              className="px-3 py-2 bg-yellow-600 text-white text-sm rounded-lg hover:bg-yellow-700 transition-colors w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+              aria-label="Show post content"
             >
               Show Content
             </button>
@@ -298,7 +343,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
                                         loading="lazy"
                                         decoding="async"
                                         onError={(e) => {
-                                          console.log('Mood board image failed to load')
+                                          // Image failed to load - handled by onError
                                           e.currentTarget.style.display = 'none'
                                         }}
                                       />
@@ -425,10 +470,11 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
               setShowCommentForm(!showComments)
               onComment?.(post.id)
             }}
-            className={`flex items-center space-x-1.5 sm:space-x-2 transition-all duration-200 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-95 ${
+            className={`flex items-center space-x-1.5 sm:space-x-2 transition-all duration-200 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
               showComments ? 'text-indigo-500' : 'text-gray-500 hover:text-indigo-500'
             }`}
-            aria-label="Comments"
+            aria-label={`${showComments ? 'Hide' : 'Show'} comments`}
+            aria-expanded={showComments}
           >
             <MessageCircle className={`h-5 w-5 sm:h-5 sm:w-5 ${showComments ? 'fill-current' : ''}`} />
             {post.comments_count > 0 && (
@@ -494,7 +540,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
                       className="w-full aspect-square object-cover rounded-lg shadow-lg cursor-pointer hover:scale-105 transition-transform"
                       onClick={(e) => e.stopPropagation()}
                       onError={(e) => {
-                        console.log('Mood board image failed to load in modal')
+                        // Image failed to load in modal - handled by onError
                         e.currentTarget.style.display = 'none'
                       }}
                     />

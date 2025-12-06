@@ -28,28 +28,38 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
     setLoading(true)
     setError('')
 
-    const { error } = await signIn(email, password)
-    
-    if (error) {
-      setError(error.message)
-    } else {
-      onSuccess?.()
+    try {
+      const { error } = await signIn(email, password)
+      
+      if (error) {
+        // Provide more helpful error messages
+        console.error('Login error details:', error)
+        if (error.message?.includes('fetch') || error.message?.includes('Load failed') || error.name === 'AuthRetryableFetchError') {
+          setError('Connection error. Your Supabase project may still be initializing after restoration. Please wait 2-3 minutes and try again, or check your Supabase dashboard to confirm the project is active.')
+        } else if (error.message?.includes('Invalid login credentials') || error.message?.includes('Invalid')) {
+          setError('Invalid email or password. Please try again.')
+        } else {
+          setError(error.message || 'An error occurred. Please try again.')
+        }
+      } else {
+        onSuccess?.()
+      }
+    } catch (err: any) {
+      console.error('Login error:', err)
+      setError('An unexpected error occurred. Please try again.')
+    } finally {
+      setLoading(false)
     }
-    
-    setLoading(false)
   }
 
   if (!mounted) {
     return (
-      <div className="max-w-md mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+      <div className="w-full">
+        <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-space-whale-heading text-space-whale-navy mb-2">
               Welcome Back
             </h2>
-            <p className="text-gray-600 dark:text-gray-300">
-              Sign in to continue your space whale journey
-            </p>
           </div>
           <div className="animate-pulse">
             <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
@@ -64,37 +74,28 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
   }
 
   return (
-    <div className="max-w-md mx-auto">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+    <div className="w-full">
+      <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
+        <div className="text-center mb-6">
+          <h2 className="text-xl font-space-whale-heading text-space-whale-navy mb-2">
             Welcome Back
           </h2>
-          <p className="text-gray-600 dark:text-gray-300">
-            Sign in to continue your space whale journey
-          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Email Address
-            </label>
             <input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-              placeholder="your@email.com"
+              className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors font-space-whale-body"
+              placeholder="Email"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Password
-            </label>
             <div className="relative">
               <input
                 id="password"
@@ -102,14 +103,14 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                placeholder="Enter your password"
-                suppressHydrationWarning
+                className="w-full px-4 py-3 pr-12 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors font-space-whale-body"
+                placeholder="Password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-space-whale-purple hover:text-space-whale-dark-purple"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
@@ -125,7 +126,7 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 px-4 rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl"
+            className="w-full bg-gradient-to-r from-space-whale-purple to-accent-pink text-white font-space-whale-accent py-3 px-4 rounded-lg hover:from-space-whale-dark-purple hover:to-accent-pink/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-space-whale-purple/30"
           >
             {loading ? (
               <div className="flex items-center justify-center">
@@ -139,11 +140,11 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-gray-600 dark:text-gray-300">
+          <p className="font-space-whale-body text-space-whale-navy">
             Don't have an account?{' '}
             <button
               onClick={onSwitchToSignUp}
-              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium"
+              className="text-space-whale-purple hover:text-space-whale-dark-purple font-space-whale-accent transition-colors"
             >
               Sign up here
             </button>
@@ -151,7 +152,7 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
         </div>
 
         <div className="mt-6 text-center">
-          <button className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+          <button className="text-sm font-space-whale-body text-space-whale-purple hover:text-space-whale-dark-purple transition-colors">
             Forgot your password?
           </button>
         </div>

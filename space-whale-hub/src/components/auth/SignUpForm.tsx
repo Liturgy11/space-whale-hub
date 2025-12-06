@@ -117,17 +117,14 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
   }
 
   return (
-    <div className="max-w-md mx-auto">
+    <div className="w-full">
       <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-space-whale-heading text-space-whale-navy mb-2">
-            Welcome to Space Whale Portal
+        <div className="text-center mb-6">
+          <h2 className="text-xl font-space-whale-heading text-space-whale-navy mb-2">
+            Join the Portal
           </h2>
-          <p className="font-space-whale-body text-space-whale-purple">
-            A sanctuary for creative healing and community care
-          </p>
-          <p className="font-space-whale-body text-space-whale-navy text-sm mt-2">
-            Made with and for ND queers, nature lovers, artists, and seekers building something different together.
+          <p className="text-sm font-space-whale-body text-space-whale-navy">
+            Made for LGBTIQA+, ND, disabled folks, and anyone seeking space to create, share, and connect.
           </p>
         </div>
 
@@ -144,7 +141,6 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
               required
               className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors font-space-whale-body"
               placeholder="What should we call you?"
-              suppressHydrationWarning
             />
             <p className="text-xs font-space-whale-body text-space-whale-purple mt-1">
               You can change this anytime in your settings
@@ -162,7 +158,6 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
               onChange={(e) => setPronouns(e.target.value)}
               className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors font-space-whale-body"
               placeholder="e.g., they/them, she/her, he/him"
-              suppressHydrationWarning
             />
           </div>
 
@@ -178,7 +173,6 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
               required
               className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors font-space-whale-body"
               placeholder="Enter your invite code"
-              suppressHydrationWarning
             />
             <p className="text-xs font-space-whale-body text-space-whale-purple mt-1">
               The Space Whale Portal is invite-only. Contact us if you need an invite code.
@@ -197,7 +191,6 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
               required
               className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors font-space-whale-body"
               placeholder="your@email.com"
-              suppressHydrationWarning
             />
           </div>
 
@@ -212,21 +205,33 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 pr-12 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors font-space-whale-body"
+                className={`w-full px-4 py-3 pr-12 border rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:border-transparent transition-colors font-space-whale-body ${
+                  password && password.length < 6
+                    ? 'border-red-300 focus:ring-red-500'
+                    : password && password.length >= 6
+                    ? 'border-green-300 focus:ring-green-500'
+                    : 'border-space-whale-lavender/30 focus:ring-space-whale-purple'
+                }`}
                 placeholder="Create a secure password"
-                suppressHydrationWarning
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-space-whale-purple hover:text-space-whale-dark-purple"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
-            <p className="text-xs font-space-whale-body text-space-whale-purple mt-1">
-              Must be at least 6 characters long
-            </p>
+            {password && password.length < 6 && (
+              <p className="mt-1 text-xs text-red-600 font-space-whale-body">Password must be at least 6 characters</p>
+            )}
+            {password && password.length >= 6 && (
+              <p className="mt-1 text-xs text-green-600 font-space-whale-body">✓ Password length is good</p>
+            )}
+            {!password && (
+              <p className="mt-1 text-xs font-space-whale-body text-space-whale-purple">Must be at least 6 characters long</p>
+            )}
           </div>
 
           <div>
@@ -240,18 +245,30 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 pr-12 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors font-space-whale-body"
+                className={`w-full px-4 py-3 pr-12 border rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:border-transparent transition-colors font-space-whale-body ${
+                  confirmPassword && password !== confirmPassword
+                    ? 'border-red-300 focus:ring-red-500'
+                    : confirmPassword && password === confirmPassword
+                    ? 'border-green-300 focus:ring-green-500'
+                    : 'border-space-whale-lavender/30 focus:ring-space-whale-purple'
+                }`}
                 placeholder="Confirm your password"
-                suppressHydrationWarning
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-space-whale-purple hover:text-space-whale-dark-purple"
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
               >
                 {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
+            {confirmPassword && password !== confirmPassword && (
+              <p className="mt-1 text-xs text-red-600 font-space-whale-body">Passwords do not match</p>
+            )}
+            {confirmPassword && password === confirmPassword && password.length >= 6 && (
+              <p className="mt-1 text-xs text-green-600 font-space-whale-body">✓ Passwords match</p>
+            )}
           </div>
 
           {error && (
@@ -262,8 +279,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
 
           <div className="bg-gradient-to-r from-space-whale-lavender/20 to-accent-pink/20 border border-space-whale-lavender/30 rounded-lg p-4">
             <p className="text-sm font-space-whale-body text-space-whale-navy">
-              By creating an account, you're agreeing to show up with care, to be accountable when you mess up, 
-              and to trust that we're all doing our best to build something different together. Welcome home. 🐋
+              By creating an account, you're agreeing to show up with care, and trust that we're all doing our best together. Welcome home. 🐋
             </p>
           </div>
 

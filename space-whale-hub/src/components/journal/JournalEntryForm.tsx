@@ -27,24 +27,11 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
     if (!user) return
 
     try {
-      console.log('Starting file upload for journal entry:', { 
-        fileName: file.name, 
-        fileSize: file.size, 
-        fileType: file.type,
-        userId: user.id 
-      })
-
       // Use new storage system instead of base64
       const result = await uploadMedia(file, {
         category: 'journal',
         filename: `${Date.now()}-${file.name}`
       }, user.id)
-
-      console.log('File upload successful:', { 
-        url: result.url, 
-        path: result.path, 
-        bucket: result.bucket 
-      })
       
       setMediaUrl(result.url)
       setMediaType(file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'document')
@@ -65,8 +52,6 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
     setLoading(true)
 
     try {
-      console.log('Creating journal entry for user:', user.id)
-      
       // Use the secure API route that doesn't require authentication tokens
       const response = await fetch('/api/create-journal-entry-secure', {
         method: 'POST',
@@ -90,8 +75,6 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
       if (!result.success) {
         throw new Error(result.error || 'Failed to create journal entry')
       }
-
-      console.log('Journal entry created successfully:', result.entry)
 
       // Reset form
       setTitle('')

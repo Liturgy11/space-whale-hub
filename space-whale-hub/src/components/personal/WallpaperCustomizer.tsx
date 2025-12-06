@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
+import { toast } from '@/components/ui/Toast'
 import { X, Palette, Upload, Sparkles, Leaf, Zap } from 'lucide-react'
 
 interface WallpaperCustomizerProps {
@@ -57,7 +58,7 @@ export default function WallpaperCustomizer({ onClose, onWallpaperChange }: Wall
     if (!file || !user) return
 
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file')
+      toast('Please select an image file', 'error')
       return
     }
 
@@ -76,7 +77,7 @@ export default function WallpaperCustomizer({ onClose, onWallpaperChange }: Wall
       setSelectedWallpaper('')
     } catch (error: any) {
       console.error('Error uploading custom wallpaper:', error)
-      alert(`Upload failed: ${error.message}`)
+      toast(`Upload failed: ${error.message}`, 'error')
     } finally {
       setUploading(false)
     }
@@ -88,6 +89,13 @@ export default function WallpaperCustomizer({ onClose, onWallpaperChange }: Wall
     } else if (customImage) {
       onWallpaperChange(customImage)
     }
+    onClose()
+  }
+
+  const handleRevert = () => {
+    onWallpaperChange('minimal')
+    setSelectedWallpaper('')
+    setCustomImage('')
     onClose()
   }
 
@@ -168,8 +176,14 @@ export default function WallpaperCustomizer({ onClose, onWallpaperChange }: Wall
             )}
           </div>
 
-          {/* Apply Button */}
-          <div className="flex justify-end">
+          {/* Action Buttons */}
+          <div className="flex justify-between items-center gap-4">
+            <button
+              onClick={handleRevert}
+              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-space-whale-accent"
+            >
+              Revert to Default
+            </button>
             <button
               onClick={handleApply}
               disabled={!selectedWallpaper && !customImage}

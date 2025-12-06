@@ -123,3 +123,7 @@ FOR DELETE
 TO authenticated
 USING (auth.uid()::text = user_id);
 
+
+
+
+

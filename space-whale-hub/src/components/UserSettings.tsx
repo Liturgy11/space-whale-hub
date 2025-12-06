@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
 import { supabase } from '@/lib/supabase'
 import { User, Camera, X, Sparkles, Edit3, Save, Loader2 } from 'lucide-react'
+import { toast } from '@/components/ui/Toast'
 
 interface UserSettingsProps {
   onClose?: () => void
@@ -31,26 +32,17 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
   }, [user])
 
   const handleAvatarUpload = async (file: File) => {
-    console.log('Avatar upload started:', file.name)
     setUploading(true)
     setError('')
     setSuccess('')
     
     try {
-      // Create a unique filename with user ID
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${user.id}-avatar.${fileExt}`
-      
-      console.log('Uploading to storage:', fileName)
-      
       // Use new storage system
       const result = await uploadMedia(file, {
         category: 'avatars',
         filename: `${user.id}-avatar`,
         upsert: true
       }, user.id)
-
-      console.log('Upload result:', result)
       const publicUrl = result.url
       const bustUrl = `${publicUrl}?v=${Date.now()}`
 
@@ -65,9 +57,11 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
       if (updateError) {
         console.error('Profile update error:', updateError)
         setError('Avatar uploaded but profile update failed.')
+        toast('Failed to update avatar', 'error')
       } else {
         setAvatarUrl(bustUrl)
         setSuccess('✨ Avatar updated successfully! ✨')
+        toast('Avatar updated successfully!', 'success')
         // Ensure global auth user metadata reflects the new avatar
         await refreshUser()
         // Auto-close shortly after avatar success
@@ -80,6 +74,7 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
     } catch (error) {
       console.error('Upload error:', error)
       setError('Upload failed. Please try again.')
+      toast('Failed to upload avatar', 'error')
       setUploading(false)
     }
   }
@@ -100,8 +95,10 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
 
       if (updateError) {
         setError('Failed to update profile. Please try again.')
+        toast('Failed to update profile', 'error')
       } else {
         setSuccess('✨ Profile updated successfully! ✨')
+        toast('Profile updated successfully!', 'success')
         await refreshUser()
         if (onClose) {
           setTimeout(() => onClose(), 800)
@@ -112,6 +109,7 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
     } catch (error) {
       console.error('Profile update error:', error)
       setError('Failed to update profile. Please try again.')
+      toast('Failed to update profile', 'error')
       setSaving(false)
     }
   }

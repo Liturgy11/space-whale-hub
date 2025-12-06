@@ -52,7 +52,6 @@ export default function ArchivePage() {
   const loadConstellationItems = async () => {
     try {
       setLoading(true)
-      console.log('[ArchivePage] Loading albums from /api/get-albums-secure...')
       
       // Fetch albums for public Constellation view
       const response = await fetch('/api/get-albums-secure', {
@@ -63,8 +62,6 @@ export default function ArchivePage() {
         cache: 'no-store' // Ensure fresh data
       })
       
-      console.log('[ArchivePage] Response status:', response.status, response.statusText)
-      
       if (!response.ok) {
         const errorText = await response.text()
         console.error('[ArchivePage] API response not OK:', response.status, errorText)
@@ -72,7 +69,6 @@ export default function ArchivePage() {
       }
       
       const result = await response.json()
-      console.log('[ArchivePage] Albums API response:', result)
 
       if (!result.success) {
         console.error('[ArchivePage] API returned error:', result.error, result.details)
@@ -80,7 +76,6 @@ export default function ArchivePage() {
       }
 
       const data = result.data || []
-      console.log('[ArchivePage] Raw albums data:', data)
 
       const list: AlbumCardData[] = data.map((a: any) => ({
         id: a.id,
@@ -92,7 +87,6 @@ export default function ArchivePage() {
         item_count: a.item_count || 0,
       }))
 
-      console.log(`[ArchivePage] Loaded ${list.length} albums:`, list.map(a => ({ id: a.id, title: a.title, item_count: a.item_count })))
       setAlbums(list)
       setFilteredAlbums(list)
 
@@ -102,7 +96,6 @@ export default function ArchivePage() {
         .filter((url: string | undefined) => url && url.includes('supabase')) as string[]
 
       if (coverUrls.length > 0) {
-        console.log(`[ArchivePage] Signing ${coverUrls.length} cover image URLs`)
         try {
           const signedUrlResults = await getSignedUrls(coverUrls)
           const urlMap = createSignedUrlMap(signedUrlResults)

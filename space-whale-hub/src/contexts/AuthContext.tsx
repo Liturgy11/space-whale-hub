@@ -93,10 +93,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       if (error) {
-        console.error('Error getting session:', error)
-        // Clear any invalid session data
-        setSession(null)
-        setUser(null)
+        // Handle retryable errors gracefully - they'll retry automatically
+        if (error.name === 'AuthRetryableFetchError') {
+          console.warn('Network error during auth initialization, will retry:', error.message)
+          // Don't clear session on retryable errors - Supabase will handle retries
+          // Try to use cached session if available
+          try {
+            const cachedSession = await supabase.auth.getSession()
+            if (cachedSession.data.session) {
+              setSession(cachedSession.data.session)
+              setUser(cachedSession.data.session.user)
+            }
+          } catch (e) {
+            // Ignore cache errors
+          }
+        } else {
+          console.error('Error getting session:', error)
+          // Clear any invalid session data for non-retryable errors
+          setSession(null)
+          setUser(null)
+        }
       } else {
         setSession(session)
         setUser(session?.user ?? null)
@@ -104,19 +120,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Note: Profile creation handled in getPosts function due to RLS constraints
       }
       setLoading(false)
+    }).catch((err) => {
+      // Catch any unexpected errors
+      console.warn('Unexpected error during session fetch:', err)
+      setLoading(false)
     })
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change:', event, session?.user?.id)
       setSession(session)
       setUser(session?.user ?? null)
       
       // Note: Profile creation handled in getPosts function due to RLS constraints
       
       setLoading(false)
+    }, (error) => {
+      // Handle auth state change errors
+      if (error?.name === 'AuthRetryableFetchError' || error?.message?.includes('Load failed')) {
+        // Suppress retryable errors - they'll retry automatically
+        // These are network issues that Supabase will handle
+        return
+      } else {
+        console.error('Auth state change error:', error)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -139,11 +167,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    return { error }
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      return { error }
+    } catch (err: any) {
+      // Handle network errors
+      console.error('Sign in error:', err)
+      return { 
+        error: { 
+          message: err.message || 'Network error. Please check your connection and try again.',
+          name: err.name 
+        } 
+      }
+    }
   }
 
   const signOut = async () => {

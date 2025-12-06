@@ -107,3 +107,7 @@ FOR SELECT USING (bucket_id = 'archive');
 -- Enable RLS on storage.objects
 ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
+
+
+
+

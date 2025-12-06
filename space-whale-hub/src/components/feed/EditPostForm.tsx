@@ -51,15 +51,11 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
     setError('')
 
     try {
-      console.log('Uploading file for post edit:', { fileName: file.name, fileSize: file.size, fileType: file.type })
-
       // Use new storage system instead of base64
       const result = await uploadMedia(file, {
         category: 'posts',
         filename: `${Date.now()}-${file.name}`
       }, user.id)
-
-      console.log('File uploaded to storage:', result.url)
       setMediaUrl(result.url)
       setMediaType(file.type.startsWith('image/') ? 'image' : 
                   file.type.startsWith('video/') ? 'video' : 'document')

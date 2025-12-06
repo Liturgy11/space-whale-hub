@@ -268,7 +268,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
 
   const handleLike = async () => {
     if (!user) {
-      alert('Please log in to like items')
+      toast('Please log in to like items', 'info')
       return
     }
     
@@ -319,7 +319,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
     if (!newComment.trim()) return
     
     if (!user) {
-      alert('Please log in to comment')
+      toast('Please log in to comment', 'info')
       return
     }
 
@@ -862,7 +862,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
               </div>
 
               {/* Comment Form */}
-              <form onSubmit={handleSubmitComment} className="space-y-4" suppressHydrationWarning>
+              <form onSubmit={handleSubmitComment} className="space-y-4">
                 <div>
                   <textarea
                     value={newComment}
@@ -872,7 +872,6 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                     className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors resize-none font-space-whale-body"
                     maxLength={1000}
                     disabled={isSubmittingComment}
-                    suppressHydrationWarning
                   />
                   <div className="flex justify-between items-center mt-2">
                     <p className="text-xs text-space-whale-purple font-space-whale-body">

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { deleteJournalEntry } from '@/lib/database'
+import { toast } from '@/components/ui/Toast'
 import { Calendar, Heart, Edit, Trash2, Lock, Eye, Share2, X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react'
 
 interface JournalListProps {
@@ -29,6 +30,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   const [lightboxImage, setLightboxImage] = useState('')
   const [lightboxImages, setLightboxImages] = useState<string[]>([])
   const [lightboxIndex, setLightboxIndex] = useState(0)
+  const [imageError, setImageError] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -38,12 +40,8 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
 
   const loadEntries = async () => {
     if (!user) {
-      console.log('No user found for journal entries')
       return
     }
-
-    console.log('Loading journal entries for user:', user.id)
-    console.log('User object:', user)
 
     try {
       setLoading(true)
@@ -66,20 +64,9 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       }
 
       const data = result.entries
-      console.log('Loaded journal entries:', data)
-      console.log('Number of entries:', data?.length || 0)
       
-      // Debug media data
       data?.forEach((entry: any, index: number) => {
         if (entry.media_url) {
-          console.log(`Entry ${index} media:`, {
-            hasMedia: !!entry.media_url,
-            mediaType: entry.media_type,
-            mediaUrl: entry.media_url,
-            mediaUrlStart: entry.media_url?.substring(0, 50) + '...',
-            isBase64: entry.media_url?.startsWith('data:'),
-            isSupabaseUrl: entry.media_url?.includes('supabase.co')
-          })
         }
       })
       
@@ -129,13 +116,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
 
   // Lightbox functions
   const openImageLightbox = (imageUrl: string, allImages: string[], index: number) => {
-    console.log('Opening lightbox with:', {
-      imageUrl,
-      allImages,
-      index,
-      imageUrlLength: imageUrl?.length,
-      allImagesLength: allImages?.length
-    })
+    setImageError(false)
     setLightboxImage(imageUrl)
     setLightboxImages(allImages)
     setLightboxIndex(index)
@@ -147,6 +128,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
     setLightboxImage('')
     setLightboxImages([])
     setLightboxIndex(0)
+    setImageError(false)
   }
 
   const navigateLightbox = (direction: 'prev' | 'next') => {
@@ -281,7 +263,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       }
       
       // Show success message
-      alert('✨ Your thoughts are now floating in the Community Orbit! ✨')
+      toast('✨ Your thoughts are now floating in the Community Orbit! ✨', 'success')
       
     } catch (err: any) {
       setError(err.message)
@@ -498,7 +480,15 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
             {entry.media_url && (
               <div className="mt-3">
                 {entry.media_type === 'image' ? (
-                  <div className="relative group cursor-pointer" onClick={() => setShowImageModal(true)}>
+                  <div 
+                    className="relative group cursor-pointer" 
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (entry.media_url) {
+                        openImageLightbox(entry.media_url, [entry.media_url], 0)
+                      }
+                    }}
+                  >
                     <img
                       src={entry.media_url}
                       alt="Journal media"
@@ -506,17 +496,15 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                       loading="lazy"
                       decoding="async"
                       onError={(e) => {
-                        console.log('❌ Image failed to load:', entry.media_url)
-                        console.log('Media type:', entry.media_type)
-                        console.log('Error event:', e)
+                        console.error('Image failed to load:', entry.media_url, entry.media_type)
                         // Hide broken images (old blob URLs)
                         if (entry.media_url?.startsWith('blob:')) {
-                          console.log('Hiding broken blob URL image')
+                          // Hiding broken blob URL image
                           e.currentTarget.style.display = 'none'
                         }
                       }}
                       onLoad={() => {
-                        console.log('Image loaded successfully:', entry.media_url?.substring(0, 50) + '...')
+                        // Image loaded successfully
                       }}
                     />
                     <div className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -546,7 +534,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                                 loading="lazy"
                                 decoding="async"
                                 onError={(e) => {
-                                  console.log('Mood board image failed to load')
+                                  // Mood board image failed to load - handled by onError
                                   e.currentTarget.style.display = 'none'
                                 }}
                               />
@@ -673,15 +661,40 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
             )}
             
             {/* Main Image - smaller relative to modal, matches Community Orbit */}
-            <img
-              src={lightboxImage}
-              alt="Mood board image - click to close"
-              className="max-w-3xl max-h-[75vh] object-contain rounded-lg shadow-2xl cursor-pointer"
-              onClick={(e) => e.stopPropagation()}
-              style={{ maxHeight: '75vh', maxWidth: '60vw' }}
-              loading="eager"
-              decoding="async"
-            />
+            {!imageError && lightboxImage ? (
+              <img
+                src={lightboxImage}
+                alt="Journal image - click to close"
+                className="max-w-3xl max-h-[75vh] w-auto h-auto object-contain rounded-lg shadow-2xl cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
+                style={{ 
+                  maxHeight: '75vh', 
+                  maxWidth: '90vw',
+                  width: 'auto',
+                  height: 'auto'
+                }}
+                loading="eager"
+                decoding="async"
+                onError={(e) => {
+                  console.error('Lightbox image failed to load:', lightboxImage)
+                  setImageError(true)
+                }}
+                onLoad={() => {
+                  setImageError(false)
+                }}
+              />
+            ) : imageError ? (
+              <div className="max-w-3xl max-h-[75vh] w-full h-[75vh] flex items-center justify-center bg-black/20 rounded-lg">
+                <div className="text-center text-white">
+                  <p className="text-lg mb-2">Image failed to load</p>
+                  <p className="text-sm opacity-75 break-all px-4">{lightboxImage}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="max-w-3xl max-h-[75vh] w-full h-[75vh] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+              </div>
+            )}
             
             {/* Image counter - only show if multiple images */}
             {lightboxImages.length > 1 && (

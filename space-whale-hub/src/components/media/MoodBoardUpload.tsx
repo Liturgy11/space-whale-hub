@@ -126,8 +126,6 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
     setError('')
 
     try {
-      console.log('Uploading mood board images to storage:', files.length)
-      
       // Use new storage system for multiple files
       const results = await uploadMultipleMedia(
         files.map(f => f.file),
@@ -139,7 +137,6 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
       )
 
       const urls = results.map(result => result.url)
-      console.log('Mood board images uploaded:', urls.length)
       
       // Call completion callback with storage URLs and title
       if (onUploadComplete) {

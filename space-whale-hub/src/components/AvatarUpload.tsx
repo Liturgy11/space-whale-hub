@@ -26,21 +26,14 @@ export default function AvatarUpload({ onClose }: AvatarUploadProps) {
 
   const handleAvatarUpload = async (file: File) => {
     setUploading(true)
-    console.log('Uploading file:', file.name)
     
     try {
-      // Create a unique filename with user ID
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${user.id}-avatar.${fileExt}`
-      
       // Use new storage system instead of direct storage calls
       const result = await uploadMedia(file, {
         category: 'avatars',
         filename: `${user.id}-avatar`,
         upsert: true
       }, user.id)
-
-      console.log('Avatar uploaded to storage:', result.url)
       const publicUrl = result.url
 
       // Update user metadata with new avatar URL

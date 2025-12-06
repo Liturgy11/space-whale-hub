@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Inter, Poppins, Quicksand } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import MobileNav from "@/components/MobileNav";
+import ToastProvider from "@/components/ui/ToastProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,6 +53,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <MobileNav />
+          <ToastProvider />
         </AuthProvider>
       </body>
     </html>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { getPosts, deletePost } from '@/lib/database'
 import { useAuth } from '@/contexts/AuthContext'
+import { toast } from '@/components/ui/Toast'
 import PostCard from './PostCard'
 import EditPostForm from './EditPostForm'
 
@@ -33,6 +34,7 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [editingPost, setEditingPost] = useState<Post | null>(null)
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
 
   useEffect(() => {
     loadPosts()
@@ -48,6 +50,7 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
   const loadPosts = async () => {
     try {
       setLoading(true)
+      setError('') // Clear any previous errors
       // Try secure API first (service role), fallback to client getPosts
       try {
         const res = await fetch('/api/get-posts-secure')
@@ -109,7 +112,6 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
 
   const handleComment = (postId: string) => {
     // Comment functionality is handled in PostCard component
-    console.log('Comment on post:', postId)
   }
 
   const handleEdit = (postId: string) => {
@@ -131,7 +133,9 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
   const handleDelete = async (postId: string) => {
     if (!user) return
     
-    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+    // Show confirmation state
+    if (deletingPostId !== postId) {
+      setDeletingPostId(postId)
       return
     }
     
@@ -139,17 +143,23 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
       await deletePost(postId, user.id)
       // Remove the post from local state
       setPosts(posts.filter(post => post.id !== postId))
+      setDeletingPostId(null)
+      toast('Post deleted successfully', 'success')
     } catch (err) {
       console.error('Error deleting post:', err)
       setError('Failed to delete post. Please try again.')
+      setDeletingPostId(null)
+      toast('Failed to delete post. Please try again.', 'error')
     }
+  }
+
+  const cancelDelete = () => {
+    setDeletingPostId(null)
   }
 
   const handleBookmark = (postId: string) => {
     // TODO: Implement bookmark functionality
-    console.log('Bookmark post:', postId)
-    // For now, just show a simple alert
-    alert('Post saved for later! (Bookmark functionality coming soon)')
+    toast('Post saved for later! (Bookmark functionality coming soon)', 'info')
   }
 
   if (loading) {
@@ -183,7 +193,8 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
         <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
         <button
           onClick={loadPosts}
-          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          aria-label="Retry loading posts"
         >
           Try Again
         </button>
@@ -228,6 +239,8 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onBookmark={handleBookmark}
+              isDeleting={deletingPostId === post.id}
+              onCancelDelete={cancelDelete}
             />
           )}
         </div>

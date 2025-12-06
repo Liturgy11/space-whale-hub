@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { toast } from '@/components/ui/Toast'
 
 export default function SetDisplayName() {
   const { user } = useAuth()
@@ -32,10 +33,10 @@ export default function SetDisplayName() {
           window.location.reload()
         }, 1000)
       } else {
-        alert('Error: ' + data.error)
+        toast('Error: ' + data.error, 'error')
       }
-    } catch (error) {
-      alert('Error: ' + error)
+    } catch (error: any) {
+      toast('Error: ' + (error.message || error), 'error')
     } finally {
       setLoading(false)
     }
