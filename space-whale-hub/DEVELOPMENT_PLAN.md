@@ -102,6 +102,37 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
 
 ## ⚠️ Temporary Solutions & Known Issues
 
+### 🔴 Password Reset Flow (IN PROGRESS - Needs Resolution)
+- **Status**: Partially implemented, not fully working
+- **What We Built Today**:
+  - ✅ **Resend SMTP Integration** - Set up custom SMTP with Resend service
+  - ✅ **Custom Domain Email** - Configured `hello@spacewhale.com.au` for sending emails
+  - ✅ **Domain Verification** - Verified `spacewhale.com.au` domain in Resend with DNS records
+  - ✅ **Supabase SMTP Configuration** - Connected Supabase to Resend SMTP
+  - ✅ **Password Reset UI** - Built forgot password form and reset password page
+  - ✅ **Error Handling** - Added comprehensive error detection and user-friendly messages
+  - ✅ **Redirect URL Configuration** - Added production URL to Supabase redirect URLs list
+- **Current Issues**:
+  - 🔴 **Password reset links not working** - Links in emails are either expired or redirect incorrectly
+  - 🔴 **Email links contain errors** - Some reset emails contain error parameters in the URL itself
+  - 🔴 **Redirect to /auth instead of /auth/reset-password** - Users sometimes redirected to login page
+  - 🔴 **Rate limiting** - Supabase rate limits after multiple reset attempts
+- **What We Tried**:
+  - Redirecting through Supabase verification endpoint when code detected in query params
+  - Using `token` parameter instead of `code` for verification
+  - Checking for errors before redirecting
+  - Waiting for auto-session establishment
+  - Multiple iterations of error handling and session detection
+- **Next Steps** (To Come Back To):
+  - Investigate why Supabase is generating links with error parameters
+  - Check if email template is using correct `{{ .ConfirmationURL }}` variable
+  - Verify redirect URL matches exactly in Supabase configuration
+  - Test with fresh reset email after all configuration changes
+  - Consider using Supabase's built-in password reset flow more directly
+  - Check if custom SMTP is causing issues with link generation
+  - Review Supabase documentation for password reset best practices
+- **Temporary Workaround**: Users can contact admin for manual password reset if needed
+
 ### Storage & Media Upload Infrastructure (Major Overhaul Completed)
 - **Previous Status**: Using base64 encoding for all media uploads to bypass Supabase Storage RLS issues
 - **Current Status**: Comprehensive storage infrastructure built with multiple approaches
@@ -120,7 +151,39 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
 
 ## Recent Achievements (Latest Session) 🎉
 
-### Deployment Fixes & Infrastructure (Today)
+### Password Reset & Email Infrastructure (Today - Session 1)
+- ✅ **Resend SMTP Setup**
+  - Set up Resend account and API key
+  - Configured custom domain (`spacewhale.com.au`) in Resend
+  - Added DNS records (DKIM, SPF, MX) to Squarespace/GoDaddy
+  - Verified domain successfully
+- ✅ **Supabase Email Configuration**
+  - Configured Supabase to use Resend SMTP
+  - Set sender email to `hello@spacewhale.com.au`
+  - Updated Site URL to production domain
+  - Added redirect URLs for password reset
+- ✅ **Password Reset UI Components**
+  - Created `ForgotPasswordForm` component
+  - Built `/auth/reset-password` page with Suspense boundary
+  - Added error handling for expired/invalid links
+  - Improved user experience with clear error messages
+  - Added "Request New Reset Link" button
+- ✅ **Code Improvements**
+  - Added `resetPassword` and `updatePassword` functions to AuthContext
+  - Implemented dynamic redirect URL handling
+  - Added comprehensive error detection (query params and hash fragments)
+  - Prevented redirect loops when errors are present
+  - Added extensive logging for debugging
+- ⚠️ **Note**: Password reset flow still not fully working - see Known Issues section
+
+### Invite Code System (Today - Session 2)
+- ✅ **Temporarily Disabled Invite Code Requirement**
+  - Commented out invite code validation in SignUpForm
+  - Removed invite code field from signup form
+  - Added TODO comments for easy re-enablement
+  - Allows testing with friends without invite codes
+
+### Deployment Fixes & Infrastructure (Previous Session)
 - ✅ **Fixed critical deployment issues**
   - Fixed hardcoded Supabase URL in `supabase.ts` to use environment variables
   - Added proper error handling for missing env vars in all API routes
