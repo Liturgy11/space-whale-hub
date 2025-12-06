@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import ForgotPasswordForm from './ForgotPasswordForm'
@@ -18,12 +19,17 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
   const [error, setError] = useState('')
   const [mounted, setMounted] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const searchParams = useSearchParams()
 
   const { signIn } = useAuth()
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+    // Check if forgot password form should be shown from URL parameter
+    if (searchParams.get('forgot') === 'true') {
+      setShowForgotPassword(true)
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

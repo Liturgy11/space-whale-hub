@@ -36,6 +36,31 @@ function ResetPasswordContent() {
         console.log('Search params:', window.location.search)
       }
 
+      // Check for error parameters first (from Supabase redirect)
+      const errorParam = searchParams.get('error')
+      const errorCode = searchParams.get('error_code')
+      const errorDescription = searchParams.get('error_description')
+      
+      // Also check hash fragments for errors
+      let hashError = null
+      if (typeof window !== 'undefined' && window.location.hash) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1))
+        hashError = hashParams.get('error') || hashParams.get('error_code')
+      }
+      
+      if (errorParam || errorCode || hashError) {
+        console.log('Error detected in URL:', { errorParam, errorCode, errorDescription, hashError })
+        if (errorCode === 'otp_expired' || hashError === 'otp_expired') {
+          setError('This reset link has expired. Please request a new password reset email.')
+        } else if (errorParam === 'access_denied' || hashError === 'access_denied') {
+          setError('Access denied. This reset link is invalid or has expired. Please request a new password reset email.')
+        } else {
+          setError(errorDescription?.replace(/\+/g, ' ') || 'This reset link is invalid or has expired. Please request a new password reset email.')
+        }
+        setInitializing(false)
+        return
+      }
+
       // First, check if we already have a session
       let { data: { session } } = await supabase.auth.getSession()
       
@@ -251,12 +276,23 @@ function ResetPasswordContent() {
             <div className="text-center">
               <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-4">
                 <p className="text-red-600 text-sm mb-4">{error}</p>
-                <button
-                  onClick={() => router.push('/auth')}
-                  className="text-space-whale-purple hover:text-space-whale-dark-purple font-space-whale-body underline"
-                >
-                  Return to sign in
-                </button>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => router.push('/auth')}
+                    className="block w-full text-space-whale-purple hover:text-space-whale-dark-purple font-space-whale-body underline"
+                  >
+                    Return to sign in
+                  </button>
+                  <p className="text-space-whale-navy/70 text-sm">
+                    or{' '}
+                    <button
+                      onClick={() => router.push('/auth?forgot=true')}
+                      className="text-space-whale-purple hover:text-space-whale-dark-purple font-space-whale-body underline"
+                    >
+                      request a new reset link
+                    </button>
+                  </p>
+                </div>
               </div>
             </div>
           ) : (

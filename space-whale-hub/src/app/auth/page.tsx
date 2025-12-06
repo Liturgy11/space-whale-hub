@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import LoginForm from '@/components/auth/LoginForm'
 import SignUpForm from '@/components/auth/SignUpForm'
 import Image from 'next/image'
+import { Loader2 } from 'lucide-react'
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
@@ -37,10 +38,19 @@ export default function AuthPage() {
 
         <div className="flex justify-center">
           {isLogin ? (
-            <LoginForm 
-              onSuccess={handleSuccess}
-              onSwitchToSignUp={() => setIsLogin(false)}
-            />
+            <Suspense fallback={
+              <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft w-full">
+                <div className="text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-space-whale-purple mx-auto mb-4" />
+                  <p className="text-space-whale-navy font-space-whale-body">Loading...</p>
+                </div>
+              </div>
+            }>
+              <LoginForm 
+                onSuccess={handleSuccess}
+                onSwitchToSignUp={() => setIsLogin(false)}
+              />
+            </Suspense>
           ) : (
             <SignUpForm 
               onSuccess={handleSuccess}
