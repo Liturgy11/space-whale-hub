@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { Loader2, Eye, EyeOff, CheckCircle } from 'lucide-react'
 import Image from 'next/image'
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -328,6 +328,27 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white star-field flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-space-whale-purple mx-auto mb-4" />
+              <p className="text-space-whale-navy font-space-whale-body">
+                Loading...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   )
 }
 
