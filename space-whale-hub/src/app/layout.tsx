@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Inter, Poppins, Quicksand } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -36,7 +36,11 @@ const quicksand = Quicksand({
 export const metadata: Metadata = {
   title: "Space Whale Portal - A Sanctuary for Creative Becoming",
   description: "A portal where your sensitivity is honoured, your creativity is sacred, and your becoming is witnessed. A sanctuary for space whales navigating by starlight and whale song.",
-  viewport: "width=device-width, initial-scale=1",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

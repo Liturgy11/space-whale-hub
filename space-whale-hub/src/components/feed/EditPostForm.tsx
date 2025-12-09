@@ -47,6 +47,14 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
   const handleFileUpload = async (file: File) => {
     if (!user) return
 
+    // Check file size (10MB limit for posts)
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    if (file.size > maxSize) {
+      const fileSizeMB = (file.size / 1024 / 1024).toFixed(1)
+      setError(`File too large: ${fileSizeMB}MB. Maximum size for posts is 10MB. Please choose a smaller file or compress the image.`)
+      return
+    }
+
     setUploadingMedia(true)
     setError('')
 

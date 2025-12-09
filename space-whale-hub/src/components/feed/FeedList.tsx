@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { getPosts, deletePost } from '@/lib/database'
+import { useState, useEffect, useCallback } from 'react'
+import { getPosts } from '@/lib/database'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/ui/Toast'
 import PostCard from './PostCard'
@@ -36,18 +36,7 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
   const [editingPost, setEditingPost] = useState<Post | null>(null)
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadPosts()
-  }, [])
-
-  // Refresh when trigger changes
-  useEffect(() => {
-    if (refreshTrigger) {
-      loadPosts()
-    }
-  }, [refreshTrigger])
-
-  const loadPosts = async () => {
+  const loadPosts = useCallback(async () => {
     try {
       setLoading(true)
       setError('') // Clear any previous errors
@@ -58,6 +47,7 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
           const json = await res.json()
           if (json.success) {
             setPosts(json.data)
+            setLoading(false)
             return
           }
         }
@@ -70,7 +60,18 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadPosts()
+  }, [loadPosts])
+
+  // Refresh when trigger changes
+  useEffect(() => {
+    if (refreshTrigger) {
+      loadPosts()
+    }
+  }, [refreshTrigger, loadPosts])
 
   const handleLike = async (postId: string) => {
     if (!user) return
@@ -140,16 +141,33 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
     }
     
     try {
-      await deletePost(postId, user.id)
+      // Use the secure API route instead of direct database function
+      const response = await fetch('/api/delete-post-secure', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          postId,
+          userId: user.id
+        })
+      })
+
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to delete post')
+      }
+
       // Remove the post from local state
       setPosts(posts.filter(post => post.id !== postId))
       setDeletingPostId(null)
       toast('Post deleted successfully', 'success')
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting post:', err)
-      setError('Failed to delete post. Please try again.')
+      setError(err.message || 'Failed to delete post. Please try again.')
       setDeletingPostId(null)
-      toast('Failed to delete post. Please try again.', 'error')
+      toast(err.message || 'Failed to delete post. Please try again.', 'error')
     }
   }
 

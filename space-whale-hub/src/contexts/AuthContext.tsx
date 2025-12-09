@@ -95,8 +95,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       if (error) {
-        // Handle retryable errors gracefully - they'll retry automatically
-        if (error.name === 'AuthRetryableFetchError') {
+        // Handle invalid refresh token - clear session and let user sign in again
+        if (error.message?.includes('Invalid Refresh Token') || 
+            error.message?.includes('Refresh Token Not Found') ||
+            error.name === 'AuthApiError' && error.message?.includes('refresh_token')) {
+          console.warn('Invalid refresh token detected, clearing session:', error.message)
+          // Clear invalid session
+          await supabase.auth.signOut()
+          setSession(null)
+          setUser(null)
+        } else if (error.name === 'AuthRetryableFetchError') {
           console.warn('Network error during auth initialization, will retry:', error.message)
           // Don't clear session on retryable errors - Supabase will handle retries
           // Try to use cached session if available
@@ -125,6 +133,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }).catch((err) => {
       // Catch any unexpected errors
       console.warn('Unexpected error during session fetch:', err)
+      // If it's an invalid token error, clear the session
+      if (err?.message?.includes('Invalid Refresh Token') || 
+          err?.message?.includes('Refresh Token Not Found')) {
+        supabase.auth.signOut()
+        setSession(null)
+        setUser(null)
+      }
       setLoading(false)
     })
 
@@ -140,7 +155,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
     }, (error) => {
       // Handle auth state change errors
-      if (error?.name === 'AuthRetryableFetchError' || error?.message?.includes('Load failed')) {
+      if (error?.message?.includes('Invalid Refresh Token') || 
+          error?.message?.includes('Refresh Token Not Found')) {
+        // Clear invalid session on refresh token errors
+        console.warn('Invalid refresh token in auth state change, clearing session')
+        supabase.auth.signOut()
+        setSession(null)
+        setUser(null)
+      } else if (error?.name === 'AuthRetryableFetchError' || error?.message?.includes('Load failed')) {
         // Suppress retryable errors - they'll retry automatically
         // These are network issues that Supabase will handle
         return

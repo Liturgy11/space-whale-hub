@@ -139,6 +139,22 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      // Validate file type (Android browsers sometimes return empty MIME types)
+      const isValidMimeType = file.type.startsWith('image/') || file.type.startsWith('video/') || file.type.startsWith('audio/') || file.type === 'application/pdf'
+      
+      // Fallback: check file extension for Android compatibility
+      const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif']
+      const videoExtensions = ['.mp4', '.webm']
+      const audioExtensions = ['.mp3', '.wav']
+      const isValidExtension = imageExtensions.includes(fileExtension) || videoExtensions.includes(fileExtension) || audioExtensions.includes(fileExtension) || fileExtension === '.pdf'
+      
+      if (!isValidMimeType && !isValidExtension) {
+        toast('Please upload an image, video, audio, or PDF file', 'error')
+        e.target.value = '' // Clear the input
+        return
+      }
+
       // Check file size (50MB limit)
       const maxSize = 50 * 1024 * 1024 // 50MB in bytes
       if (file.size > maxSize) {

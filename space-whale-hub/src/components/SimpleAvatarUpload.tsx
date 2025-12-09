@@ -63,6 +63,17 @@ export default function SimpleAvatarUpload({ onClose }: SimpleAvatarUploadProps)
   }
 
   const handleAvatarUpload = async (file: File) => {
+    // Validate file type (Android browsers sometimes return empty MIME types)
+    const isValidMimeType = file.type.startsWith('image/')
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif']
+    const isValidExtension = imageExtensions.includes(fileExtension)
+    
+    if (!isValidMimeType && !isValidExtension) {
+      setSuccess('❌ Please upload an image file')
+      return
+    }
+
     setUploading(true)
     setSuccess('')
     

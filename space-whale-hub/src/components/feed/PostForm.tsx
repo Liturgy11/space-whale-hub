@@ -27,11 +27,31 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
   const [isDragging, setIsDragging] = useState(false)
 
   const handleFileUpload = async (file: File) => {
-    if (!user) return
+    if (!user) {
+      return
+    }
 
-    // Validate file type
-    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+    // Validate file type (Android browsers sometimes return empty MIME types)
+    const isValidMimeType = file.type.startsWith('image/') || file.type.startsWith('video/')
+    
+    // Fallback: check file extension for Android compatibility
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif']
+    const videoExtensions = ['.mp4', '.webm']
+    const isValidExtension = imageExtensions.includes(fileExtension) || videoExtensions.includes(fileExtension)
+    
+    if (!isValidMimeType && !isValidExtension) {
       const errorMsg = 'Please upload an image or video file'
+      setError(errorMsg)
+      toast(errorMsg, 'error')
+      return
+    }
+
+    // Check file size (10MB limit for posts)
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    if (file.size > maxSize) {
+      const fileSizeMB = (file.size / 1024 / 1024).toFixed(1)
+      const errorMsg = `File too large: ${fileSizeMB}MB. Maximum size for posts is 10MB. Please choose a smaller file or compress the image.`
       setError(errorMsg)
       toast(errorMsg, 'error')
       return
@@ -47,14 +67,19 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
         category: 'posts',
         filename: `${Date.now()}-${file.name}`
       }, user.id)
+      
       setMediaUrl(result.url)
-      setMediaType(file.type.startsWith('image/') ? 'image' : 'video')
+      // Determine media type (handle Android empty MIME types)
+      const isImage = file.type.startsWith('image/') || imageExtensions.includes(fileExtension)
+      setMediaType(isImage ? 'image' : 'video')
       setShowMediaUpload(false)
       toast('Media uploaded successfully', 'success')
     } catch (err: any) {
       console.error('File upload error:', err)
-      setError(err.message)
-      toast(err.message || 'Failed to upload media', 'error')
+      const errorMessage = err?.message || 'Failed to upload media'
+      setError(errorMessage)
+      toast(errorMessage, 'error')
+      // Don't close the modal on error so user can try again
     } finally {
       setUploadingMedia(false)
     }
@@ -326,7 +351,10 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">Upload Media</h3>
                 <button
-                  onClick={() => setShowMediaUpload(false)}
+                  onClick={() => {
+                    setShowMediaUpload(false)
+                    setError('') // Clear error when closing modal
+                  }}
                   className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   <X className="h-6 w-6" />
@@ -341,21 +369,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
                   isDragging
                     ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
                     : 'border-gray-300 dark:border-gray-600'
-                } ${uploadingMedia ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}
-                onClick={() => {
-                  if (!uploadingMedia) {
-                    document.getElementById('media-upload')?.click()
-                  }
-                }}
-                role="button"
-                tabIndex={uploadingMedia ? -1 : 0}
-                onKeyDown={(e) => {
-                  if (!uploadingMedia && (e.key === 'Enter' || e.key === ' ')) {
-                    e.preventDefault()
-                    document.getElementById('media-upload')?.click()
-                  }
-                }}
-                aria-label="Upload media by clicking or dragging and dropping"
+                } ${uploadingMedia ? 'opacity-50 pointer-events-none' : ''}`}
               >
                 <Image className={`h-12 w-12 mx-auto mb-4 ${isDragging ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'}`} />
                 <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
@@ -367,7 +381,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
                 <input
                   type="file"
                   onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
+                    if (e.target.files && e.target.files[0] && !uploadingMedia) {
                       handleFileUpload(e.target.files[0])
                     }
                   }}
@@ -393,6 +407,19 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
                     'Choose File'
                   )}
                 </label>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
+                  Supports images and videos (max 10MB)
+                </p>
+                
+                {/* Error Message in Modal */}
+                {error && (
+                  <div className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 mr-2" />
+                      <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -70,6 +70,26 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
+    // Log access (update action)
+    // Note: Audit trail is automatically created by trigger, but we log explicit access
+    try {
+      const ipAddress = request.headers.get('x-forwarded-for') || 
+                       request.headers.get('x-real-ip') || 
+                       null
+      const userAgent = request.headers.get('user-agent') || null
+
+      await supabaseAdmin.rpc('log_journal_access', {
+        p_entry_id: entryId,
+        p_user_id: userId,
+        p_action: 'update',
+        p_ip_address: ipAddress,
+        p_user_agent: userAgent
+      })
+    } catch (logError) {
+      // Don't fail the request if logging fails, but log the error
+      console.error('Failed to log journal access:', logError)
+    }
+
     return NextResponse.json({
       success: true,
       entry: data

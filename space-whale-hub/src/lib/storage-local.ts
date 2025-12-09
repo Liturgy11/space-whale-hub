@@ -57,11 +57,34 @@ export async function uploadMedia(
       body: formData
     })
 
+    // Check if response is OK before trying to parse JSON
     if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || 'Upload failed')
+      // Try to parse error as JSON, but handle plain text errors gracefully
+      let errorMessage = 'Upload failed'
+      const contentType = response.headers.get('content-type')
+      
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || `Upload failed: ${response.status} ${response.statusText}`
+        } catch (parseError) {
+          // If JSON parsing fails, use status text
+          errorMessage = `Upload failed: ${response.status} ${response.statusText}`
+        }
+      } else {
+        // For non-JSON responses (like plain text "Forbidden"), use status text
+        try {
+          const text = await response.text()
+          errorMessage = text || `Upload failed: ${response.status} ${response.statusText}`
+        } catch (textError) {
+          errorMessage = `Upload failed: ${response.status} ${response.statusText}`
+        }
+      }
+      
+      throw new Error(errorMessage)
     }
 
+    // Response is OK, parse as JSON
     const result = await response.json()
     
     if (!result.success) {

@@ -57,11 +57,26 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
   const handleFiles = (newFiles: File[]) => {
     setError('')
     
-    // Filter for images only
-    const imageFiles = newFiles.filter(file => file.type.startsWith('image/'))
+    // Filter for images only (Android browsers sometimes return empty MIME types)
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif']
+    const imageFiles = newFiles.filter(file => {
+      const isValidMimeType = file.type.startsWith('image/')
+      const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
+      const isValidExtension = imageExtensions.includes(fileExtension)
+      return isValidMimeType || isValidExtension
+    })
     
     if (imageFiles.length !== newFiles.length) {
       setError('Only image files are supported for mood boards')
+    }
+
+    // Check file size (10MB limit for journal/mood boards)
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    const oversizedFiles = imageFiles.filter(file => file.size > maxSize)
+    if (oversizedFiles.length > 0) {
+      const fileSizeMB = (oversizedFiles[0].size / 1024 / 1024).toFixed(1)
+      setError(`File too large: ${fileSizeMB}MB. Maximum size for mood boards is 10MB. Please choose smaller files or compress the images.`)
+      return
     }
 
     const newUploadedFiles: UploadedFile[] = imageFiles.map(file => ({

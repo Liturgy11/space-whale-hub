@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
-import { Loader2, Save, X, Upload, Image, X as XIcon } from 'lucide-react'
+import { encryptJournalContent } from '@/lib/journal-encryption'
+import { Loader2, Save, X, Upload, Image, X as XIcon, Lock, Unlock } from 'lucide-react'
 
 interface JournalEntryFormProps {
   onSuccess?: (entry: any) => void
@@ -20,11 +21,37 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showMediaUpload, setShowMediaUpload] = useState(false)
+  const [enableEncryption, setEnableEncryption] = useState(false)
+  const [encryptionPassphrase, setEncryptionPassphrase] = useState('')
+  const [confirmPassphrase, setConfirmPassphrase] = useState('')
 
   // Removed emoji mood selection - keeping it simple
 
   const handleFileUpload = async (file: File) => {
     if (!user) return
+
+    // Validate file type (Android browsers sometimes return empty MIME types)
+    const isValidMimeType = file.type.startsWith('image/') || file.type.startsWith('video/') || file.type.startsWith('audio/')
+    
+    // Fallback: check file extension for Android compatibility
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif']
+    const videoExtensions = ['.mp4', '.webm']
+    const audioExtensions = ['.mp3', '.wav']
+    const isValidExtension = imageExtensions.includes(fileExtension) || videoExtensions.includes(fileExtension) || audioExtensions.includes(fileExtension)
+    
+    if (!isValidMimeType && !isValidExtension) {
+      setError('Please upload an image, video, or audio file')
+      return
+    }
+
+    // Check file size (10MB limit for journal)
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    if (file.size > maxSize) {
+      const fileSizeMB = (file.size / 1024 / 1024).toFixed(1)
+      setError(`File too large: ${fileSizeMB}MB. Maximum size for journal entries is 10MB. Please choose a smaller file or compress the image.`)
+      return
+    }
 
     try {
       // Use new storage system instead of base64
@@ -34,7 +61,10 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
       }, user.id)
       
       setMediaUrl(result.url)
-      setMediaType(file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'document')
+      // Determine media type (handle Android empty MIME types)
+      const isImage = file.type.startsWith('image/') || imageExtensions.includes(fileExtension)
+      const isVideo = file.type.startsWith('video/') || videoExtensions.includes(fileExtension)
+      setMediaType(isImage ? 'image' : isVideo ? 'video' : 'document')
       setShowMediaUpload(false)
       setError('') // Clear any previous errors
     } catch (err: any) {
@@ -52,6 +82,38 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
     setLoading(true)
 
     try {
+      // Validate encryption passphrase if encryption is enabled
+      if (enableEncryption) {
+        if (!encryptionPassphrase || encryptionPassphrase.length < 8) {
+          setError('Encryption passphrase must be at least 8 characters long')
+          setLoading(false)
+          return
+        }
+        if (encryptionPassphrase !== confirmPassphrase) {
+          setError('Passphrases do not match')
+          setLoading(false)
+          return
+        }
+      }
+
+      let finalContent = content.trim()
+      let encryptedData = null
+      let isEncrypted = false
+
+      // Encrypt content if encryption is enabled
+      if (enableEncryption && encryptionPassphrase) {
+        try {
+          encryptedData = await encryptJournalContent(finalContent, encryptionPassphrase)
+          isEncrypted = true
+          // Don't send plain text content when encrypted
+          finalContent = '' // Clear plain text content
+        } catch (encryptError: any) {
+          setError(`Encryption failed: ${encryptError.message}`)
+          setLoading(false)
+          return
+        }
+      }
+
       // Use the secure API route that doesn't require authentication tokens
       const response = await fetch('/api/create-journal-entry-secure', {
         method: 'POST',
@@ -60,7 +122,12 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
         },
         body: JSON.stringify({
           title: title.trim() || undefined,
-          content: content.trim(),
+          content: finalContent, // Empty if encrypted
+          content_encrypted: encryptedData?.encrypted || null,
+          is_encrypted: isEncrypted,
+          encryption_key_id: encryptedData?.keyId || null,
+          encryption_salt: encryptedData?.salt || null,
+          encryption_iv: encryptedData?.iv || null,
           mood: mood || undefined,
           tags: [], // You can add tag functionality later
           media_url: mediaUrl || undefined,
@@ -83,6 +150,9 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
       setMediaUrl('')
       setMediaType('')
       setShowMediaUpload(false)
+      setEnableEncryption(false)
+      setEncryptionPassphrase('')
+      setConfirmPassphrase('')
 
       if (onSuccess) onSuccess(result.entry)
     } catch (err: any) {
@@ -200,6 +270,75 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
               {content.length}/10,000 characters
             </span>
           </div>
+        </div>
+
+        {/* Encryption Section */}
+        <div className="border border-space-whale-lavender/30 rounded-lg p-4 bg-space-whale-lavender/5">
+          <div className="flex items-center justify-between mb-3">
+            <label className="flex items-center text-sm font-medium text-space-whale-navy font-space-whale-body cursor-pointer">
+              <input
+                type="checkbox"
+                checked={enableEncryption}
+                onChange={(e) => {
+                  setEnableEncryption(e.target.checked)
+                  if (!e.target.checked) {
+                    setEncryptionPassphrase('')
+                    setConfirmPassphrase('')
+                  }
+                }}
+                className="mr-2 h-4 w-4 text-space-whale-purple focus:ring-space-whale-purple border-space-whale-lavender/30 rounded"
+              />
+              {enableEncryption ? (
+                <Lock className="h-4 w-4 mr-2 text-space-whale-purple" />
+              ) : (
+                <Unlock className="h-4 w-4 mr-2 text-gray-400" />
+              )}
+              <span>Encrypt this entry</span>
+            </label>
+          </div>
+          
+          {enableEncryption && (
+            <div className="space-y-3 mt-3">
+              <div className="bg-space-whale-purple/5 border border-space-whale-purple/20 rounded-lg p-3">
+                <p className="text-xs text-space-whale-navy font-space-whale-body mb-2">
+                  <strong className="text-space-whale-purple">What is encryption?</strong>
+                </p>
+                <p className="text-xs text-space-whale-navy/80 font-space-whale-body leading-relaxed">
+                  Encryption scrambles your words into unreadable code before they're saved. Even if someone accessed the database, they couldn't read your entry without your passphrase. Your content is protected with military-grade encryption that only you can unlock.
+                </p>
+              </div>
+              <p className="text-xs text-space-whale-purple/70 font-space-whale-body">
+                🔐 Your content will be encrypted before saving. You'll need this passphrase to read it later. 
+                <strong className="block mt-1 text-space-whale-purple">Important: We cannot recover your passphrase if you forget it!</strong>
+              </p>
+              <div>
+                <label className="block text-xs font-medium text-space-whale-navy mb-1 font-space-whale-body">
+                  Encryption Passphrase (min 8 characters)
+                </label>
+                <input
+                  type="password"
+                  value={encryptionPassphrase}
+                  onChange={(e) => setEncryptionPassphrase(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors"
+                  placeholder="Enter a secure passphrase"
+                  minLength={8}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-space-whale-navy mb-1 font-space-whale-body">
+                  Confirm Passphrase
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassphrase}
+                  onChange={(e) => setConfirmPassphrase(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors"
+                  placeholder="Confirm your passphrase"
+                  minLength={8}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end space-x-3">

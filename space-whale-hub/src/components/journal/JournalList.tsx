@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { deleteJournalEntry } from '@/lib/database'
+import { decryptJournalContent, isEncrypted, getEncryptionStatus } from '@/lib/journal-encryption'
 import { toast } from '@/components/ui/Toast'
 import { Calendar, Heart, Edit, Trash2, Lock, Eye, Share2, X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react'
 
@@ -31,6 +32,11 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   const [lightboxImages, setLightboxImages] = useState<string[]>([])
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const [imageError, setImageError] = useState(false)
+  
+  // Decryption state
+  const [decryptingId, setDecryptingId] = useState<string | null>(null)
+  const [decryptPassphrase, setDecryptPassphrase] = useState('')
+  const [decryptedContent, setDecryptedContent] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (user) {
@@ -96,10 +102,60 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
     }
   }
 
+  const handleDecrypt = async (entry: any) => {
+    if (!entry.content_encrypted || !entry.encryption_salt || !entry.encryption_iv) {
+      toast('This entry is not encrypted or missing encryption data', 'error')
+      return
+    }
+
+    if (!decryptPassphrase) {
+      toast('Please enter your passphrase', 'error')
+      return
+    }
+
+    try {
+      // Log the data we're trying to decrypt (for debugging)
+      console.log('Decrypting entry:', {
+        entryId: entry.id,
+        hasEncrypted: !!entry.content_encrypted,
+        hasSalt: !!entry.encryption_salt,
+        hasIv: !!entry.encryption_iv,
+        encryptedType: typeof entry.content_encrypted,
+        encryptedLength: entry.content_encrypted?.length,
+        saltLength: entry.encryption_salt?.length,
+        ivLength: entry.encryption_iv?.length,
+        encryptedPreview: typeof entry.content_encrypted === 'string' 
+          ? entry.content_encrypted.substring(0, 50) 
+          : 'not a string'
+      })
+      
+      const decrypted = await decryptJournalContent(
+        entry.content_encrypted,
+        decryptPassphrase,
+        entry.encryption_salt,
+        entry.encryption_iv
+      )
+      
+      setDecryptedContent(prev => ({ ...prev, [entry.id]: decrypted }))
+      setDecryptingId(null)
+      setDecryptPassphrase('')
+      toast('Entry decrypted successfully', 'success')
+    } catch (err: any) {
+      console.error('Decryption error:', err)
+      console.error('Error details:', {
+        message: err.message,
+        name: err.name,
+        stack: err.stack
+      })
+      toast(err.message || 'Failed to decrypt. Please check your passphrase.', 'error')
+    }
+  }
+
   const handleEdit = (entry: any) => {
     setEditingId(entry.id)
     setEditTitle(entry.title || '')
-    setEditContent(entry.content || '')
+    // Use decrypted content if available, otherwise use plain content
+    setEditContent(decryptedContent[entry.id] || entry.content || '')
     setEditMood(entry.mood || '')
     setEditMediaUrl(entry.media_url || '')
     setEditMediaType(entry.media_type || '')
@@ -350,6 +406,11 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                 <div className="flex items-center space-x-1 flex-shrink-0">
                   <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-space-whale-purple" />
                   <span className="text-xs text-space-whale-purple font-space-whale-body">Private</span>
+                  {isEncrypted(entry) && (
+                    <span className="text-xs text-space-whale-purple font-space-whale-body ml-1">
+                      • 🔒 Encrypted
+                    </span>
+                  )}
                 </div>
               </div>
               
@@ -469,9 +530,37 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
               <>
                 {/* Only show content if it's not a mood board */}
                 {entry.media_type !== 'moodboard' && (
-                  <p className="text-space-whale-navy whitespace-pre-wrap font-space-whale-body mb-3">
-                    {entry.content}
-                  </p>
+                  <div className="mb-3">
+                    {isEncrypted(entry) ? (
+                      decryptedContent[entry.id] ? (
+                        <p className="text-space-whale-navy whitespace-pre-wrap font-space-whale-body">
+                          {decryptedContent[entry.id]}
+                        </p>
+                      ) : (
+                        <div className="bg-space-whale-lavender/10 border border-space-whale-lavender/30 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-2">
+                              <Lock className="h-5 w-5 text-space-whale-purple" />
+                              <span className="text-sm font-medium text-space-whale-navy">This entry is encrypted</span>
+                            </div>
+                            <button
+                              onClick={() => setDecryptingId(entry.id)}
+                              className="px-3 py-1.5 bg-space-whale-purple text-white text-sm rounded-lg hover:bg-space-whale-purple/90 transition-colors"
+                            >
+                              Decrypt
+                            </button>
+                          </div>
+                          <p className="text-xs text-space-whale-purple/70">
+                            Enter your passphrase to view this encrypted entry
+                          </p>
+                        </div>
+                      )
+                    ) : (
+                      <p className="text-space-whale-navy whitespace-pre-wrap font-space-whale-body">
+                        {entry.content}
+                      </p>
+                    )}
+                  </div>
                 )}
               </>
             )}
@@ -702,6 +791,77 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                 {lightboxIndex + 1} / {lightboxImages.length}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Decryption Modal */}
+      {decryptingId && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[10000] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+                <Lock className="h-5 w-5 mr-2 text-space-whale-purple" />
+                Decrypt Entry
+              </h3>
+              <button
+                onClick={() => {
+                  setDecryptingId(null)
+                  setDecryptPassphrase('')
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+              This entry is encrypted. Enter your passphrase to decrypt and view it.
+            </p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Passphrase
+                </label>
+                <input
+                  type="password"
+                  value={decryptPassphrase}
+                  onChange={(e) => setDecryptPassphrase(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && decryptPassphrase) {
+                      const entry = entries.find(e => e.id === decryptingId)
+                      if (entry) handleDecrypt(entry)
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
+                  placeholder="Enter your encryption passphrase"
+                  autoFocus
+                />
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    const entry = entries.find(e => e.id === decryptingId)
+                    if (entry) handleDecrypt(entry)
+                  }}
+                  disabled={!decryptPassphrase}
+                  className="flex-1 px-4 py-2 bg-space-whale-purple text-white rounded-lg hover:bg-space-whale-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Decrypt
+                </button>
+                <button
+                  onClick={() => {
+                    setDecryptingId(null)
+                    setDecryptPassphrase('')
+                  }}
+                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

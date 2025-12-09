@@ -76,6 +76,38 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
+    // Log access for each entry viewed
+    // Note: This logs that the user accessed their journal entries list
+    try {
+      const ipAddress = request.headers.get('x-forwarded-for') || 
+                       request.headers.get('x-real-ip') || 
+                       null
+      const userAgent = request.headers.get('user-agent') || null
+
+      // Log access for each entry that was viewed
+      if (data && data.length > 0) {
+        const logPromises = data.map(async (entry: any) => {
+          try {
+            await supabaseAdmin.rpc('log_journal_access', {
+              p_entry_id: entry.id,
+              p_user_id: userId,
+              p_action: 'view',
+              p_ip_address: ipAddress,
+              p_user_agent: userAgent
+            })
+          } catch (err) {
+            // Don't fail if individual log fails - just log the error
+            console.error(`Failed to log access for entry ${entry.id}:`, err)
+          }
+        })
+        // Wait for all logs, but don't fail if any fail
+        await Promise.allSettled(logPromises)
+      }
+    } catch (logError) {
+      // Don't fail the request if logging fails, but log the error
+      console.error('Failed to log journal access:', logError)
+    }
+
     return NextResponse.json({
       success: true,
       entries: data || []
