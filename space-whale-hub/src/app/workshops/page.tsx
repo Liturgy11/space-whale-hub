@@ -31,7 +31,7 @@ export default function Workshops() {
       facilitator: "Jed at Sea of Light Studios",
       description: "Weekly Qi Gong classes—an ancient Chinese practice combining slow movement, breathwork, and meditation to cultivate life energy and support wellbeing.",
       date: "Sundays",
-      location: "Sea of Light Studios, [location]",
+      location: "Online via Zoom",
       price: "Pricing TBD"
     },
     {

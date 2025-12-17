@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { Plus, Filter, Search, RefreshCw } from "lucide-react";
+import { Plus, Filter, Search } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UserProfile from "@/components/UserProfile";
 import PostForm from "@/components/feed/PostForm";
@@ -79,21 +79,12 @@ function CommunityFeedContent() {
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 pb-20 md:pb-8">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-4 sm:space-y-0">
-            <h1 className="text-2xl sm:text-3xl font-space-whale-heading text-space-whale-navy">
-              Community Orbit
-            </h1>
-            <button
-              onClick={() => setRefreshTrigger(prev => prev + 1)}
-              className="flex items-center justify-center px-4 py-2 text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent w-full sm:w-auto"
-            >
-              <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-              Refresh
-            </button>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-space-whale-heading text-space-whale-navy mb-4">
+            Community Orbit
+          </h1>
           <p className="text-base sm:text-lg font-space-whale-body text-space-whale-navy mb-4 sm:mb-6">
             Share your art, poetry, reflections, and inspiration. A cosy place to share and witness each other.
           </p>

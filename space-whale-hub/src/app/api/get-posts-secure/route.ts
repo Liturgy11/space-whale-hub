@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   try {
     // Get limit and userId from query params
     const { searchParams } = new URL(request.url)
-    const limit = parseInt(searchParams.get('limit') || '50', 10)
+    const limit = parseInt(searchParams.get('limit') || '25', 10) // Reduced default from 50 to 25 for faster initial load
     const userId = searchParams.get('userId') || null
 
     // Fetch posts with limit
@@ -43,35 +43,35 @@ export async function GET(request: NextRequest) {
 
     const postIds = posts.map(p => p.id)
 
-    // Build parallel queries array
-    const queries: Promise<any>[] = [
+    // Build parallel queries array - wrap in Promise.resolve to ensure proper Promise type
+    const queries = [
       // Fetch minimal author profiles
-      supabaseAdmin
+      Promise.resolve(supabaseAdmin
         .from('profiles')
         .select('id, display_name, pronouns, avatar_url')
-        .in('id', Array.from(new Set(posts.map(p => p.user_id)))),
+        .in('id', Array.from(new Set(posts.map((p: any) => p.user_id))))),
       
       // Fetch all likes for these posts (just post_id, no need for full data)
-      supabaseAdmin
+      Promise.resolve(supabaseAdmin
         .from('likes')
         .select('post_id')
-        .in('post_id', postIds),
+        .in('post_id', postIds)),
       
       // Fetch all comments for these posts (just post_id, no need for full data)
-      supabaseAdmin
+      Promise.resolve(supabaseAdmin
         .from('comments')
         .select('post_id')
-        .in('post_id', postIds)
+        .in('post_id', postIds))
     ]
 
     // If userId provided, also fetch user's likes
     if (userId) {
       queries.push(
-        supabaseAdmin
+        Promise.resolve(supabaseAdmin
           .from('likes')
           .select('post_id')
           .eq('user_id', userId)
-          .in('post_id', postIds)
+          .in('post_id', postIds))
       )
     }
 
@@ -84,23 +84,23 @@ export async function GET(request: NextRequest) {
 
     // Build profile map
     const profileMap = new Map<string, any>()
-    profilesResult.data?.forEach((p) => profileMap.set(p.id, p))
+    profilesResult.data?.forEach((p: any) => profileMap.set(p.id, p))
 
     // Build like count map
     const likeCountMap = new Map<string, number>()
-    likesResult.data?.forEach((like) => {
+    likesResult.data?.forEach((like: any) => {
       likeCountMap.set(like.post_id, (likeCountMap.get(like.post_id) || 0) + 1)
     })
 
     // Build comment count map
     const commentCountMap = new Map<string, number>()
-    commentsResult.data?.forEach((comment) => {
+    commentsResult.data?.forEach((comment: any) => {
       commentCountMap.set(comment.post_id, (commentCountMap.get(comment.post_id) || 0) + 1)
     })
 
     // Build user liked posts set
     const userLikedPosts = new Set<string>()
-    userLikesResult?.data?.forEach((like) => {
+    userLikesResult?.data?.forEach((like: any) => {
       userLikedPosts.add(like.post_id)
     })
 

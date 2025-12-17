@@ -50,8 +50,8 @@ export default function MobileNav() {
   if (!user) return null
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200 dark:bg-gray-900/95 dark:border-gray-700 md:hidden">
-      <div className="flex items-center justify-around py-2">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200 dark:bg-gray-900/95 dark:border-gray-700 md:hidden safe-area-inset-bottom">
+      <div className="flex items-center justify-between px-2 py-2 max-w-screen-sm mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = item.active
@@ -59,14 +59,14 @@ export default function MobileNav() {
             <Link
               key={item.name}
               href={item.href}
-              className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-colors ${
+              className={`flex flex-col items-center justify-center space-y-0.5 px-2 py-1.5 rounded-lg transition-colors flex-1 min-w-0 ${
                 isActive
                   ? 'bg-space-whale-lavender/20'
-                  : 'hover:bg-space-whale-lavender/10'
+                  : 'hover:bg-space-whale-lavender/10 active:bg-space-whale-lavender/15'
               }`}
             >
-              <Icon className={`h-5 w-5 ${isActive ? item.iconColor : item.iconColor} ${isActive ? 'opacity-100' : 'opacity-70'}`} />
-              <span className={`text-xs font-medium ${isActive ? 'text-space-whale-purple' : 'text-gray-600 dark:text-gray-400'}`}>
+              <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? item.iconColor : item.iconColor} ${isActive ? 'opacity-100' : 'opacity-70'}`} />
+              <span className={`text-[10px] font-medium truncate w-full text-center ${isActive ? 'text-space-whale-purple' : 'text-gray-600 dark:text-gray-400'}`}>
                 {item.name}
               </span>
             </Link>
