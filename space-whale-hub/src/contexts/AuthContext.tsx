@@ -94,6 +94,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      // #region agent log
+      if (typeof window !== 'undefined') {
+        fetch('http://127.0.0.1:7242/ingest/760e5a7f-c1da-40b6-a7d0-e4cab2131118',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:96',message:'AuthContext initial session check',data:{hasSession:!!session,hasError:!!error,errorMessage:error?.message,pathname:window.location.pathname,hash:window.location.hash.substring(0,50)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      }
+      // #endregion
       if (error) {
         // Handle invalid refresh token - clear session and let user sign in again
         if (error.message?.includes('Invalid Refresh Token') || 
@@ -147,6 +152,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // #region agent log
+      if (typeof window !== 'undefined') {
+        fetch('http://127.0.0.1:7242/ingest/760e5a7f-c1da-40b6-a7d0-e4cab2131118',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:149',message:'Auth state change event',data:{event,hasSession:!!session,pathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      }
+      // #endregion
+      
+      // If this is a password recovery event and we're not on the reset password page, redirect there
+      if (event === 'PASSWORD_RECOVERY' && session && typeof window !== 'undefined') {
+        const currentPath = window.location.pathname
+        if (currentPath !== '/auth/reset-password') {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/760e5a7f-c1da-40b6-a7d0-e4cab2131118',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:156',message:'PASSWORD_RECOVERY event detected - redirecting to reset-password page',data:{currentPath},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+          // #endregion
+          // Preserve hash fragments and query params
+          const resetUrl = new URL('/auth/reset-password', window.location.origin)
+          resetUrl.hash = window.location.hash
+          resetUrl.search = window.location.search
+          window.location.href = resetUrl.toString()
+          return // Don't update state yet, let the redirect happen
+        }
+      }
+      
       setSession(session)
       setUser(session?.user ?? null)
       
@@ -219,10 +246,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const resetPassword = async (email: string) => {
     try {
       // Use the current origin (works for both localhost and production)
-      const redirectUrl = `${window.location.origin}/auth/reset-password`
+      // IMPORTANT: This must match EXACTLY what's in Supabase's allowed redirect URLs
+      // (including protocol, host, port, path - no trailing slashes)
+      const redirectUrl = `${window.location.protocol}//${window.location.host}/auth/reset-password`
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/760e5a7f-c1da-40b6-a7d0-e4cab2131118',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:222',message:'resetPassword called',data:{email,redirectUrl,origin:window.location.origin,protocol:window.location.protocol,host:window.location.host},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
       })
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/760e5a7f-c1da-40b6-a7d0-e4cab2131118',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:226',message:'resetPassword result',data:{hasError:!!error,errorMessage:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       return { error }
     } catch (err: any) {
       console.error('Reset password error:', err)

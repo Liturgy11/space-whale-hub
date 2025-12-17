@@ -17,8 +17,6 @@ function HomeContent() {
   const [showWelcome, setShowWelcome] = useState(false);
   const createMenuRef = useRef<HTMLDivElement>(null);
   
-  console.log('HomeContent - Current user:', user)
-  
   // Show display name modal if user doesn't have display_name set
   useEffect(() => {
     if (user && !user.user_metadata?.display_name) {
@@ -141,17 +139,12 @@ function HomeContent() {
             />
           </div>
           
-          <h1 className="text-4xl md:text-6xl font-space-whale-heading text-space-whale-navy mb-6">
+          <h1 className="text-4xl md:text-6xl font-space-whale-heading text-space-whale-navy mb-8">
             Welcome fellow travelers{" "}
             <span className="bg-gradient-to-r from-space-whale-purple via-accent-pink to-accent-orange bg-clip-text text-transparent">
               to the Space Whale Portal
             </span>
           </h1>
-          
-          <p className="text-xl font-space-whale-body text-space-whale-navy mb-8 max-w-3xl mx-auto">
-            A portal for reflection, sharing, and connection. A sanctuary where your sensitivity is honoured, 
-            your creativity is sacred, and your becoming is witnessed. Online workshops and events coming in 2026...
-          </p>
 
           {/* Create Button */}
           <div className="mb-12">
@@ -160,55 +153,51 @@ function HomeContent() {
                 onClick={() => setShowCreateMenu(!showCreateMenu)}
                 className="btn-lofi flex items-center mx-auto text-lg px-6 py-3"
               >
-                <Plus className="h-5 w-5 mr-2" />
-                Create
+                <Compass className="h-5 w-5 mr-2" />
+                Explore
                 <ChevronDown className="h-5 w-5 ml-2" />
               </button>
               
-              {/* Create Menu Dropdown */}
+              {/* Explore Menu Dropdown */}
               {showCreateMenu && (
                 <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-4 w-72 bg-lofi-card rounded-xl shadow-xl z-50 rainbow-border-soft">
                   <div className="p-3">
-                    <div className="text-xs font-space-whale-playful text-space-whale-purple mb-3 px-2 text-center">
-                      Choose Your Creation
-                    </div>
-                    
-                    {/* Inner Space Entry */}
+                    {/* Inner Space */}
                     <Link 
                       href="/personal" 
                       onClick={() => setShowCreateMenu(false)}
                       className="flex items-center p-4 hover:bg-space-whale-lavender/20 rounded-lg transition-colors mb-2"
                     >
-                      <Heart className="h-6 w-6 text-pink-200 mr-4" />
-                      <div>
+                      <Eye className="h-6 w-6 text-pink-400 mr-4 flex-shrink-0" />
+                      <div className="flex-1">
                         <div className="font-medium text-space-whale-navy text-lg">Inner Space</div>
-                        <div className="text-sm text-space-whale-purple">Private reflection</div>
+                        <div className="text-sm text-space-whale-purple">Journal & reflect</div>
                       </div>
                     </Link>
                     
-                    {/* Community Orbit Post */}
+                    {/* Community Orbit */}
                     <Link 
                       href="/feed" 
                       onClick={() => setShowCreateMenu(false)}
                       className="flex items-center p-4 hover:bg-space-whale-lavender/20 rounded-lg transition-colors mb-2"
                     >
-                      <Orbit className="h-6 w-6 text-pink-300 mr-4" />
-                      <div>
+                      <Orbit className="h-6 w-6 text-yellow-500 mr-4 flex-shrink-0" />
+                      <div className="flex-1">
                         <div className="font-medium text-space-whale-navy text-lg">Community Orbit</div>
-                        <div className="text-sm text-space-whale-purple">Share with space whales</div>
+                        <div className="text-sm text-space-whale-purple">Share with community</div>
                       </div>
                     </Link>
                     
-                    {/* Archive Item */}
+                    {/* Deep Space */}
                     <Link 
-                      href="/archive" 
+                      href="/workshops" 
                       onClick={() => setShowCreateMenu(false)}
                       className="flex items-center p-4 hover:bg-space-whale-lavender/20 rounded-lg transition-colors"
                     >
-                      <Star className="h-6 w-6 text-blue-300 mr-4" />
-                      <div>
-                        <div className="font-medium text-space-whale-navy text-lg">Constellation</div>
-                        <div className="text-sm text-space-whale-purple">Add to constellation</div>
+                      <CircleDotDashed className="h-6 w-6 text-cyan-500 mr-4 flex-shrink-0" />
+                      <div className="flex-1">
+                        <div className="font-medium text-space-whale-navy text-lg">Deep Space</div>
+                        <div className="text-sm text-space-whale-purple">Workshops & resources</div>
                       </div>
                     </Link>
                   </div>
@@ -221,7 +210,7 @@ function HomeContent() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
             <Link href="/archive" className="group">
               <div className="bg-lofi-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105 rainbow-border-soft glow-soft">
-                <Star className="h-12 w-12 text-purple-600 mb-4 mx-auto float-gentle" />
+                <Star className="h-12 w-12 text-purple-800 mb-4 mx-auto float-gentle" />
                 <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">Constellation</h3>
                 <p className="text-space-whale-navy text-sm font-space-whale-body">
                   Archive of Space Whale events - pride poetry, community workshops, and creative gatherings.
@@ -241,7 +230,7 @@ function HomeContent() {
 
             <Link href="/workshops" className="group">
               <div className="bg-lofi-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105 rainbow-border-soft glow-soft group-hover:shadow-purple-200/50">
-                <CircleDotDashed className="h-12 w-12 text-purple-500 mb-4 mx-auto float-gentle group-hover:text-purple-600" />
+                <CircleDotDashed className="h-12 w-12 text-cyan-500 mb-4 mx-auto float-gentle group-hover:text-cyan-600" />
                 <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">Deep Space</h3>
                 <p className="text-space-whale-navy text-sm font-space-whale-body">
                   Workshops and creative offerings to support your journey. Explore resources, online groups, and spaces to grow together.
@@ -251,7 +240,7 @@ function HomeContent() {
 
             <Link href="/personal" className="group">
               <div className="bg-lofi-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105 rainbow-border-soft glow-soft">
-                <Eye className="h-12 w-12 text-yellow-600 mb-4 mx-auto float-gentle" />
+                <Eye className="h-12 w-12 text-pink-400 mb-4 mx-auto float-gentle" />
                 <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">Inner Space</h3>
                 <p className="text-space-whale-navy text-sm font-space-whale-body">
                   Your private journal for reflection and creativity. Write, collect inspiration, and explore prompts.
@@ -267,9 +256,8 @@ function HomeContent() {
       <div className="bg-lofi-card rounded-xl p-6 mx-4 sm:mx-6 lg:mx-8 mb-8 rainbow-border-soft glow-soft">
         <p className="text-sm font-space-whale-body text-space-whale-navy">
           <strong>Land Acknowledgement:</strong> Space Whale operates on First Nations land, Darkinjung Country, 
-          (Central Coast, NSW). We acknowledge sovereignty was never ceded and pay our respects to elder's 
-          past, present and emerging. Space Whale welcomes all people and celebrates diversity. 
-          Space Whale is a registered LGBTIQA+ safe space.
+          (Central Coast, NSW). We acknowledge sovereignty was never ceded and pay our respects to Elders 
+          past, present and emerging. Always was, always will be Aboriginal land.
         </p>
       </div>
 
@@ -277,7 +265,7 @@ function HomeContent() {
       <footer className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-gray-600 dark:text-gray-400">
-            <p>Space Whale Hub - Where creativity meets community</p>
+            <p>Space Whale Portal • Created by Lit • 2025</p>
           </div>
         </div>
       </footer>

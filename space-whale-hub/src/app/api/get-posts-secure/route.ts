@@ -17,29 +17,20 @@ function getSupabaseAdmin() {
   })
 }
 
-async function getLikeCount(postId: string, supabaseAdmin: ReturnType<typeof getSupabaseAdmin>) {
-  const { count } = await supabaseAdmin
-    .from('likes')
-    .select('*', { count: 'exact', head: true })
-    .eq('post_id', postId)
-  return count || 0
-}
-
-async function getCommentCount(postId: string, supabaseAdmin: ReturnType<typeof getSupabaseAdmin>) {
-  const { count } = await supabaseAdmin
-    .from('comments')
-    .select('*', { count: 'exact', head: true })
-    .eq('post_id', postId)
-  return count || 0
-}
-
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin()
   try {
+    // Get limit and userId from query params
+    const { searchParams } = new URL(request.url)
+    const limit = parseInt(searchParams.get('limit') || '50', 10)
+    const userId = searchParams.get('userId') || null
+
+    // Fetch posts with limit
     const { data: posts, error } = await supabaseAdmin
       .from('posts')
       .select('*')
       .order('created_at', { ascending: false })
+      .limit(limit)
 
     if (error) {
       console.error('Error fetching posts:', error)
@@ -50,17 +41,71 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ success: true, data: [] })
     }
 
-    // Fetch minimal author profiles
-    const userIds = Array.from(new Set(posts.map(p => p.user_id)))
-    const { data: profiles } = await supabaseAdmin
-      .from('profiles')
-      .select('id, display_name, pronouns, avatar_url')
-      .in('id', userIds)
+    const postIds = posts.map(p => p.id)
 
+    // Build parallel queries array
+    const queries: Promise<any>[] = [
+      // Fetch minimal author profiles
+      supabaseAdmin
+        .from('profiles')
+        .select('id, display_name, pronouns, avatar_url')
+        .in('id', Array.from(new Set(posts.map(p => p.user_id)))),
+      
+      // Fetch all likes for these posts (just post_id, no need for full data)
+      supabaseAdmin
+        .from('likes')
+        .select('post_id')
+        .in('post_id', postIds),
+      
+      // Fetch all comments for these posts (just post_id, no need for full data)
+      supabaseAdmin
+        .from('comments')
+        .select('post_id')
+        .in('post_id', postIds)
+    ]
+
+    // If userId provided, also fetch user's likes
+    if (userId) {
+      queries.push(
+        supabaseAdmin
+          .from('likes')
+          .select('post_id')
+          .eq('user_id', userId)
+          .in('post_id', postIds)
+      )
+    }
+
+    // Execute all queries in parallel
+    const results = await Promise.all(queries)
+    const profilesResult = results[0]
+    const likesResult = results[1]
+    const commentsResult = results[2]
+    const userLikesResult = userId ? results[3] : null
+
+    // Build profile map
     const profileMap = new Map<string, any>()
-    profiles?.forEach((p) => profileMap.set(p.id, p))
+    profilesResult.data?.forEach((p) => profileMap.set(p.id, p))
 
-    const enriched = await Promise.all(posts.map(async (post) => ({
+    // Build like count map
+    const likeCountMap = new Map<string, number>()
+    likesResult.data?.forEach((like) => {
+      likeCountMap.set(like.post_id, (likeCountMap.get(like.post_id) || 0) + 1)
+    })
+
+    // Build comment count map
+    const commentCountMap = new Map<string, number>()
+    commentsResult.data?.forEach((comment) => {
+      commentCountMap.set(comment.post_id, (commentCountMap.get(comment.post_id) || 0) + 1)
+    })
+
+    // Build user liked posts set
+    const userLikedPosts = new Set<string>()
+    userLikesResult?.data?.forEach((like) => {
+      userLikedPosts.add(like.post_id)
+    })
+
+    // Enrich posts with counts (no async needed now!)
+    const enriched = posts.map((post) => ({
       id: post.id,
       content: post.content,
       tags: post.tags || [],
@@ -74,10 +119,10 @@ export async function GET(_request: NextRequest) {
         pronouns: profileMap.get(post.user_id)?.pronouns || null,
         avatar_url: profileMap.get(post.user_id)?.avatar_url || null,
       },
-      likes_count: await getLikeCount(post.id, supabaseAdmin),
-      comments_count: await getCommentCount(post.id, supabaseAdmin),
-      is_liked: false // computed client-side when user is known
-    })))
+      likes_count: likeCountMap.get(post.id) || 0,
+      comments_count: commentCountMap.get(post.id) || 0,
+      is_liked: userLikedPosts.has(post.id)
+    }))
 
     return NextResponse.json({ success: true, data: enriched })
   } catch (e: any) {

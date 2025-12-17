@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Filter, Search, Tag } from "lucide-react";
+import { Filter, Search, Tag } from "lucide-react";
 import ArchivePage from "@/components/archive/ArchivePage";
 
 export default function Archive() {
@@ -11,20 +11,16 @@ export default function Archive() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16" suppressHydrationWarning>
             <div className="flex items-center space-x-4" suppressHydrationWarning>
-              <Link href="/" className="flex items-center text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent">
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                Back to Portal
-              </Link>
-              <div className="flex items-center space-x-2">
+              <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
                 <Image
                   src="/Space Whale_Social Only.jpg"
-                  alt="Space Whale Logo"
+                  alt="Space Whale Logo - Click to return home"
                   width={32}
                   height={32}
-                  className="rounded-full"
+                  className="rounded-full cursor-pointer"
                 />
                 <span className="text-xl font-space-whale-heading text-space-whale-navy">Constellation</span>
-              </div>
+              </Link>
             </div>
             <div className="flex items-center space-x-4">
               {/* Search moved to ArchivePage component */}

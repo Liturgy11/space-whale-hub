@@ -1,75 +1,48 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Calendar, Users, Clock, MapPin, BookOpen, Heart, MessageCircle, Star, Plus } from "lucide-react";
+import { Calendar, Users, Clock, MapPin, DollarSign } from "lucide-react";
 
 export default function Workshops() {
-  // Mock data for demonstration
-  const upcomingWorkshops = [
+  const workshops = [
     {
       id: 1,
-      title: "Nature-Based Art Therapy for Neurodivergent Creatives",
-      facilitator: "Liz (Space Whale)",
-      date: "Saturday, March 15th",
-      time: "2:00 PM - 4:00 PM",
-      location: "Central Coast, NSW (Darkinjung Country)",
-      type: "In-Person",
-      description: "A therapeutic workshop using art and nature to explore creativity in ways that honor neurodivergent strengths. We'll work with natural materials and explore sensory creativity in a safe, affirming space.",
-      maxParticipants: 8,
-      currentParticipants: 5,
-      price: "NDIS participants welcome",
-      tags: ["nature-based", "neurodivergent", "art therapy", "sensory"],
-      isNDIS: true
+      title: "In Our Nature",
+      subtitle: "Online Group/Course",
+      facilitator: "Lit (Space Whale)",
+      description: "An online eco/art therapy course using creative and experiential practices to deepen your connection with land, self, and others. A gentle space to explore your relationship with the natural world.",
+      note: "Made especially for ND, queer, trans, and gender diverse folks—everyone welcome.",
+      date: "Date/time TBD - Taking expressions of interest",
+      location: "Online via Zoom",
+      price: "Pricing TBD"
     },
     {
       id: 2,
-      title: "Queer Ecology: Art & Nature Connection",
-      facilitator: "Liz (Space Whale)",
-      date: "Sunday, March 23rd",
-      time: "10:00 AM - 12:00 PM",
-      location: "Online via Zoom",
-      type: "Online",
-      description: "Explore the intersection of queerness and ecology through creative expression. This workshop celebrates diverse ways of being and our connection to the natural world.",
-      maxParticipants: 15,
-      currentParticipants: 12,
-      price: "Sliding scale $30-$60",
-      tags: ["queer", "ecology", "online", "community"],
-      isNDIS: false
+      title: "Space Whale Open Studio",
+      facilitator: "Lit (Space Whale)",
+      description: "A monthly online creative session where you can work on your own projects alongside others or respond to creative prompts. A supportive space to create together.",
+      note: "ND and Rainbow friendly.",
+      date: "Monthly via Zoom",
+      time: "60-90 minutes",
+      price: "Pricing TBD"
     },
     {
       id: 3,
-      title: "Trauma-Informed Creative Expression",
-      facilitator: "Liz (Space Whale)",
-      date: "Saturday, April 6th",
-      time: "1:00 PM - 3:00 PM",
-      location: "Central Coast, NSW",
-      type: "In-Person",
-      description: "A gentle, trauma-informed approach to creative expression. Learn techniques for using art as a tool for healing and self-discovery in a safe, supportive environment.",
-      maxParticipants: 6,
-      currentParticipants: 3,
-      price: "NDIS participants welcome",
-      tags: ["trauma-informed", "healing", "art therapy", "safe space"],
-      isNDIS: true
-    }
-  ];
-
-  const pastWorkshops = [
-    {
-      id: 4,
-      title: "Space Whale Sojourns: Creative Journaling",
-      facilitator: "Liz (Space Whale)",
-      date: "February 20th, 2024",
-      participants: 12,
-      rating: 4.9,
-      feedback: "Such a beautiful, affirming space. Liz created such a safe environment for exploration."
+      title: "Qi Gong with Jed",
+      facilitator: "Jed at Sea of Light Studios",
+      description: "Weekly Qi Gong classes—an ancient Chinese practice combining slow movement, breathwork, and meditation to cultivate life energy and support wellbeing.",
+      date: "Sundays",
+      location: "Sea of Light Studios, [location]",
+      price: "Pricing TBD"
     },
     {
-      id: 5,
-      title: "Neurodivergent Joy: Art & Celebration",
-      facilitator: "Liz (Space Whale)",
-      date: "February 10th, 2024",
-      participants: 8,
-      rating: 5.0,
-      feedback: "Finally a workshop that truly understood and celebrated neurodivergent ways of being."
+      id: 4,
+      title: "Meditation with Hugh",
+      facilitator: "Hugh (Deep Blue Mind)",
+      description: "Online meditation sessions to support self-awareness, resilience, attention, and focus. Develop mindfulness practices to support stress and anxiety.",
+      date: "Schedule TBD",
+      time: "30-60 minutes",
+      location: "Online via Zoom",
+      price: "Pricing TBD"
     }
   ];
 
@@ -80,26 +53,16 @@ export default function Workshops() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <Link href="/" className="flex items-center text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent">
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                Back to Hub
-              </Link>
-              <div className="flex items-center space-x-2">
+              <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
                 <Image
                   src="/Space Whale_Social Only.jpg"
-                  alt="Space Whale Logo"
+                  alt="Space Whale Logo - Click to return home"
                   width={32}
                   height={32}
-                  className="rounded-full"
+                  className="rounded-full cursor-pointer"
                 />
                 <span className="text-xl font-space-whale-heading text-space-whale-navy">Deep Space</span>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button className="btn-lofi flex items-center">
-                <Plus className="h-4 w-4 mr-2" />
-                Host Workshop
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -112,169 +75,82 @@ export default function Workshops() {
             Deep Space
           </h1>
           <p className="text-lg font-space-whale-body text-space-whale-navy mb-6">
-            Take your journey deeper with art and therapy resources, online groups and workshops. 
-            Learn, create, and grow together in our trauma-informed, neuroaffirming, and gender-affirming community.
+            Workshops, resources, and online groups to support your journey.
           </p>
-          
-          {/* Acknowledgement */}
-          <div className="bg-lofi-card rounded-xl p-6 mb-8 rainbow-border-soft glow-soft">
-            <p className="text-sm font-space-whale-body text-space-whale-navy">
-              <strong>Land Acknowledgement:</strong> Space Whale operates on First Nations land, Darkinjung Country, 
-              (Central Coast, NSW). We acknowledge sovereignty was never ceded and pay our respects to elder's 
-              past, present and emerging. Space Whale welcomes all people and celebrates diversity. 
-              Space Whale is a registered LGBTIQA+ safe space.
-            </p>
-          </div>
         </div>
 
-        {/* Upcoming Workshops */}
+        {/* Workshops */}
         <div className="mb-12">
-          <h2 className="text-2xl font-space-whale-heading text-space-whale-navy mb-6">Upcoming Workshops</h2>
           <div className="grid lg:grid-cols-2 gap-6">
-            {upcomingWorkshops.map((workshop) => (
-              <div key={workshop.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                      {workshop.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                      Facilitated by {workshop.facilitator}
+            {workshops.map((workshop) => (
+              <div key={workshop.id} className="bg-lofi-card rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 rainbow-border-soft">
+                <div className="mb-4">
+                  <h3 className="text-xl font-space-whale-heading text-space-whale-navy mb-1">
+                    {workshop.title}
+                  </h3>
+                  {workshop.subtitle && (
+                    <p className="text-sm text-space-whale-purple mb-2">
+                      {workshop.subtitle}
                     </p>
-                  </div>
-                  {workshop.isNDIS && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                      NDIS Welcome
-                    </span>
                   )}
+                  <p className="text-sm text-space-whale-navy/70 mb-3">
+                    Facilitated by {workshop.facilitator}
+                  </p>
                 </div>
                 
-                <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
+                <p className="text-space-whale-navy font-space-whale-body mb-4 leading-relaxed">
                   {workshop.description}
                 </p>
                 
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    {workshop.date}
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                    <Clock className="h-4 w-4 mr-2" />
-                    {workshop.time}
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                    <MapPin className="h-4 w-4 mr-2" />
-                    {workshop.location}
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                    <Users className="h-4 w-4 mr-2" />
-                    {workshop.currentParticipants}/{workshop.maxParticipants} participants
-                  </div>
-                </div>
-                
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {workshop.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs rounded-full"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {workshop.price}
-                  </span>
-                  <button className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                    Register
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Past Workshops */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Past Workshops</h2>
-          <div className="grid lg:grid-cols-2 gap-6">
-            {pastWorkshops.map((workshop) => (
-              <div key={workshop.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {workshop.title}
-                  </h3>
-                  <div className="flex items-center">
-                    <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                    <span className="text-sm font-medium text-gray-900 dark:text-white ml-1">
-                      {workshop.rating}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    {workshop.date}
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                    <Users className="h-4 w-4 mr-2" />
-                    {workshop.participants} participants
-                  </div>
-                </div>
-                
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                  <p className="text-sm text-gray-700 dark:text-gray-300 italic">
-                    "{workshop.feedback}"
+                {workshop.note && (
+                  <p className="text-sm text-space-whale-purple mb-4 italic">
+                    {workshop.note}
                   </p>
+                )}
+                
+                <div className="space-y-2 mb-4">
+                  {workshop.date && (
+                    <div className="flex items-center text-sm text-space-whale-navy">
+                      <Calendar className="h-4 w-4 mr-2 text-cyan-500" />
+                      {workshop.date}
+                    </div>
+                  )}
+                  {workshop.time && (
+                    <div className="flex items-center text-sm text-space-whale-navy">
+                      <Clock className="h-4 w-4 mr-2 text-cyan-500" />
+                      {workshop.time}
+                    </div>
+                  )}
+                  {workshop.location && (
+                    <div className="flex items-center text-sm text-space-whale-navy">
+                      <MapPin className="h-4 w-4 mr-2 text-cyan-500" />
+                      {workshop.location}
+                    </div>
+                  )}
+                  {workshop.price && (
+                    <div className="flex items-center text-sm text-space-whale-navy">
+                      <DollarSign className="h-4 w-4 mr-2 text-cyan-500" />
+                      {workshop.price}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Workshop Categories */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Workshop Categories</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 text-center">
-              <BookOpen className="h-12 w-12 text-indigo-600 dark:text-indigo-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Art Therapy</h3>
-              <p className="text-gray-600 dark:text-gray-300 text-sm">
-                One-on-one and group art therapy sessions for healing and self-discovery.
-              </p>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 text-center">
-              <Heart className="h-12 w-12 text-pink-600 dark:text-pink-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">NDIS Art Therapy</h3>
-              <p className="text-gray-600 dark:text-gray-300 text-sm">
-                Specialized art therapy services for NDIS participants with a focus on individual needs.
-              </p>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 text-center">
-              <Users className="h-12 w-12 text-green-600 dark:text-green-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Community Events</h3>
-              <p className="text-gray-600 dark:text-gray-300 text-sm">
-                Community arts projects and events that bring people together through creativity.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Contact Section */}
-        <div className="bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 rounded-xl p-8 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Interested in a Custom Workshop?
-          </h2>
-          <p className="text-gray-700 dark:text-gray-300 mb-6">
-            Book a free phone, video or text chat to explore working together. 
-            I offer trauma-informed, neuroaffirming, and gender-affirming services.
+        {/* Expression of Interest Section */}
+        <div className="bg-lofi-card rounded-xl p-6 mb-8 rainbow-border-soft">
+          <p className="text-space-whale-navy font-space-whale-body text-center">
+            Interested in joining a workshop?<br />
+            We're taking expressions of interest for 2026. Email{" "}
+            <a 
+              href="mailto:hellospacewhale@gmail.com" 
+              className="text-space-whale-purple hover:text-space-whale-navy underline"
+            >
+              hellospacewhale@gmail.com
+            </a>
           </p>
-          <button className="px-8 py-3 bg-indigo-600 text-white font-semibold rounded-full hover:bg-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl">
-            Book a Free Consultation
-          </button>
         </div>
       </main>
     </div>

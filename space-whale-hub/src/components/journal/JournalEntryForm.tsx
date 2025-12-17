@@ -308,32 +308,35 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
                 </p>
               </div>
               <p className="text-xs text-space-whale-purple/70 font-space-whale-body">
-                🔐 Your content will be encrypted before saving. You'll need this passphrase to read it later. 
+                🔐 Your content will be encrypted before saving. This is your master encryption passphrase - you'll use the same passphrase for all encrypted entries. 
                 <strong className="block mt-1 text-space-whale-purple">Important: We cannot recover your passphrase if you forget it!</strong>
               </p>
               <div>
                 <label className="block text-xs font-medium text-space-whale-navy mb-1 font-space-whale-body">
-                  Encryption Passphrase (min 8 characters)
+                  Master Encryption Passphrase (min 8 characters)
                 </label>
                 <input
                   type="password"
                   value={encryptionPassphrase}
                   onChange={(e) => setEncryptionPassphrase(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors"
-                  placeholder="Enter a secure passphrase"
+                  placeholder="Enter your master encryption passphrase"
                   minLength={8}
                 />
+                <p className="text-xs text-space-whale-purple/60 mt-1">
+                  Use this same passphrase for all encrypted entries
+                </p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-space-whale-navy mb-1 font-space-whale-body">
-                  Confirm Passphrase
+                  Confirm Master Passphrase
                 </label>
                 <input
                   type="password"
                   value={confirmPassphrase}
                   onChange={(e) => setConfirmPassphrase(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors"
-                  placeholder="Confirm your passphrase"
+                  placeholder="Confirm your master passphrase"
                   minLength={8}
                 />
               </div>

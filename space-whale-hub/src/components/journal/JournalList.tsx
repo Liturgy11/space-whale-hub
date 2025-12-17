@@ -33,9 +33,11 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const [imageError, setImageError] = useState(false)
   
-  // Decryption state
+  // Master passphrase state - stored in memory for the session
+  const [masterPassphrase, setMasterPassphrase] = useState<string>('')
+  const [showMasterPassphrasePrompt, setShowMasterPassphrasePrompt] = useState(false)
+  const [masterPassphraseInput, setMasterPassphraseInput] = useState('')
   const [decryptingId, setDecryptingId] = useState<string | null>(null)
-  const [decryptPassphrase, setDecryptPassphrase] = useState('')
   const [decryptedContent, setDecryptedContent] = useState<Record<string, string>>({})
 
   useEffect(() => {
@@ -102,52 +104,81 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
     }
   }
 
+  // Set master passphrase (called once per session)
+  const handleSetMasterPassphrase = async (entryToDecrypt?: any) => {
+    if (!masterPassphraseInput || masterPassphraseInput.length < 8) {
+      toast('Passphrase must be at least 8 characters long', 'error')
+      return
+    }
+    const passphrase = masterPassphraseInput
+    setMasterPassphrase(passphrase)
+    setMasterPassphraseInput('')
+    setShowMasterPassphrasePrompt(false)
+    toast('Master passphrase set for this session', 'success')
+    
+    // If there's an entry waiting to be decrypted, decrypt it now
+    if (entryToDecrypt) {
+      try {
+        const decrypted = await decryptJournalContent(
+          entryToDecrypt.content_encrypted,
+          passphrase,
+          entryToDecrypt.encryption_salt,
+          entryToDecrypt.encryption_iv
+        )
+        setDecryptedContent(prev => ({ ...prev, [entryToDecrypt.id]: decrypted }))
+        setDecryptingId(null)
+        toast('Entry decrypted successfully', 'success')
+      } catch (err: any) {
+        console.error('Decryption error:', err)
+        // If decryption fails, clear the passphrase and prompt again
+        setMasterPassphrase('')
+        setShowMasterPassphrasePrompt(true)
+        toast('Incorrect passphrase. Please try again.', 'error')
+      }
+    }
+  }
+
+  // Clear master passphrase from memory
+  const handleClearMasterPassphrase = () => {
+    setMasterPassphrase('')
+    setDecryptedContent({}) // Clear all decrypted content
+    toast('Master passphrase cleared from memory', 'info')
+  }
+
   const handleDecrypt = async (entry: any) => {
     if (!entry.content_encrypted || !entry.encryption_salt || !entry.encryption_iv) {
       toast('This entry is not encrypted or missing encryption data', 'error')
       return
     }
 
-    if (!decryptPassphrase) {
-      toast('Please enter your passphrase', 'error')
+    // If no master passphrase set, prompt for it
+    if (!masterPassphrase) {
+      setDecryptingId(entry.id)
+      setShowMasterPassphrasePrompt(true)
       return
     }
 
     try {
-      // Log the data we're trying to decrypt (for debugging)
-      console.log('Decrypting entry:', {
-        entryId: entry.id,
-        hasEncrypted: !!entry.content_encrypted,
-        hasSalt: !!entry.encryption_salt,
-        hasIv: !!entry.encryption_iv,
-        encryptedType: typeof entry.content_encrypted,
-        encryptedLength: entry.content_encrypted?.length,
-        saltLength: entry.encryption_salt?.length,
-        ivLength: entry.encryption_iv?.length,
-        encryptedPreview: typeof entry.content_encrypted === 'string' 
-          ? entry.content_encrypted.substring(0, 50) 
-          : 'not a string'
-      })
-      
       const decrypted = await decryptJournalContent(
         entry.content_encrypted,
-        decryptPassphrase,
+        masterPassphrase,
         entry.encryption_salt,
         entry.encryption_iv
       )
       
       setDecryptedContent(prev => ({ ...prev, [entry.id]: decrypted }))
       setDecryptingId(null)
-      setDecryptPassphrase('')
       toast('Entry decrypted successfully', 'success')
     } catch (err: any) {
       console.error('Decryption error:', err)
-      console.error('Error details:', {
-        message: err.message,
-        name: err.name,
-        stack: err.stack
-      })
-      toast(err.message || 'Failed to decrypt. Please check your passphrase.', 'error')
+      // If decryption fails, it might be wrong passphrase - clear it and prompt again
+      if (err.message?.includes('passphrase') || err.message?.includes('incorrect')) {
+        setMasterPassphrase('')
+        setShowMasterPassphrasePrompt(true)
+        toast('Incorrect passphrase. Please enter your master passphrase again.', 'error')
+      } else {
+        toast(err.message || 'Failed to decrypt. Please check your passphrase.', 'error')
+      }
     }
   }
 
@@ -551,7 +582,9 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                             </button>
                           </div>
                           <p className="text-xs text-space-whale-purple/70">
-                            Enter your passphrase to view this encrypted entry
+                            {masterPassphrase 
+                              ? 'Click decrypt to view this encrypted entry'
+                              : 'Enter your master passphrase to view this encrypted entry'}
                           </p>
                         </div>
                       )
@@ -807,7 +840,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
               <button
                 onClick={() => {
                   setDecryptingId(null)
-                  setDecryptPassphrase('')
+                  setMasterPassphraseInput('')
                 }}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
@@ -816,51 +849,97 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
             </div>
             
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              This entry is encrypted. Enter your passphrase to decrypt and view it.
+              {masterPassphrase 
+                ? 'This entry is encrypted. Click decrypt to view it using your master passphrase.'
+                : 'This entry is encrypted. Enter your master passphrase to decrypt and view it. This passphrase will be used for all encrypted entries in this session.'}
             </p>
             
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Passphrase
-                </label>
-                <input
-                  type="password"
-                  value={decryptPassphrase}
-                  onChange={(e) => setDecryptPassphrase(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && decryptPassphrase) {
-                      const entry = entries.find(e => e.id === decryptingId)
-                      if (entry) handleDecrypt(entry)
-                    }
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
-                  placeholder="Enter your encryption passphrase"
-                  autoFocus
-                />
-              </div>
-              
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => {
-                    const entry = entries.find(e => e.id === decryptingId)
-                    if (entry) handleDecrypt(entry)
-                  }}
-                  disabled={!decryptPassphrase}
-                  className="flex-1 px-4 py-2 bg-space-whale-purple text-white rounded-lg hover:bg-space-whale-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Decrypt
-                </button>
-                <button
-                  onClick={() => {
-                    setDecryptingId(null)
-                    setDecryptPassphrase('')
-                  }}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
+              {!masterPassphrase ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Master Encryption Passphrase
+                    </label>
+                    <input
+                      type="password"
+                      value={masterPassphraseInput}
+                      onChange={(e) => setMasterPassphraseInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && masterPassphraseInput && masterPassphraseInput.length >= 8) {
+                          const entry = entries.find(e => e.id === decryptingId)
+                          if (entry) {
+                            handleSetMasterPassphrase(entry)
+                          }
+                        }
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
+                      placeholder="Enter your master encryption passphrase"
+                      autoFocus
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      This passphrase will be used for all encrypted entries in this session.
+                    </p>
+                  </div>
+                  
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => {
+                        const entry = entries.find(e => e.id === decryptingId)
+                        if (entry) {
+                          handleSetMasterPassphrase(entry)
+                        }
+                      }}
+                      disabled={!masterPassphraseInput || masterPassphraseInput.length < 8}
+                      className="flex-1 px-4 py-2 bg-space-whale-purple text-white rounded-lg hover:bg-space-whale-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Set & Decrypt
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDecryptingId(null)
+                        setMasterPassphraseInput('')
+                      }}
+                      className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-green-800 dark:text-green-200">
+                      ✓ Master passphrase is set for this session
+                    </p>
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => {
+                        const entry = entries.find(e => e.id === decryptingId)
+                        if (entry) handleDecrypt(entry)
+                      }}
+                      className="flex-1 px-4 py-2 bg-space-whale-purple text-white rounded-lg hover:bg-space-whale-purple/90 transition-colors"
+                    >
+                      Decrypt Entry
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDecryptingId(null)
+                      }}
+                      className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleClearMasterPassphrase}
+                    className="w-full mt-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                  >
+                    Clear master passphrase from memory
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

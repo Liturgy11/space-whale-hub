@@ -14,7 +14,7 @@ interface ArchiveItem {
   title: string
   description?: string
   content_type: 'video' | 'artwork' | 'zine' | 'audio'
-  media_url: string
+  media_url?: string
   thumbnail_url?: string
   artist_name?: string
   tags?: string[]
@@ -209,7 +209,7 @@ export default function ArchivePage() {
                 Constellation
               </h1>
               <p className="text-lg text-space-whale-navy/70 font-space-whale-body">
-                A collection of creative work from our community - poetry, art, videos, and more from fellow space whales.
+                I'll be uploading albums from past workshops and Pride Poetry gatherings over time. Watch this space...
               </p>
             </div>
             <div className="mt-4 sm:mt-0">

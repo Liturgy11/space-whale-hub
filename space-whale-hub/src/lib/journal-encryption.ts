@@ -23,10 +23,13 @@ async function deriveKey(
     ['deriveBits', 'deriveKey']
   )
 
+  // Ensure salt is a proper BufferSource (Uint8Array is valid)
+  const saltBuffer: BufferSource = new Uint8Array(salt)
+  
   return crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: salt,
+      salt: saltBuffer,
       iterations: 100000, // High iteration count for security
       hash: 'SHA-256'
     },
@@ -37,9 +40,9 @@ async function deriveKey(
   )
 }
 
-// Convert Uint8Array to base64 string for storage
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer)
+// Convert ArrayBuffer or Uint8Array to base64 string for storage
+function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): string {
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer)
   let binary = ''
   for (let i = 0; i < bytes.byteLength; i++) {
     binary += String.fromCharCode(bytes[i])
@@ -48,9 +51,9 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 }
 
 // Convert base64 string to Uint8Array
-function base64ToArrayBuffer(base64: string): Uint8Array {
+function base64ToArrayBuffer(base64: string | Uint8Array | ArrayBuffer): Uint8Array {
   // Handle different input formats
-  let base64String = base64
+  let base64String: string
   
   // If it's already a Uint8Array or ArrayBuffer, return as is
   if (base64 instanceof Uint8Array) {
@@ -63,6 +66,8 @@ function base64ToArrayBuffer(base64: string): Uint8Array {
   // Convert to string if needed
   if (typeof base64 !== 'string') {
     base64String = String(base64)
+  } else {
+    base64String = base64
   }
   
   // Remove any whitespace or newlines
@@ -249,9 +254,26 @@ export async function decryptJournalContent(
     })
     
     // Normalize the encrypted data (handle BYTEA hex format from database)
-    const normalizedEncrypted = normalizeEncryptedData(encrypted)
-    const normalizedSalt = normalizeEncryptedData(salt)
-    const normalizedIv = normalizeEncryptedData(iv)
+    let normalizedEncrypted: string
+    let normalizedSalt: string
+    let normalizedIv: string
+    
+    try {
+      normalizedEncrypted = normalizeEncryptedData(encrypted)
+      normalizedSalt = normalizeEncryptedData(salt)
+      normalizedIv = normalizeEncryptedData(iv)
+    } catch (normalizeError: any) {
+      console.error('Data normalization error:', {
+        error: normalizeError?.message,
+        encryptedType: typeof encrypted,
+        saltType: typeof salt,
+        ivType: typeof iv,
+        encryptedPreview: typeof encrypted === 'string' ? encrypted.substring(0, 100) : String(encrypted),
+        saltPreview: typeof salt === 'string' ? salt.substring(0, 50) : String(salt),
+        ivPreview: typeof iv === 'string' ? iv.substring(0, 50) : String(iv)
+      })
+      throw new Error(`Invalid encryption data format: ${normalizeError?.message || 'Unable to normalize encrypted data'}`)
+    }
     
     console.log('Normalized encryption data:', {
       normalizedEncryptedLength: normalizedEncrypted.length,
@@ -294,20 +316,32 @@ export async function decryptJournalContent(
       console.error('Invalid salt length:', {
         expected: 16,
         actual: saltArray.length,
-        normalizedSalt: normalizedSalt.substring(0, 30)
+        normalizedSalt: normalizedSalt.substring(0, 30),
+        originalSalt: typeof salt === 'string' ? salt.substring(0, 30) : String(salt)
       })
-      throw new Error(`Invalid salt length: expected 16 bytes, got ${saltArray.length}`)
+      throw new Error(`Invalid salt length: expected 16 bytes, got ${saltArray.length}. The encryption data may be corrupted or in an unexpected format.`)
     }
     if (ivArray.length !== 12) {
       console.error('Invalid IV length:', {
         expected: 12,
         actual: ivArray.length,
-        normalizedIv: normalizedIv.substring(0, 30)
+        normalizedIv: normalizedIv.substring(0, 30),
+        originalIv: typeof iv === 'string' ? iv.substring(0, 30) : String(iv)
       })
-      throw new Error(`Invalid IV length: expected 12 bytes, got ${ivArray.length}`)
+      throw new Error(`Invalid IV length: expected 12 bytes, got ${ivArray.length}. The encryption data may be corrupted or in an unexpected format.`)
     }
     if (encryptedArray.length === 0) {
-      throw new Error('Encrypted data is empty')
+      console.error('Encrypted data is empty after normalization')
+      throw new Error('Encrypted data is empty. The entry may not have been encrypted properly.')
+    }
+    
+    // Additional validation: encrypted data should be at least 16 bytes (minimum for AES-GCM with tag)
+    if (encryptedArray.length < 16) {
+      console.error('Encrypted data too short:', {
+        length: encryptedArray.length,
+        expected: 'at least 16 bytes'
+      })
+      throw new Error('Encrypted data appears to be corrupted (too short).')
     }
     
     console.log('All validations passed, attempting decryption...')
@@ -325,13 +359,17 @@ export async function decryptJournalContent(
         keyLength: '256 bits'
       })
       
+      // Ensure iv and encrypted data are proper BufferSource types
+      const ivBuffer: BufferSource = new Uint8Array(ivArray)
+      const encryptedBuffer: BufferSource = new Uint8Array(encryptedArray)
+      
       decryptedData = await crypto.subtle.decrypt(
         {
           name: 'AES-GCM',
-          iv: ivArray
+          iv: ivBuffer
         },
         key,
-        encryptedArray
+        encryptedBuffer
       )
       
       console.log('Decryption successful! Decrypted data length:', decryptedData.byteLength)
@@ -339,16 +377,79 @@ export async function decryptJournalContent(
       // DOMException doesn't serialize well, so we need to extract properties manually
       let errorName = 'UnknownError'
       let errorMessage = 'Unknown error'
+      let errorCode: number | undefined
       
       if (decryptError instanceof DOMException) {
-        errorName = decryptError.name || 'DOMException'
-        errorMessage = decryptError.message || 'DOMException occurred'
-        console.error('DOMException caught:', {
-          name: decryptError.name,
-          message: decryptError.message,
-          code: decryptError.code,
-          toString: decryptError.toString()
-        })
+        // Extract properties directly - use try-catch to safely access
+        let domName: string | undefined
+        let domMessage: string | undefined
+        let domCode: number | undefined
+        
+        try {
+          domName = decryptError.name
+        } catch (e) {
+          domName = 'DOMException (name inaccessible)'
+        }
+        
+        try {
+          domMessage = decryptError.message
+        } catch (e) {
+          domMessage = 'DOMException (message inaccessible)'
+        }
+        
+        try {
+          domCode = decryptError.code
+        } catch (e) {
+          // code might be undefined
+        }
+        
+        errorName = domName || 'DOMException'
+        errorMessage = domMessage || 'DOMException occurred'
+        errorCode = domCode
+        
+        // Log DOMException properties explicitly - use console.error for each
+        console.error('=== DOMException Details ===')
+        console.error('Error Name:', domName)
+        console.error('Error Message:', domMessage)
+        console.error('Error Code:', domCode)
+        
+        // Try to get string representation
+        try {
+          console.error('Error toString():', decryptError.toString())
+        } catch (e) {
+          console.error('Could not call toString() on error')
+        }
+        
+        // Try to access via bracket notation
+        try {
+          const errorObj = decryptError as any
+          console.error('Error via bracket notation:', {
+            'name': errorObj['name'],
+            'message': errorObj['message'],
+            'code': errorObj['code']
+          })
+        } catch (e) {
+          console.error('Could not access error via bracket notation')
+        }
+        
+        // Try Object.getOwnPropertyNames
+        try {
+          const props = Object.getOwnPropertyNames(decryptError)
+          console.error('Error property names:', props)
+          const descriptors: any = {}
+          props.forEach(prop => {
+            try {
+              descriptors[prop] = Object.getOwnPropertyDescriptor(decryptError, prop)?.value
+            } catch (e) {
+              descriptors[prop] = 'inaccessible'
+            }
+          })
+          console.error('Error property values:', descriptors)
+        } catch (e) {
+          console.error('Could not enumerate error properties')
+        }
+        
+        console.error('===========================')
       } else if (decryptError instanceof Error) {
         errorName = decryptError.name || 'Error'
         errorMessage = decryptError.message || 'Error occurred'
@@ -369,7 +470,7 @@ export async function decryptJournalContent(
       }
       
       // Log detailed error information for debugging
-      console.error('Crypto decrypt error details:', {
+      const errorDetails: any = {
         errorName,
         errorMessage,
         errorType: typeof decryptError,
@@ -379,6 +480,48 @@ export async function decryptJournalContent(
         encryptedPreview: typeof encrypted === 'string' ? encrypted.substring(0, 50) : 'not a string',
         saltPreview: typeof salt === 'string' ? salt.substring(0, 20) : 'not a string',
         ivPreview: typeof iv === 'string' ? iv.substring(0, 20) : 'not a string'
+      }
+      
+      if (errorCode !== undefined) {
+        errorDetails.errorCode = errorCode
+      }
+      
+      // Try to get more info from the error object directly
+      try {
+        if (decryptError != null && typeof decryptError === 'object') {
+          const errorObj = decryptError as any
+          errorDetails.errorKeys = Object.keys(errorObj)
+          errorDetails.errorString = String(decryptError)
+          if (errorObj.stack) {
+            errorDetails.errorStack = errorObj.stack.substring(0, 200) // Limit stack trace length
+          }
+          // Try to access common error properties
+          if (errorObj.toString) {
+            errorDetails.errorToString = errorObj.toString()
+          }
+        } else if (decryptError != null) {
+          errorDetails.errorPrimitive = String(decryptError)
+        }
+      } catch (e) {
+        errorDetails.inspectionError = String(e)
+      }
+      
+      // Always log error details - expand the object to show all properties
+      console.error('Crypto decrypt error details:', JSON.stringify(errorDetails, null, 2))
+      console.error('Full error object (attempting to serialize):', {
+        errorType: typeof decryptError,
+        errorConstructor: decryptError?.constructor?.name,
+        errorString: String(decryptError),
+        // Try to get all enumerable properties
+        errorKeys: decryptError && typeof decryptError === 'object' ? Object.keys(decryptError) : [],
+        // Try JSON.stringify (might fail but worth trying)
+        errorJSON: (() => {
+          try {
+            return JSON.stringify(decryptError)
+          } catch {
+            return 'Could not stringify error'
+          }
+        })()
       })
       
       // Check for specific error types

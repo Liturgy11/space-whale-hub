@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { ArrowLeft, Plus, Edit3, Heart, Lock, Unlock, BookOpen, Palette, FileText, Camera, Save, Settings, Sparkles, PenTool, Images } from "lucide-react";
+import { Plus, Edit3, Heart, Lock, Unlock, BookOpen, Palette, FileText, Camera, Save, Settings, Sparkles, Key } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UserProfile from "@/components/UserProfile";
 import { useAuth } from "@/contexts/AuthContext";
@@ -60,21 +60,16 @@ function PersonalSpaceContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <Link href="/" className="flex items-center text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent">
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Back to Hub</span>
-                <span className="sm:hidden">Back</span>
-              </Link>
-              <div className="flex items-center space-x-2">
+              <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
                 <Image
                   src="/Space Whale_Social Only.jpg"
-                  alt="Space Whale Logo"
+                  alt="Space Whale Logo - Click to return home"
                   width={28}
                   height={28}
-                  className="rounded-full sm:w-8 sm:h-8"
+                  className="rounded-full sm:w-8 sm:h-8 cursor-pointer"
                 />
                 <span className="text-lg sm:text-xl font-space-whale-heading text-space-whale-navy">Inner Space</span>
-              </div>
+              </Link>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
               <UserProfile />
@@ -121,7 +116,7 @@ function PersonalSpaceContent() {
                 className="flex flex-col items-center justify-center p-6 sm:p-8 bg-gradient-to-br from-pink-50 via-purple-50 to-pink-50 rounded-2xl hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group border-2 border-pink-200/50 hover:border-pink-300"
               >
                 <div className="mb-4 p-4 bg-gradient-to-br from-pink-200 to-purple-200 rounded-2xl group-hover:scale-110 transition-transform duration-300">
-                  <PenTool className="h-8 w-8 sm:h-10 sm:w-10 text-pink-600" />
+                  <Key className="h-8 w-8 sm:h-10 sm:w-10 text-pink-600" />
                 </div>
                 <div className="text-center">
                   <div className="text-lg sm:text-xl font-semibold text-space-whale-navy mb-1">Journal</div>
@@ -133,7 +128,18 @@ function PersonalSpaceContent() {
                 className="flex flex-col items-center justify-center p-6 sm:p-8 bg-gradient-to-br from-blue-50 via-teal-50 to-blue-50 rounded-2xl hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group border-2 border-blue-200/50 hover:border-blue-300"
               >
                 <div className="mb-4 p-4 bg-gradient-to-br from-blue-200 to-teal-200 rounded-2xl group-hover:scale-110 transition-transform duration-300">
-                  <Images className="h-8 w-8 sm:h-10 sm:w-10 text-blue-600" />
+                  <svg 
+                    className="h-8 w-8 sm:h-10 sm:w-10 text-cyan-500" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  >
+                    {/* Simple crescent moon - single line */}
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
                 </div>
                 <div className="text-center">
                   <div className="text-lg sm:text-xl font-semibold text-space-whale-navy mb-1">Mood Board</div>
@@ -163,7 +169,6 @@ function PersonalSpaceContent() {
           <div className="w-full max-w-2xl mobile-modal">
             <MediaUpload 
               onUploadComplete={(url, type) => {
-                console.log('Media uploaded:', url, type);
                 setShowMediaUpload(false);
                 // TODO: Add to user's media collection
               }}
@@ -179,7 +184,6 @@ function PersonalSpaceContent() {
           <div className="w-full max-w-4xl mobile-modal">
             <MoodBoardUpload 
               onUploadComplete={async (urls, type, title) => {
-                console.log('Mood board created:', urls, type, title);
                 setShowMoodBoardUpload(false);
                 
                 // Create a journal entry with the mood board images
@@ -188,8 +192,6 @@ function PersonalSpaceContent() {
                     console.error('User not authenticated');
                     return;
                   }
-                  
-                  console.log('Starting mood board creation...', { userId: user.id, urlsCount: urls.length, title });
                   
                   // Use the secure API route instead of direct database function
                   const response = await fetch('/api/create-journal-entry-secure', {
@@ -216,8 +218,6 @@ function PersonalSpaceContent() {
                   }
 
                   const entry = result.entry;
-                  
-                  console.log('Mood board journal entry created successfully:', entry);
                   
                   // Show success message
                   toast('✨ Mood board created successfully! ✨', 'success');

@@ -42,7 +42,11 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
       setError('') // Clear any previous errors
       // Try secure API first (service role), fallback to client getPosts
       try {
-        const res = await fetch('/api/get-posts-secure')
+        // Include userId in query params if available for like status
+        const url = user?.id 
+          ? `/api/get-posts-secure?userId=${encodeURIComponent(user.id)}`
+          : '/api/get-posts-secure'
+        const res = await fetch(url)
         if (res.ok) {
           const json = await res.json()
           if (json.success) {
@@ -60,7 +64,7 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [user])
 
   useEffect(() => {
     loadPosts()

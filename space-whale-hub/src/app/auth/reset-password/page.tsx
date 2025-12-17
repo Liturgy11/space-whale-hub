@@ -17,6 +17,7 @@ function ResetPasswordContent() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [codeVerified, setCodeVerified] = useState(false)
   
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -29,6 +30,11 @@ function ResetPasswordContent() {
     // 1. Hash fragments (automatically processed) - e.g., #access_token=...
     // 2. Query parameters (need manual processing) - e.g., ?code=...
     const initializeReset = async () => {
+      // #region agent log
+      if (typeof window !== 'undefined') {
+        fetch('http://127.0.0.1:7242/ingest/760e5a7f-c1da-40b6-a7d0-e4cab2131118',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'reset-password/page.tsx:32',message:'Reset password page initialized',data:{url:window.location.href,hash:window.location.hash,search:window.location.search,pathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      }
+      // #endregion
       // Log the current URL for debugging
       if (typeof window !== 'undefined') {
         console.log('Reset password page URL:', window.location.href)
@@ -77,6 +83,9 @@ function ResetPasswordContent() {
 
       // First, check if we already have a session
       let { data: { session } } = await supabase.auth.getSession()
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/760e5a7f-c1da-40b6-a7d0-e4cab2131118',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'reset-password/page.tsx:79',message:'Initial session check',data:{hasSession:!!session,sessionUserId:session?.user?.id,accessToken:session?.access_token?.substring(0,20)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
       
       if (session) {
         console.log('Session already exists')
@@ -90,6 +99,9 @@ function ResetPasswordContent() {
       await new Promise(resolve => setTimeout(resolve, 500))
       
       const { data: { session: hashSession } } = await supabase.auth.getSession()
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/760e5a7f-c1da-40b6-a7d0-e4cab2131118',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'reset-password/page.tsx:93',message:'Hash fragment session check',data:{hasHashSession:!!hashSession,hash:typeof window !== 'undefined' ? window.location.hash : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       if (hashSession) {
         console.log('Hash session found')
         setInitializing(false)
@@ -99,6 +111,9 @@ function ResetPasswordContent() {
       // If no hash fragments, check for query parameters
       const code = searchParams.get('code')
       const type = searchParams.get('type')
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/760e5a7f-c1da-40b6-a7d0-e4cab2131118',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'reset-password/page.tsx:100',message:'Query params check',data:{hasCode:!!code,hasType:!!type,codeLength:code?.length,typeValue:type},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       
       console.log('Code from URL:', code)
       console.log('Type from URL:', type)
@@ -106,22 +121,28 @@ function ResetPasswordContent() {
       if (!code && !type) {
         // No code in URL - invalid link
         console.log('No code or type found in URL')
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/760e5a7f-c1da-40b6-a7d0-e4cab2131118',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'reset-password/page.tsx:107',message:'No code or type found - invalid link',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         setError('Invalid reset link. Please request a new password reset email.')
         setInitializing(false)
         return
       }
 
       // We have a code in query params
-      // IMPORTANT: Supabase password reset links should redirect through Supabase servers first
-      // (https://[project].supabase.co/auth/v1/verify?token=...&type=recovery&redirect_to=...)
-      // which then redirects to your app with hash fragments (#access_token=...).
+      // IMPORTANT: Supabase password reset emails should contain the full verification URL that goes
+      // through Supabase's servers (https://[project].supabase.co/auth/v1/verify?...), which then
+      // redirects to your app with hash fragments (#access_token=...).
       // 
-      // If we're getting query parameters directly, it likely means:
-      // 1. The email template is using a custom format instead of {{ .ConfirmationURL }}
-      // 2. The redirect URL doesn't match exactly (but your config looks correct)
+      // If we're getting codes in query params directly, it means the email template might be using
+      // {{ .Token }} or {{ .TokenHash }} instead of {{ .ConfirmationURL }}.
       // 
-      // The Supabase client's detectSessionInUrl only works with hash fragments, not query params.
-      // Query param codes need to go through Supabase's verification endpoint first.
+      // To fix this properly, check your Supabase email template:
+      // 1. Go to Authentication > Email Templates > Reset Password
+      // 2. Make sure the link uses: {{ .ConfirmationURL }}
+      // 3. NOT: {{ .Token }} or {{ .TokenHash }}
+      // 
+      // For now, we'll try to handle codes by redirecting through Supabase's verification endpoint.
       
       // Check if there's a hash fragment we should be using instead
       if (typeof window !== 'undefined' && window.location.hash) {
@@ -137,48 +158,126 @@ function ResetPasswordContent() {
       
       // If we have a code in query params, try to verify it directly with verifyOtp
       // The code from Supabase password reset emails can be verified using verifyOtp
-      if (code && typeof window !== 'undefined') {
+      if (code && typeof window !== 'undefined' && !codeVerified) {
         console.log('Code found in query params - attempting to verify')
         console.log('Full URL:', window.location.href)
         console.log('Code being used:', code.substring(0, 20) + '...')
         
-        // IMPORTANT: Don't redirect if we already have error parameters in the URL
-        // This prevents infinite redirect loops and ensures errors are shown on this page
+        // IMPORTANT: Don't verify if we already have error parameters in the URL
+        // This prevents infinite loops and ensures errors are shown on this page
         if (finalError || finalErrorCode) {
-          console.log('Error already detected, not redirecting to verification endpoint')
+          console.log('Error already detected, not verifying code')
           // Error handling already done above, just return
           return
         }
         
         try {
-          // Wait a moment for Supabase to potentially process it automatically
-          await new Promise(resolve => setTimeout(resolve, 1000))
-          
-          // Check if session was established
-          const { data: { session: checkSession } } = await supabase.auth.getSession()
-          if (checkSession) {
-            console.log('Session established automatically')
-            setInitializing(false)
-            return
+          // Wait longer for Supabase's detectSessionInUrl to process the code automatically
+          // Supabase with PKCE flow should automatically process codes in query params
+          // Give it multiple chances to establish the session
+          let sessionEstablished = false
+          for (let attempt = 0; attempt < 5; attempt++) {
+            await new Promise(resolve => setTimeout(resolve, 500))
+            
+            const { data: { session: checkSession } } = await supabase.auth.getSession()
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/760e5a7f-c1da-40b6-a7d0-e4cab2131118',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'reset-password/page.tsx:175',message:'Waiting for auto-session establishment',data:{attempt:attempt+1,hasSession:!!checkSession},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+            
+            if (checkSession) {
+              console.log('Session established automatically after', attempt + 1, 'attempts')
+              sessionEstablished = true
+              setCodeVerified(true)
+              setInitializing(false)
+              // Remove the code from URL to prevent re-verification
+              if (window.history.replaceState) {
+                const newUrl = new URL(window.location.href)
+                newUrl.searchParams.delete('code')
+                newUrl.searchParams.delete('type')
+                window.history.replaceState({}, '', newUrl.toString())
+              }
+              return
+            }
           }
           
-          // If no session, the code might need to go through Supabase's verification endpoint
-          // BUT: Only redirect if we don't already have errors, and make sure redirect_to matches exactly
-          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qrmdgbzmdtvqcuzfkwar.supabase.co'
-          // Use the exact current URL as redirect_to to preserve any parameters
-          const currentUrl = window.location.origin + '/auth/reset-password'
-          const redirectTo = encodeURIComponent(currentUrl)
-          
-          // Try with 'token' parameter
-          const verifyUrl = `${supabaseUrl}/auth/v1/verify?token=${code}&type=recovery&redirect_to=${redirectTo}`
-          
-          console.log('No auto-session found, redirecting to Supabase verification:', verifyUrl)
-          console.log('Redirect target:', currentUrl)
-          window.location.href = verifyUrl
-          return
+          // If session still not established after waiting, try verifyOtp first
+          // Since Supabase is generating direct links (bypassing verification endpoint),
+          // we need to handle the code directly with verifyOtp
+          if (!sessionEstablished) {
+            console.log('Session not established automatically, trying verifyOtp with code')
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/760e5a7f-c1da-40b6-a7d0-e4cab2131118',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'reset-password/page.tsx:200',message:'Attempting verifyOtp with code',data:{codeLength:code.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+            
+            // Mark as verified to prevent re-attempts
+            setCodeVerified(true)
+            
+            // Try verifyOtp with the code as token_hash for recovery type
+            // This is the recommended approach for direct links with codes
+            const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+              token_hash: code,
+              type: 'recovery'
+            })
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/760e5a7f-c1da-40b6-a7d0-e4cab2131118',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'reset-password/page.tsx:210',message:'verifyOtp result',data:{hasError:!!verifyError,errorMessage:verifyError?.message,hasData:!!verifyData,hasSession:!!verifyData?.session},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+            
+            if (verifyError) {
+              console.error('Error verifying OTP:', verifyError)
+              // If verifyOtp fails, try redirecting through verification endpoint as fallback
+              console.log('verifyOtp failed, trying redirect through verification endpoint as fallback')
+              const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qrmdgbzmdtvqcuzfkwar.supabase.co'
+              const redirectUrl = `${window.location.protocol}//${window.location.host}/auth/reset-password`
+              const redirectTo = encodeURIComponent(redirectUrl)
+              const verifyUrl = `${supabaseUrl}/auth/v1/verify?token=${encodeURIComponent(code)}&type=recovery&redirect_to=${redirectTo}`
+              
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/760e5a7f-c1da-40b6-a7d0-e4cab2131118',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'reset-password/page.tsx:220',message:'Falling back to verification endpoint redirect',data:{verifyUrl,redirectUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+              // #endregion
+              
+              console.log('Redirecting to Supabase verification endpoint as fallback:', verifyUrl)
+              window.location.href = verifyUrl
+              return
+            }
+            
+            // Check if session was established after verification
+            const { data: { session: verifySession } } = await supabase.auth.getSession()
+            if (verifySession) {
+              console.log('Session established after verifyOtp')
+              setInitializing(false)
+              // Remove the code from URL to prevent re-verification
+              if (window.history.replaceState) {
+                const newUrl = new URL(window.location.href)
+                newUrl.searchParams.delete('code')
+                newUrl.searchParams.delete('type')
+                window.history.replaceState({}, '', newUrl.toString())
+              }
+              return
+            } else {
+              console.error('No session after verifyOtp')
+              setError('Failed to establish session. Please request a new password reset email.')
+              setInitializing(false)
+              return
+            }
+          }
         } catch (err) {
           console.error('Error verifying code:', err)
-          // Fall through to error handling
+          setError('An error occurred while verifying the reset link. Please request a new password reset email.')
+          setInitializing(false)
+          return
+        }
+      } else if (codeVerified) {
+        // Code already verified, just check for session
+        const { data: { session: existingSession } } = await supabase.auth.getSession()
+        if (existingSession) {
+          setInitializing(false)
+          return
+        } else {
+          // Session lost after verification - this shouldn't happen but handle gracefully
+          setError('Session expired. Please request a new password reset email.')
+          setInitializing(false)
+          return
         }
       }
 
@@ -243,7 +342,7 @@ function ResetPasswordContent() {
     }
 
     initializeReset()
-  }, [searchParams])
+  }, [searchParams, codeVerified]) // Add codeVerified to dependencies to prevent re-running if already verified
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

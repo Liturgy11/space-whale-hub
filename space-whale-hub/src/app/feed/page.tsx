@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Plus, Filter, Search, RefreshCw } from "lucide-react";
+import { Plus, Filter, Search, RefreshCw } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UserProfile from "@/components/UserProfile";
 import PostForm from "@/components/feed/PostForm";
@@ -61,21 +61,16 @@ function CommunityFeedContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <Link href="/" className="flex items-center text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent">
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Back to Hub</span>
-                <span className="sm:hidden">Back</span>
-              </Link>
-              <div className="flex items-center space-x-2">
+              <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
                 <Image
                   src="/Space Whale_Social Only.jpg"
-                  alt="Space Whale Logo"
+                  alt="Space Whale Logo - Click to return home"
                   width={28}
                   height={28}
-                  className="rounded-full sm:w-8 sm:h-8"
+                  className="rounded-full sm:w-8 sm:h-8 cursor-pointer"
                 />
                 <span className="text-lg sm:text-xl font-space-whale-heading text-space-whale-navy">Community Orbit</span>
-              </div>
+              </Link>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
               <UserProfile />

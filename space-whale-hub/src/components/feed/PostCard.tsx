@@ -218,7 +218,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
                       <button
                         onClick={() => {
                           onDelete?.(post.id)
-                          setShowOptions(false)
+                          // Don't close menu on first click - keep it open to show confirmation
                         }}
                         className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                         aria-label="Delete post"

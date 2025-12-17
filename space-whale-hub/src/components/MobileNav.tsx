@@ -1,46 +1,50 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { Home, User, Heart, Archive, Info, LogOut, FolderOpen } from 'lucide-react'
+import { Star, Orbit, CircleDotDashed, Eye, Info } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 export default function MobileNav() {
-  const { user, signOut } = useAuth()
+  const { user } = useAuth()
   const pathname = usePathname()
 
   const navItems = [
     {
-      name: 'Home',
-      href: '/',
-      icon: Home,
-      active: pathname === '/'
-    },
-    {
-      name: 'Personal',
-      href: '/personal',
-      icon: User,
-      active: pathname === '/personal'
+      name: 'Constellation',
+      href: '/archive',
+      icon: Star,
+      iconColor: 'text-purple-800',
+      active: pathname === '/archive'
     },
     {
       name: 'Community',
       href: '/feed',
-      icon: Heart,
+      icon: Orbit,
+      iconColor: 'text-yellow-500',
       active: pathname === '/feed'
     },
     {
-      name: 'Archive',
-      href: '/archive',
-      icon: Archive,
-      active: pathname === '/archive'
+      name: 'Deep Space',
+      href: '/workshops',
+      icon: CircleDotDashed,
+      iconColor: 'text-cyan-500',
+      active: pathname === '/workshops'
     },
-    // Admin-only Albums
-    ...(user?.email === 'lizwamc@gmail.com' ? [{
-      name: 'Albums',
-      href: '/admin/albums',
-      icon: FolderOpen,
-      active: pathname === '/admin/albums'
-    }] : [])
+    {
+      name: 'Inner Space',
+      href: '/personal',
+      icon: Eye,
+      iconColor: 'text-pink-400',
+      active: pathname === '/personal'
+    },
+    {
+      name: 'About',
+      href: '/about',
+      icon: Info,
+      iconColor: 'text-gray-600 dark:text-gray-400',
+      active: pathname === '/about'
+    }
   ]
 
   if (!user) return null
@@ -50,34 +54,24 @@ export default function MobileNav() {
       <div className="flex items-center justify-around py-2">
         {navItems.map((item) => {
           const Icon = item.icon
+          const isActive = item.active
           return (
             <Link
               key={item.name}
               href={item.href}
               className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-colors ${
-                item.active
-                  ? 'text-space-whale-purple bg-space-whale-lavender/20'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-space-whale-purple'
+                isActive
+                  ? 'bg-space-whale-lavender/20'
+                  : 'hover:bg-space-whale-lavender/10'
               }`}
             >
-              <Icon className="h-5 w-5" />
-              <span className="text-xs font-medium">{item.name}</span>
+              <Icon className={`h-5 w-5 ${isActive ? item.iconColor : item.iconColor} ${isActive ? 'opacity-100' : 'opacity-70'}`} />
+              <span className={`text-xs font-medium ${isActive ? 'text-space-whale-purple' : 'text-gray-600 dark:text-gray-400'}`}>
+                {item.name}
+              </span>
             </Link>
           )
         })}
-        
-        {/* About link */}
-        <Link
-          href="/about"
-          className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-colors ${
-            pathname === '/about'
-              ? 'text-space-whale-purple bg-space-whale-lavender/20'
-              : 'text-gray-600 dark:text-gray-400 hover:text-space-whale-purple'
-          }`}
-        >
-          <Info className="h-5 w-5" />
-          <span className="text-xs font-medium">About</span>
-        </Link>
       </div>
     </div>
   )
