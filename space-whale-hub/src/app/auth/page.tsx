@@ -7,7 +7,8 @@ import SignUpForm from '@/components/auth/SignUpForm'
 import Image from 'next/image'
 import { Loader2 } from 'lucide-react'
 
-export default function AuthPage() {
+// Component that uses searchParams - must be wrapped in Suspense
+function AuthPageContent() {
   const [isLogin, setIsLogin] = useState(true)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -91,5 +92,32 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white star-field flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <Image
+              src="/Space Whale_Horizontal.jpg"
+              alt="Space Whale"
+              width={300}
+              height={90}
+              className="mx-auto mb-4"
+              priority
+            />
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-space-whale-purple mx-auto mb-4" />
+              <p className="text-space-whale-navy font-space-whale-body">Loading...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <AuthPageContent />
+    </Suspense>
   )
 }
