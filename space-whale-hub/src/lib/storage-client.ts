@@ -13,6 +13,56 @@ export interface UploadOptions {
   upsert?: boolean
 }
 
+function sanitizeFilename(name: string): string {
+  const extIndex = name.lastIndexOf('.')
+  const ext = extIndex >= 0 ? name.substring(extIndex) : ''
+  const baseName = extIndex >= 0 ? name.substring(0, extIndex) : name
+  const sanitized = baseName
+    .replace(/\s+/g, '_')
+    .replace(/[^a-zA-Z0-9_-]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+  return sanitized + ext
+}
+
+function buildStoragePath(file: File, options: UploadOptions, userId: string): string {
+  const filename = sanitizeFilename(options.filename || `${Date.now()}-${file.name}`)
+  const folderPath = options.folder
+    ? `${userId}/${options.category}/${options.folder}`
+    : `${userId}/${options.category}`
+  return `${folderPath}/${filename}`
+}
+
+async function uploadDirect(
+  file: File,
+  options: UploadOptions,
+  userId: string
+): Promise<UploadResult> {
+  const { supabase } = await import('@/lib/supabase')
+  const fullPath = buildStoragePath(file, options, userId)
+
+  const { error } = await supabase.storage
+    .from(options.category)
+    .upload(fullPath, file, {
+      upsert: options.upsert || false,
+      cacheControl: '3600'
+    })
+
+  if (error) {
+    throw new Error(`Upload failed: ${error.message}`)
+  }
+
+  const { data: urlData } = supabase.storage
+    .from(options.category)
+    .getPublicUrl(fullPath)
+
+  return {
+    url: urlData.publicUrl,
+    path: fullPath,
+    bucket: options.category
+  }
+}
+
 /**
  * Upload media using API route (secure server-side approach)
  */
@@ -50,6 +100,9 @@ export async function uploadMedia(
   if (options.filename) {
     formData.append('filename', options.filename)
   }
+  if (options.folder) {
+    formData.append('folder', options.folder)
+  }
   if (options.upsert !== undefined) {
     formData.append('upsert', options.upsert.toString())
   }
@@ -74,12 +127,22 @@ export async function uploadMedia(
     if (!response.ok) {
       // Try to parse error as JSON, but handle plain text errors gracefully
       let errorMessage = 'Upload failed'
+      let shouldFallbackToDirect = response.status === 413
       const contentType = response.headers.get('content-type')
       
       if (contentType && contentType.includes('application/json')) {
         try {
           const errorData = await response.json()
           const serverError = errorData.error || ''
+          const lowerServerError = serverError.toLowerCase()
+          if (
+            response.status === 413 ||
+            lowerServerError.includes('request entity too large') ||
+            lowerServerError.includes('payload too large') ||
+            lowerServerError.includes('upload_payload_too_large')
+          ) {
+            shouldFallbackToDirect = true
+          }
           
           // Provide user-friendly error messages for common issues
           if (serverError.includes('exceeded the maximum allowed size') || 
@@ -105,12 +168,26 @@ export async function uploadMedia(
         // For non-JSON responses (like plain text "Forbidden"), use status text
         try {
           const text = await response.text()
+          const lowerText = text.toLowerCase()
+          if (
+            response.status === 413 ||
+            lowerText.includes('request entity too large') ||
+            lowerText.includes('payload too large') ||
+            lowerText.includes('upload_payload_too_large')
+          ) {
+            shouldFallbackToDirect = true
+          }
           errorMessage = text || `Upload failed: ${response.status} ${response.statusText}`
         } catch (textError) {
           errorMessage = `Upload failed: ${response.status} ${response.statusText}`
         }
       }
-      
+
+      if (shouldFallbackToDirect) {
+        console.warn('⚠️ Server upload too large; falling back to direct storage upload')
+        return uploadDirect(file, options, userId)
+      }
+
       throw new Error(errorMessage)
     }
 

@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
     const category = formData.get('category') as string
     const userId = formData.get('userId') as string
     const filename = formData.get('filename') as string
+    const folder = formData.get('folder') as string
     const upsert = formData.get('upsert') === 'true'
 
     if (!file || !category || !userId) {
@@ -154,7 +155,8 @@ export async function POST(request: NextRequest) {
     // Generate filename
     const originalFilename = filename || `${Date.now()}-${file.name}`
     const finalFilename = sanitizeFilename(originalFilename)
-    const fullPath = `${userId}/${category}/${finalFilename}`
+    const folderPath = folder ? `${userId}/${category}/${folder}` : `${userId}/${category}`
+    const fullPath = `${folderPath}/${finalFilename}`
 
     console.log(`📤 Server upload: ${category}/${fullPath}`, { 
       fileSize: file.size, 
