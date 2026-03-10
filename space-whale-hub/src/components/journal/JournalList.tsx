@@ -252,8 +252,8 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       }
     }
 
-    // Prevent body scroll when lightbox is open
-    if (lightboxOpen) {
+    // Prevent body scroll when lightbox or share modal is open
+    if (lightboxOpen || shareModalEntry) {
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = 'unset'
@@ -264,7 +264,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       document.removeEventListener('keydown', handleKeyDown)
       document.body.style.overflow = 'unset'
     }
-  }, [lightboxOpen, lightboxIndex, lightboxImages])
+  }, [lightboxOpen, lightboxIndex, lightboxImages, shareModalEntry])
 
   const handleEditSave = async () => {
     if (!user || !editingId || !editContent.trim()) return
@@ -872,7 +872,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       {/* Share to Community Orbit Modal */}
       {shareModalEntry && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[10000] p-4"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[10000] p-4 overscroll-none"
           onClick={() => setShareModalEntry(null)}
         >
           <div
