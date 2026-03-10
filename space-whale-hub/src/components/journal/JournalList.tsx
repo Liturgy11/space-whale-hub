@@ -26,7 +26,11 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   const [editMediaType, setEditMediaType] = useState('')
   const [editLoading, setEditLoading] = useState(false)
   
-  // Lightbox state
+  // Simple image modal state (single image click - matches Community Orbit)
+  const [showImageModal, setShowImageModal] = useState(false)
+  const [showImageUrl, setShowImageUrl] = useState('')
+
+  // Lightbox state (mood board multi-image)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxImage, setLightboxImage] = useState('')
   const [lightboxImages, setLightboxImages] = useState<string[]>([])
@@ -607,7 +611,8 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                     onClick={(e) => {
                       e.stopPropagation()
                       if (entry.media_url) {
-                        openImageLightbox(entry.media_url, [entry.media_url], 0)
+                        setShowImageUrl(entry.media_url)
+                        setShowImageModal(true)
                       }
                     }}
                   >
@@ -659,11 +664,11 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                                         className="mood-board-hero cursor-pointer group"
                                         onClick={() => openImageLightbox(imageUrl, imageUrls, index)}
                                       >
-                                        <div className="relative overflow-hidden rounded-xl">
+                                        <div className="relative overflow-hidden rounded-xl h-full">
                                           <img
                                             src={imageUrl}
                                             alt={`Mood board image ${index + 1}`}
-                                            className="w-full h-64 sm:h-72 object-cover transition-transform duration-300 group-hover:scale-105"
+                                            className="w-full h-64 sm:h-80 object-cover transition-transform duration-300 group-hover:scale-105"
                                             loading="lazy"
                                             decoding="async"
                                             onError={(e) => {
@@ -797,19 +802,35 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       ))}
       
 
-      {/* Mood Board Image Modal - Matches Community Orbit style */}
+      {/* Single Image Modal - matches Community Orbit style */}
+      {showImageModal && showImageUrl && (
+        <div
+          className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4"
+          onClick={() => setShowImageModal(false)}
+        >
+          <img
+            src={showImageUrl}
+            alt="Journal media - enlarged (click to close)"
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl cursor-pointer"
+            onClick={() => setShowImageModal(false)}
+          />
+        </div>
+      )}
+
+      {/* Mood Board Image Lightbox */}
       {lightboxOpen && lightboxImage && (
         <div 
-          className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 sm:p-6"
+          className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm flex items-center justify-center z-[9999] p-2 sm:p-4"
           onClick={closeLightbox}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
         >
-          <div className="relative max-w-4xl max-h-[85vh] w-full flex items-center justify-center px-2 sm:px-4">
+          <div className="relative max-w-4xl max-h-[80vh] w-full flex items-center justify-center">
             {/* Close button */}
             <button
               onClick={closeLightbox}
-              className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10 bg-black/50 text-white rounded-full p-2 sm:p-2.5 hover:bg-black/70 transition-colors"
+              className="absolute top-4 right-4 z-10 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
             >
-              <X className="h-5 w-5 sm:h-6 sm:w-6" />
+              <X className="h-6 w-6" />
             </button>
             
             {/* Navigation arrows - only show if multiple images */}
@@ -820,61 +841,34 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                     e.stopPropagation()
                     navigateLightbox('prev')
                   }}
-                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white rounded-full p-2 sm:p-2.5 hover:bg-black/70 transition-colors"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
                 >
-                  <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
+                  <ChevronLeft className="h-6 w-6" />
                 </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
                     navigateLightbox('next')
                   }}
-                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white rounded-full p-2 sm:p-2.5 hover:bg-black/70 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
                 >
-                  <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
+                  <ChevronRight className="h-6 w-6" />
                 </button>
               </>
             )}
             
-            {/* Main Image - smaller relative to modal, matches Community Orbit */}
-            {!imageError && lightboxImage ? (
-              <img
-                src={lightboxImage}
-                alt="Journal image - click to close"
-                className="max-w-full max-h-[80vh] sm:max-h-[75vh] w-auto h-auto object-contain rounded-lg shadow-2xl cursor-pointer"
-                onClick={(e) => e.stopPropagation()}
-                style={{ 
-                  maxHeight: '80vh', 
-                  maxWidth: 'calc(100vw - 4rem)',
-                  width: 'auto',
-                  height: 'auto'
-                }}
-                loading="eager"
-                decoding="async"
-                onError={(e) => {
-                  console.error('Lightbox image failed to load:', lightboxImage)
-                  setImageError(true)
-                }}
-                onLoad={() => {
-                  setImageError(false)
-                }}
-              />
-            ) : imageError ? (
-              <div className="max-w-full max-h-[80vh] w-full h-[80vh] flex items-center justify-center bg-black/20 rounded-lg">
-                <div className="text-center text-white px-4">
-                  <p className="text-lg mb-2">Image failed to load</p>
-                  <p className="text-sm opacity-75 break-all">{lightboxImage}</p>
-                </div>
-              </div>
-            ) : (
-              <div className="max-w-full max-h-[80vh] w-full h-[80vh] flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-              </div>
-            )}
+            {/* Main Image */}
+            <img
+              src={lightboxImage}
+              alt="Mood board image - click to close"
+              className="max-w-3xl max-h-[75vh] object-contain rounded-lg shadow-2xl cursor-pointer"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxHeight: '75vh', maxWidth: '60vw' }}
+            />
             
             {/* Image counter - only show if multiple images */}
             {lightboxImages.length > 1 && (
-              <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1.5 rounded-full text-xs sm:text-sm">
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
                 {lightboxIndex + 1} / {lightboxImages.length}
               </div>
             )}

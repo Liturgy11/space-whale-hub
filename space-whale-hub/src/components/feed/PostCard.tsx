@@ -335,7 +335,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
                                     className="mood-board-hero cursor-pointer group"
                                     onClick={() => openImageLightbox(imageUrl, imageUrls, index)}
                                   >
-                                    <div className="relative overflow-hidden rounded-xl">
+                                    <div className="relative overflow-hidden rounded-xl h-full">
                                       <img
                                         src={imageUrl}
                                         alt={`Mood board image ${index + 1}`}

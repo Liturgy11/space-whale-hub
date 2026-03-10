@@ -380,6 +380,7 @@ body {
   .mood-board-hero {
     grid-row: 1 / 3;
     height: 100%;
+    overflow: hidden;
   }
   
   .mood-board-thumb {
