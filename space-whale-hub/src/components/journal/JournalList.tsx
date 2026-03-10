@@ -18,6 +18,8 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   const [error, setError] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [sharingId, setSharingId] = useState<string | null>(null)
+  const [shareModalEntry, setShareModalEntry] = useState<any | null>(null)
+  const [shareDescription, setShareDescription] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editContent, setEditContent] = useState('')
@@ -310,39 +312,27 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
     }
   }
 
-  const handleShareToCommunity = async (entry: any) => {
+  const handleShareToCommunity = async (entry: any, description: string) => {
     if (!user) {
       setError('You must be logged in to share to the community')
       return
     }
 
-    if (!confirm('Share this entry to the Community Orbit? It will be visible to other space whales.')) {
-      return
-    }
-
     try {
       setSharingId(entry.id)
-      
-      // Create a community post from this journal entry
-      const postData = {
-        content: entry.content,
-        media_url: entry.media_url || undefined,
-        media_type: entry.media_type || undefined,
-        tags: entry.tags || []
-      }
-      
-      // Use the secure API route instead of direct database function
+      setShareModalEntry(null)
+
       const response = await fetch('/api/create-post-secure', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content: postData.content,
-          tags: postData.tags,
-          content_warning: undefined, // You can add content warning functionality later
-          media_url: postData.media_url,
-          media_type: postData.media_type,
+          content: description,
+          tags: entry.tags || [],
+          content_warning: undefined,
+          media_url: entry.media_url || undefined,
+          media_type: entry.media_type || undefined,
           userId: user.id
         })
       })
@@ -353,7 +343,6 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
         throw new Error(result.error || 'Failed to create community post')
       }
       
-      // Show success message
       toast('✨ Your thoughts are now floating in the Community Orbit! ✨', 'success')
       
     } catch (err: any) {
@@ -431,15 +420,15 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   return (
     <div className="space-y-4 overflow-x-hidden">
       {entries.map((entry) => (
-        <div key={entry.id} className="bg-lofi-card rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-all duration-300 rainbow-border-soft overflow-hidden">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+        <div key={entry.id} className="bg-lofi-card rounded-xl shadow-lg p-3 sm:p-5 hover:shadow-xl transition-all duration-300 rainbow-border-soft overflow-hidden">
+          <div className="flex flex-row justify-between items-start gap-2 mb-2">
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <h3 className="text-lg sm:text-xl font-space-whale-subheading text-space-whale-navy break-words">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <h3 className="text-base sm:text-lg font-space-whale-subheading text-space-whale-navy break-words">
                   {entry.title || 'Untitled Entry'}
                 </h3>
                 <div className="flex items-center space-x-1 flex-shrink-0">
-                  <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-space-whale-purple" />
+                  <Lock className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-space-whale-purple" />
                   <span className="text-xs text-space-whale-purple font-space-whale-body">Private</span>
                   {isEncrypted(entry) && (
                     <span className="text-xs text-space-whale-purple font-space-whale-body ml-1">
@@ -449,9 +438,9 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                 </div>
               </div>
               
-              <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-space-whale-purple font-space-whale-body">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-space-whale-purple font-space-whale-body">
                 <div className="flex items-center flex-shrink-0">
-                  <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
+                  <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1" />
                   {formatDate(entry.created_at)}
                 </div>
                 {entry.mood && (
@@ -469,39 +458,43 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
               </div>
             </div>
             
-            <div className="flex items-center justify-end sm:justify-start space-x-1 flex-shrink-0">
+            <div className="flex items-center space-x-0.5 flex-shrink-0">
               <button 
-                onClick={() => handleShareToCommunity(entry)}
+                onClick={() => {
+                  const prefill = entry.content && !isEncrypted(entry.content) ? entry.content : ''
+                  setShareDescription(prefill)
+                  setShareModalEntry(entry)
+                }}
                 disabled={sharingId === entry.id}
-                className="p-2 text-gray-400 hover:text-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-all duration-200 rounded-lg active:scale-95 disabled:opacity-50 min-w-[40px] min-h-[40px] sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center"
+                className="p-1.5 text-gray-400 hover:text-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-all duration-200 rounded-lg active:scale-95 disabled:opacity-50 flex items-center justify-center"
                 title="Share to Community Orbit"
                 aria-label="Share to Community Orbit"
               >
                 {sharingId === entry.id ? (
-                  <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-pink-500"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-pink-500"></div>
                 ) : (
-                  <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <Share2 className="h-4 w-4" />
                 )}
               </button>
               <button 
                 onClick={() => handleEdit(entry)}
-                className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/20 transition-all duration-200 rounded-lg active:scale-95 min-w-[40px] min-h-[40px] sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center"
+                className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/20 transition-all duration-200 rounded-lg active:scale-95 flex items-center justify-center"
                 title="Edit entry"
                 aria-label="Edit entry"
               >
-                <Edit className="h-4 w-4 sm:h-5 sm:w-5" />
+                <Edit className="h-4 w-4" />
               </button>
               <button 
                 onClick={() => handleDelete(entry.id)}
                 disabled={deletingId === entry.id}
-                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-all duration-200 rounded-lg active:scale-95 disabled:opacity-50 min-w-[40px] min-h-[40px] sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center"
+                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-all duration-200 rounded-lg active:scale-95 disabled:opacity-50 flex items-center justify-center"
                 title="Delete entry"
                 aria-label="Delete entry"
               >
                 {deletingId === entry.id ? (
-                  <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-red-600"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
                 ) : (
-                  <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <Trash2 className="h-4 w-4" />
                 )}
               </button>
             </div>
@@ -872,6 +865,86 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                 {lightboxIndex + 1} / {lightboxImages.length}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Share to Community Orbit Modal */}
+      {shareModalEntry && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[10000] p-4"
+          onClick={() => setShareModalEntry(null)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Share2 className="h-5 w-5 text-space-whale-purple" />
+                Share to Community Orbit
+              </h3>
+              <button
+                onClick={() => setShareModalEntry(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Media preview note */}
+            {shareModalEntry.media_type === 'moodboard' && shareModalEntry.tags?.length > 0 && (
+              <div className="mb-4 flex items-center gap-2 text-sm text-space-whale-purple bg-purple-50 dark:bg-purple-900/20 rounded-lg px-3 py-2">
+                <span>✨</span>
+                <span>
+                  {shareModalEntry.tags.filter((u: string) => u && (u.startsWith('data:image/') || u.startsWith('https://'))).length} mood board image(s) will be included
+                </span>
+              </div>
+            )}
+            {shareModalEntry.media_type === 'image' && shareModalEntry.media_url && (
+              <div className="mb-4">
+                <img
+                  src={shareModalEntry.media_url}
+                  alt="Post preview"
+                  className="w-full h-32 object-cover rounded-lg"
+                />
+              </div>
+            )}
+
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Description <span className="font-normal text-gray-400 dark:text-gray-500">(visible to all space whales)</span>
+            </label>
+            <textarea
+              value={shareDescription}
+              onChange={(e) => setShareDescription(e.target.value)}
+              placeholder="Add some context for the community..."
+              rows={4}
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-space-whale-purple resize-none"
+            />
+
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setShareModalEntry(null)}
+                className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleShareToCommunity(shareModalEntry, shareDescription)}
+                disabled={sharingId === shareModalEntry.id}
+                className="flex-1 px-4 py-2 rounded-lg bg-space-whale-purple text-white text-sm font-medium hover:bg-space-whale-purple/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {sharingId === shareModalEntry.id ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                ) : (
+                  <>
+                    <Share2 className="h-4 w-4" />
+                    Share
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -201,7 +201,7 @@ function PersonalSpaceContent() {
                     },
                     body: JSON.stringify({
                       title: title || 'Mood Board',
-                      content: `Created a mood board with ${urls.length} image${urls.length > 1 ? 's' : ''}`,
+                      content: '',
                       mood: undefined,
                       tags: urls, // Store all image URLs in tags array for display
                       media_url: urls[0], // Use first image as primary display
