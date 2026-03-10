@@ -856,7 +856,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
               alt="Mood board image - click to close"
               className="max-w-3xl max-h-[75vh] object-contain rounded-lg shadow-2xl cursor-pointer"
               onClick={(e) => e.stopPropagation()}
-              style={{ maxHeight: '75vh', maxWidth: '60vw' }}
+              style={{ maxHeight: '75vh', maxWidth: 'min(90vw, 800px)' }}
             />
             
             {/* Image counter - only show if multiple images */}
