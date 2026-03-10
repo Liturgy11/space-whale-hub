@@ -461,7 +461,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
             <div className="flex items-center space-x-0.5 flex-shrink-0">
               <button 
                 onClick={() => {
-                  const prefill = entry.content && !isEncrypted(entry.content) ? entry.content : ''
+                  const prefill = entry.content && !isEncrypted(entry) ? entry.content : ''
                   setShareDescription(prefill)
                   setShareModalEntry(entry)
                 }}
