@@ -270,13 +270,16 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
       {/* Post Content */}
       {showContent && (
         <div className="mb-3">
-          <p className="text-space-whale-navy font-space-whale-body whitespace-pre-wrap">
-            {post.content}
-          </p>
+          {/* For moodboards show description after images, for everything else show it first */}
+          {post.media_type !== 'moodboard' && (
+            <p className="text-space-whale-navy font-space-whale-body whitespace-pre-wrap">
+              {post.content}
+            </p>
+          )}
           
           {/* Media Display */}
           {post.media_url && (
-            <div className="mt-3">
+            <div className={post.media_type !== 'moodboard' ? 'mt-3' : ''}>
               {post.media_type === 'image' ? (
                 <div className="relative group cursor-pointer" onClick={() => setShowImageModal(true)}>
                   <img
@@ -310,12 +313,6 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
                 </div>
               ) : post.media_type === 'moodboard' ? (
                 <div className="space-y-3">
-                  {/* Mood Board Header */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">✨</span>
-                    <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">Mood Board</span>
-                  </div>
-                  
                   {/* Enhanced mood board display */}
                   {post.tags && post.tags.length > 0 ? (
                     <div className="relative">
@@ -430,6 +427,13 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
             </div>
           )}
           
+          {/* Moodboard caption - shown below images */}
+          {post.media_type === 'moodboard' && post.content && (
+            <p className="text-space-whale-navy font-space-whale-body whitespace-pre-wrap mt-3">
+              {post.content}
+            </p>
+          )}
+
           {/* Tags - Hide URLs for mood board posts */}
           {post.tags && post.tags.length > 0 && post.media_type !== 'moodboard' && (
             <div className="flex flex-wrap gap-2 mt-3">
