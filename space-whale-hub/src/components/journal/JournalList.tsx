@@ -426,6 +426,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   }
 
   return (
+    <>
     <div className="space-y-4 overflow-x-hidden">
       {entries.map((entry) => (
         <div key={entry.id} className="bg-lofi-card rounded-xl shadow-lg p-3 sm:p-5 hover:shadow-xl transition-all duration-300 rainbow-border-soft overflow-hidden">
@@ -802,6 +803,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
         </div>
       ))}
       
+    </div>
 
       {/* Single Image Modal - matches Community Orbit style */}
       {showImageModal && showImageUrl && (
@@ -1073,6 +1075,6 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
