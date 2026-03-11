@@ -37,15 +37,16 @@ function AuthCallbackContent() {
             router.replace('/auth/reset-password?error=otp_expired&error_description=The+reset+link+has+expired.+Please+request+a+new+one.')
             return
           }
-          // verifyOtp returns the session directly — use it rather than a
-          // separate getSession() call which can race against storage writes.
+          // Stash the tokens in sessionStorage so the reset-password page can
+          // explicitly re-establish the session before calling updateUser.
+          // This avoids any localStorage persistence timing issues.
           if (data?.session) {
-            router.replace('/auth/reset-password?verified=true')
-          } else {
-            // Session not in response — still redirect and let reset-password
-            // page handle it via its own onAuthStateChange listener.
-            router.replace('/auth/reset-password?verified=true')
+            try {
+              sessionStorage.setItem('_sw_reset_at', data.session.access_token)
+              sessionStorage.setItem('_sw_reset_rt', data.session.refresh_token)
+            } catch (_) {}
           }
+          router.replace('/auth/reset-password?verified=true')
         })
       return
     }

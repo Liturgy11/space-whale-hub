@@ -107,6 +107,18 @@ function ResetPasswordContent() {
     }
 
     try {
+      // Re-establish session from stashed tokens if available, so that
+      // updateUser works even if the session wasn't persisted to localStorage.
+      try {
+        const at = sessionStorage.getItem('_sw_reset_at')
+        const rt = sessionStorage.getItem('_sw_reset_rt')
+        if (at && rt) {
+          await supabase.auth.setSession({ access_token: at, refresh_token: rt })
+          sessionStorage.removeItem('_sw_reset_at')
+          sessionStorage.removeItem('_sw_reset_rt')
+        }
+      } catch (_) {}
+
       const { error } = await updatePassword(password)
 
       if (error) {
