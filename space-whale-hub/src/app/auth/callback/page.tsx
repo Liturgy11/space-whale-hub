@@ -32,16 +32,26 @@ function AuthCallbackContent() {
       return
     }
 
-    // Exchange the PKCE code for a session — this is the correct method for PKCE flow
+    // Try PKCE code exchange first, fall back to verifyOtp for cases where
+    // the code verifier isn't in storage (e.g. email opened in a webview/different browser)
     supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-      if (error) {
-        console.error('Code exchange failed:', error.message)
-        router.replace('/auth/reset-password?error=exchange_failed&error_description=The+reset+link+is+invalid+or+has+expired.')
-      } else if (type === 'recovery') {
-        router.replace('/auth/reset-password')
-      } else {
-        router.replace('/')
+      if (!error) {
+        // PKCE exchange succeeded
+        router.replace(type === 'recovery' ? '/auth/reset-password' : '/')
+        return
       }
+
+      console.warn('exchangeCodeForSession failed, trying verifyOtp fallback:', error.message)
+
+      // Fallback: treat the code as a token_hash (works when PKCE verifier is unavailable)
+      supabase.auth.verifyOtp({ token_hash: code, type: 'recovery' }).then(({ error: otpError }) => {
+        if (otpError) {
+          console.error('verifyOtp fallback also failed:', otpError.message)
+          router.replace('/auth/reset-password?error=exchange_failed&error_description=The+reset+link+is+invalid+or+has+expired.')
+        } else {
+          router.replace('/auth/reset-password')
+        }
+      })
     })
   }, [router, searchParams])
 
