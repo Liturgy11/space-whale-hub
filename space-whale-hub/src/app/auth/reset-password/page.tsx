@@ -37,9 +37,29 @@ function ResetPasswordContent() {
       return
     }
 
-    // callback page already confirmed the session before navigating here
+    // callback page verified the OTP — show the form, but also ensure
+    // we have a session before allowing the password update to proceed.
     if (verified === 'true') {
-      setInitializing(false)
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setInitializing(false)
+          return
+        }
+        // Session may still be propagating — listen for it
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          if ((event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') && session) {
+            setInitializing(false)
+            subscription.unsubscribe()
+          }
+        })
+        const timeout = setTimeout(() => {
+          subscription.unsubscribe()
+          // verifyOtp succeeded so just show the form anyway and let
+          // updatePassword fail with a clear message if session is truly gone
+          setInitializing(false)
+        }, 3000)
+        return () => { clearTimeout(timeout); subscription.unsubscribe() }
+      })
       return
     }
 

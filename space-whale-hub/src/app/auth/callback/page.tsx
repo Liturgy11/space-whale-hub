@@ -32,25 +32,19 @@ function AuthCallbackContent() {
     // Works in any browser — no PKCE verifier required.
     if (tokenHash && type === 'recovery') {
       supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
-        .then(async ({ error }) => {
+        .then(({ data, error }) => {
           if (error) {
             router.replace('/auth/reset-password?error=otp_expired&error_description=The+reset+link+has+expired.+Please+request+a+new+one.')
             return
           }
-          // Confirm the session is persisted before navigating — avoids a race
-          // where reset-password calls getSession() before storage is written.
-          const { data: { session } } = await supabase.auth.getSession()
-          if (session) {
+          // verifyOtp returns the session directly — use it rather than a
+          // separate getSession() call which can race against storage writes.
+          if (data?.session) {
             router.replace('/auth/reset-password?verified=true')
           } else {
-            // Session not in storage yet; give it a moment then try once more
-            await new Promise(r => setTimeout(r, 800))
-            const { data: { session: retrySession } } = await supabase.auth.getSession()
-            if (retrySession) {
-              router.replace('/auth/reset-password?verified=true')
-            } else {
-              router.replace('/auth/reset-password?error=session_missing&error_description=Session+could+not+be+established.+Please+request+a+new+reset+link.')
-            }
+            // Session not in response — still redirect and let reset-password
+            // page handle it via its own onAuthStateChange listener.
+            router.replace('/auth/reset-password?verified=true')
           }
         })
       return
