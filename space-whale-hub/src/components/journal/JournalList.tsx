@@ -808,13 +808,14 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       {/* Single Image Modal - matches Community Orbit style */}
       {showImageModal && showImageUrl && (
         <div
-          className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4"
+          className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm flex items-center justify-center z-[9999] p-2 sm:p-4"
           onClick={() => setShowImageModal(false)}
         >
           <img
             src={showImageUrl}
             alt="Journal media - enlarged (click to close)"
-            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl cursor-pointer"
+            className="object-contain rounded-lg shadow-2xl cursor-pointer"
+            style={{ maxHeight: '85dvh', maxWidth: '90vw' }}
             onClick={() => setShowImageModal(false)}
           />
         </div>
@@ -864,9 +865,9 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
             <img
               src={lightboxImage}
               alt="Mood board image - click to close"
-              className="max-w-3xl max-h-[75vh] object-contain rounded-lg shadow-2xl cursor-pointer"
+              className="object-contain rounded-lg shadow-2xl cursor-pointer"
               onClick={(e) => e.stopPropagation()}
-              style={{ maxHeight: '75vh', maxWidth: 'min(90vw, 800px)' }}
+              style={{ maxHeight: '80dvh', maxWidth: 'min(90vw, 800px)' }}
             />
             
             {/* Image counter - only show if multiple images */}
