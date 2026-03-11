@@ -32,11 +32,25 @@ function AuthCallbackContent() {
     // Works in any browser — no PKCE verifier required.
     if (tokenHash && type === 'recovery') {
       supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
-        .then(({ error }) => {
+        .then(async ({ error }) => {
           if (error) {
             router.replace('/auth/reset-password?error=otp_expired&error_description=The+reset+link+has+expired.+Please+request+a+new+one.')
+            return
+          }
+          // Confirm the session is persisted before navigating — avoids a race
+          // where reset-password calls getSession() before storage is written.
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session) {
+            router.replace('/auth/reset-password?verified=true')
           } else {
-            router.replace('/auth/reset-password')
+            // Session not in storage yet; give it a moment then try once more
+            await new Promise(r => setTimeout(r, 800))
+            const { data: { session: retrySession } } = await supabase.auth.getSession()
+            if (retrySession) {
+              router.replace('/auth/reset-password?verified=true')
+            } else {
+              router.replace('/auth/reset-password?error=session_missing&error_description=Session+could+not+be+established.+Please+request+a+new+reset+link.')
+            }
           }
         })
       return

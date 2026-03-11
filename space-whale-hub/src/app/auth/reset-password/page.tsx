@@ -22,35 +22,32 @@ function ResetPasswordContent() {
   const { updatePassword } = useAuth()
 
   useEffect(() => {
-    // Check for error params forwarded from /auth/callback
     const errorParam = searchParams.get('error')
     const errorCode = searchParams.get('error_code')
     const errorDescription = searchParams.get('error_description')
+    const verified = searchParams.get('verified')
 
+    // Show errors forwarded from /auth/callback
     if (errorParam || errorCode) {
-      if (errorCode === 'otp_expired' || errorParam === 'otp_expired') {
-        setError('This reset link has expired. Please request a new password reset email.')
-      } else if (errorParam === 'exchange_failed') {
-        setError(
-          decodeURIComponent(errorDescription || '').replace(/\+/g, ' ') ||
-          'This reset link is invalid or has expired. Please request a new password reset email.'
-        )
-      } else {
-        setError(
-          decodeURIComponent(errorDescription || '').replace(/\+/g, ' ') ||
-          'This reset link is invalid or has expired. Please request a new password reset email.'
-        )
-      }
+      setError(
+        decodeURIComponent(errorDescription || '').replace(/\+/g, ' ') ||
+        'This reset link is invalid or has expired. Please request a new password reset email.'
+      )
       setInitializing(false)
       return
     }
 
-    // The /auth/callback page already exchanged the code — just check for an active session
+    // callback page already confirmed the session before navigating here
+    if (verified === 'true') {
+      setInitializing(false)
+      return
+    }
+
+    // Fallback: check for an existing session (e.g. user navigated here directly)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setInitializing(false)
       } else {
-        // Listen for PASSWORD_RECOVERY event in case session arrives slightly after page load
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
           if ((event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') && session) {
             setInitializing(false)
@@ -58,7 +55,6 @@ function ResetPasswordContent() {
           }
         })
 
-        // Timeout after 5 seconds — link is stale or user landed here directly
         const timeout = setTimeout(() => {
           subscription.unsubscribe()
           setError('No valid reset session found. Please request a new password reset email.')
