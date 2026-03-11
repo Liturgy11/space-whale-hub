@@ -242,7 +242,6 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!lightboxOpen) return
-      
       if (e.key === 'Escape') {
         closeLightbox()
       } else if (e.key === 'ArrowLeft') {
@@ -252,19 +251,28 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       }
     }
 
-    // Prevent body scroll when lightbox or share modal is open
-    if (lightboxOpen || shareModalEntry) {
+    // iOS Safari requires position:fixed on body to truly prevent scroll
+    const anyModalOpen = lightboxOpen || !!shareModalEntry || showImageModal
+    if (anyModalOpen) {
+      const scrollY = window.scrollY
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.width = '100%'
       document.body.style.overflow = 'hidden'
     } else {
-      document.body.style.overflow = 'unset'
+      const scrollY = document.body.style.top
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.width = ''
+      document.body.style.overflow = ''
+      if (scrollY) window.scrollTo(0, parseInt(scrollY) * -1)
     }
 
     document.addEventListener('keydown', handleKeyDown)
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = 'unset'
     }
-  }, [lightboxOpen, lightboxIndex, lightboxImages, shareModalEntry])
+  }, [lightboxOpen, lightboxIndex, lightboxImages, shareModalEntry, showImageModal])
 
   const handleEditSave = async () => {
     if (!user || !editingId || !editContent.trim()) return
