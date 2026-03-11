@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { deleteJournalEntry } from '@/lib/database'
 import { decryptJournalContent, isEncrypted, getEncryptionStatus } from '@/lib/journal-encryption'
@@ -16,6 +17,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   const [entries, setEntries] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [mounted, setMounted] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [sharingId, setSharingId] = useState<string | null>(null)
   const [shareModalEntry, setShareModalEntry] = useState<any | null>(null)
@@ -45,6 +47,8 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   const [masterPassphraseInput, setMasterPassphraseInput] = useState('')
   const [decryptingId, setDecryptingId] = useState<string | null>(null)
   const [decryptedContent, setDecryptedContent] = useState<Record<string, string>>({})
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     if (user) {
@@ -424,6 +428,211 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       </div>
     )
   }
+
+  const modals = mounted ? createPortal(
+    <>
+      {/* Single Image Modal - matches Community Orbit style */}
+      {showImageModal && showImageUrl && (
+        <div
+          className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm flex items-center justify-center z-[9999] p-2 sm:p-4"
+          onClick={() => setShowImageModal(false)}
+        >
+          <img
+            src={showImageUrl}
+            alt="Journal media - enlarged (click to close)"
+            className="object-contain rounded-lg shadow-2xl cursor-pointer"
+            style={{ maxHeight: '85dvh', maxWidth: '90vw' }}
+            onClick={() => setShowImageModal(false)}
+          />
+        </div>
+      )}
+
+      {/* Mood Board Image Lightbox */}
+      {lightboxOpen && lightboxImage && (
+        <div 
+          className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm flex items-center justify-center z-[9999] p-2 sm:p-4"
+          onClick={closeLightbox}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+        >
+          <div className="relative max-w-4xl max-h-[80vh] w-full flex items-center justify-center">
+            <button
+              onClick={closeLightbox}
+              className="absolute top-4 right-4 z-10 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            {lightboxImages.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); navigateLightbox('prev') }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); navigateLightbox('next') }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
+            <img
+              src={lightboxImage}
+              alt="Mood board image - click to close"
+              className="object-contain rounded-lg shadow-2xl cursor-pointer"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxHeight: '80dvh', maxWidth: 'min(90vw, 800px)' }}
+            />
+            {lightboxImages.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                {lightboxIndex + 1} / {lightboxImages.length}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Share to Community Orbit Modal */}
+      {shareModalEntry && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[10000] p-4 overscroll-none"
+          onClick={() => setShareModalEntry(null)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Share2 className="h-5 w-5 text-space-whale-purple" />
+                Share to Community Orbit
+              </h3>
+              <button onClick={() => setShareModalEntry(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Close">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {shareModalEntry.media_type === 'moodboard' && shareModalEntry.tags?.length > 0 && (
+              <div className="mb-4 flex items-center gap-2 text-sm text-space-whale-purple bg-purple-50 dark:bg-purple-900/20 rounded-lg px-3 py-2">
+                <span>✨</span>
+                <span>{shareModalEntry.tags.filter((u: string) => u && (u.startsWith('data:image/') || u.startsWith('https://'))).length} mood board image(s) will be included</span>
+              </div>
+            )}
+            {shareModalEntry.media_type === 'image' && shareModalEntry.media_url && (
+              <div className="mb-4">
+                <img src={shareModalEntry.media_url} alt="Post preview" className="w-full h-32 object-cover rounded-lg" />
+              </div>
+            )}
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Description <span className="font-normal text-gray-400 dark:text-gray-500">(visible to all space whales)</span>
+            </label>
+            <textarea
+              value={shareDescription}
+              onChange={(e) => setShareDescription(e.target.value)}
+              placeholder="Add some context for the community..."
+              rows={4}
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-space-whale-purple resize-none"
+            />
+            <div className="flex gap-3 mt-4">
+              <button onClick={() => setShareModalEntry(null)} className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                Cancel
+              </button>
+              <button
+                onClick={() => handleShareToCommunity(shareModalEntry, shareDescription)}
+                disabled={sharingId === shareModalEntry.id}
+                className="flex-1 px-4 py-2 rounded-lg bg-space-whale-purple text-white text-sm font-medium hover:bg-space-whale-purple/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {sharingId === shareModalEntry.id ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                ) : (
+                  <><Share2 className="h-4 w-4" />Share</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Decryption Modal */}
+      {decryptingId && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[10000] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+                <Lock className="h-5 w-5 mr-2 text-space-whale-purple" />
+                Decrypt Entry
+              </h3>
+              <button onClick={() => { setDecryptingId(null); setMasterPassphraseInput('') }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+              {masterPassphrase 
+                ? 'This entry is encrypted. Click decrypt to view it using your master passphrase.'
+                : 'This entry is encrypted. Enter your master passphrase to decrypt and view it. This passphrase will be used for all encrypted entries in this session.'}
+            </p>
+            <div className="space-y-4">
+              {!masterPassphrase ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Master Encryption Passphrase</label>
+                    <input
+                      type="password"
+                      value={masterPassphraseInput}
+                      onChange={(e) => setMasterPassphraseInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && masterPassphraseInput && masterPassphraseInput.length >= 8) {
+                          const entry = entries.find(e => e.id === decryptingId)
+                          if (entry) handleSetMasterPassphrase(entry)
+                        }
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
+                      placeholder="Enter your master encryption passphrase"
+                      autoFocus
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">This passphrase will be used for all encrypted entries in this session.</p>
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => { const entry = entries.find(e => e.id === decryptingId); if (entry) handleSetMasterPassphrase(entry) }}
+                      disabled={!masterPassphraseInput || masterPassphraseInput.length < 8}
+                      className="flex-1 px-4 py-2 bg-space-whale-purple text-white rounded-lg hover:bg-space-whale-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Set & Decrypt
+                    </button>
+                    <button onClick={() => { setDecryptingId(null); setMasterPassphraseInput('') }} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-green-800 dark:text-green-200">✓ Master passphrase is set for this session</p>
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => { const entry = entries.find(e => e.id === decryptingId); if (entry) handleDecrypt(entry) }}
+                      className="flex-1 px-4 py-2 bg-space-whale-purple text-white rounded-lg hover:bg-space-whale-purple/90 transition-colors"
+                    >
+                      Decrypt Entry
+                    </button>
+                    <button onClick={() => setDecryptingId(null)} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                      Cancel
+                    </button>
+                  </div>
+                  <button onClick={handleClearMasterPassphrase} className="w-full mt-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
+                    Clear master passphrase from memory
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>,
+    document.body
+  ) : null
 
   return (
     <>
@@ -805,277 +1014,8 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       
     </div>
 
-      {/* Single Image Modal - matches Community Orbit style */}
-      {showImageModal && showImageUrl && (
-        <div
-          className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm flex items-center justify-center z-[9999] p-2 sm:p-4"
-          onClick={() => setShowImageModal(false)}
-        >
-          <img
-            src={showImageUrl}
-            alt="Journal media - enlarged (click to close)"
-            className="object-contain rounded-lg shadow-2xl cursor-pointer"
-            style={{ maxHeight: '85dvh', maxWidth: '90vw' }}
-            onClick={() => setShowImageModal(false)}
-          />
-        </div>
-      )}
-
-      {/* Mood Board Image Lightbox */}
-      {lightboxOpen && lightboxImage && (
-        <div 
-          className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm flex items-center justify-center z-[9999] p-2 sm:p-4"
-          onClick={closeLightbox}
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-        >
-          <div className="relative max-w-4xl max-h-[80vh] w-full flex items-center justify-center">
-            {/* Close button */}
-            <button
-              onClick={closeLightbox}
-              className="absolute top-4 right-4 z-10 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
-            >
-              <X className="h-6 w-6" />
-            </button>
-            
-            {/* Navigation arrows - only show if multiple images */}
-            {lightboxImages.length > 1 && (
-              <>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    navigateLightbox('prev')
-                  }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
-                >
-                  <ChevronLeft className="h-6 w-6" />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    navigateLightbox('next')
-                  }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
-                >
-                  <ChevronRight className="h-6 w-6" />
-                </button>
-              </>
-            )}
-            
-            {/* Main Image */}
-            <img
-              src={lightboxImage}
-              alt="Mood board image - click to close"
-              className="object-contain rounded-lg shadow-2xl cursor-pointer"
-              onClick={(e) => e.stopPropagation()}
-              style={{ maxHeight: '80dvh', maxWidth: 'min(90vw, 800px)' }}
-            />
-            
-            {/* Image counter - only show if multiple images */}
-            {lightboxImages.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-                {lightboxIndex + 1} / {lightboxImages.length}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Share to Community Orbit Modal */}
-      {shareModalEntry && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[10000] p-4 overscroll-none"
-          onClick={() => setShareModalEntry(null)}
-        >
-          <div
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <Share2 className="h-5 w-5 text-space-whale-purple" />
-                Share to Community Orbit
-              </h3>
-              <button
-                onClick={() => setShareModalEntry(null)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Media preview note */}
-            {shareModalEntry.media_type === 'moodboard' && shareModalEntry.tags?.length > 0 && (
-              <div className="mb-4 flex items-center gap-2 text-sm text-space-whale-purple bg-purple-50 dark:bg-purple-900/20 rounded-lg px-3 py-2">
-                <span>✨</span>
-                <span>
-                  {shareModalEntry.tags.filter((u: string) => u && (u.startsWith('data:image/') || u.startsWith('https://'))).length} mood board image(s) will be included
-                </span>
-              </div>
-            )}
-            {shareModalEntry.media_type === 'image' && shareModalEntry.media_url && (
-              <div className="mb-4">
-                <img
-                  src={shareModalEntry.media_url}
-                  alt="Post preview"
-                  className="w-full h-32 object-cover rounded-lg"
-                />
-              </div>
-            )}
-
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Description <span className="font-normal text-gray-400 dark:text-gray-500">(visible to all space whales)</span>
-            </label>
-            <textarea
-              value={shareDescription}
-              onChange={(e) => setShareDescription(e.target.value)}
-              placeholder="Add some context for the community..."
-              rows={4}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-space-whale-purple resize-none"
-            />
-
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={() => setShareModalEntry(null)}
-                className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleShareToCommunity(shareModalEntry, shareDescription)}
-                disabled={sharingId === shareModalEntry.id}
-                className="flex-1 px-4 py-2 rounded-lg bg-space-whale-purple text-white text-sm font-medium hover:bg-space-whale-purple/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {sharingId === shareModalEntry.id ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                ) : (
-                  <>
-                    <Share2 className="h-4 w-4" />
-                    Share
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Decryption Modal */}
-      {decryptingId && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[10000] p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
-                <Lock className="h-5 w-5 mr-2 text-space-whale-purple" />
-                Decrypt Entry
-              </h3>
-              <button
-                onClick={() => {
-                  setDecryptingId(null)
-                  setMasterPassphraseInput('')
-                }}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              {masterPassphrase 
-                ? 'This entry is encrypted. Click decrypt to view it using your master passphrase.'
-                : 'This entry is encrypted. Enter your master passphrase to decrypt and view it. This passphrase will be used for all encrypted entries in this session.'}
-            </p>
-            
-            <div className="space-y-4">
-              {!masterPassphrase ? (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Master Encryption Passphrase
-                    </label>
-                    <input
-                      type="password"
-                      value={masterPassphraseInput}
-                      onChange={(e) => setMasterPassphraseInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && masterPassphraseInput && masterPassphraseInput.length >= 8) {
-                          const entry = entries.find(e => e.id === decryptingId)
-                          if (entry) {
-                            handleSetMasterPassphrase(entry)
-                          }
-                        }
-                      }}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
-                      placeholder="Enter your master encryption passphrase"
-                      autoFocus
-                    />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      This passphrase will be used for all encrypted entries in this session.
-                    </p>
-                  </div>
-                  
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={() => {
-                        const entry = entries.find(e => e.id === decryptingId)
-                        if (entry) {
-                          handleSetMasterPassphrase(entry)
-                        }
-                      }}
-                      disabled={!masterPassphraseInput || masterPassphraseInput.length < 8}
-                      className="flex-1 px-4 py-2 bg-space-whale-purple text-white rounded-lg hover:bg-space-whale-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Set & Decrypt
-                    </button>
-                    <button
-                      onClick={() => {
-                        setDecryptingId(null)
-                        setMasterPassphraseInput('')
-                      }}
-                      className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 mb-4">
-                    <p className="text-sm text-green-800 dark:text-green-200">
-                      ✓ Master passphrase is set for this session
-                    </p>
-                  </div>
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={() => {
-                        const entry = entries.find(e => e.id === decryptingId)
-                        if (entry) handleDecrypt(entry)
-                      }}
-                      className="flex-1 px-4 py-2 bg-space-whale-purple text-white rounded-lg hover:bg-space-whale-purple/90 transition-colors"
-                    >
-                      Decrypt Entry
-                    </button>
-                    <button
-                      onClick={() => {
-                        setDecryptingId(null)
-                      }}
-                      className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                  <button
-                    onClick={handleClearMasterPassphrase}
-                    className="w-full mt-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-                  >
-                    Clear master passphrase from memory
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {modals}
     </>
   )
 }
+
