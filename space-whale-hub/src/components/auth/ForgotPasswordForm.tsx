@@ -52,8 +52,11 @@ export default function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) 
             <p className="font-space-whale-body text-space-whale-navy mb-6">
               We've sent a password reset link to <strong>{email}</strong>
             </p>
-            <p className="text-sm font-space-whale-body text-space-whale-navy/70 mb-6">
+            <p className="text-sm font-space-whale-body text-space-whale-navy/70 mb-3">
               Click the link in the email to reset your password. The link will expire in 1 hour.
+            </p>
+            <p className="text-sm font-space-whale-body text-space-whale-navy/60 mb-6 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3">
+              If you don't see it, check your spam or junk folder — reset emails can sometimes land there on the first attempt.
             </p>
             <button
               onClick={onBack}
