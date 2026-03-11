@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { getPosts } from '@/lib/database'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/ui/Toast'
@@ -35,16 +35,15 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
   const [error, setError] = useState('')
   const [editingPost, setEditingPost] = useState<Post | null>(null)
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
+  const likeStatusLoadedRef = useRef(false)
 
-  const loadPosts = useCallback(async () => {
+  const loadPosts = useCallback(async (userId?: string | null) => {
     try {
       setLoading(true)
-      setError('') // Clear any previous errors
-      // Try secure API first (service role), fallback to client getPosts
+      setError('')
       try {
-        // Include userId in query params if available for like status
-        const url = user?.id 
-          ? `/api/get-posts-secure?userId=${encodeURIComponent(user.id)}`
+        const url = userId
+          ? `/api/get-posts-secure?userId=${encodeURIComponent(userId)}`
           : '/api/get-posts-secure'
         const res = await fetch(url)
         if (res.ok) {
@@ -64,18 +63,27 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
     } finally {
       setLoading(false)
     }
-  }, [user])
+  }, [])
 
+  // Fire immediately on mount — no auth wait needed for posts to appear
   useEffect(() => {
     loadPosts()
   }, [loadPosts])
 
-  // Refresh when trigger changes
+  // Once user resolves, silently refresh to get correct is_liked status
+  useEffect(() => {
+    if (user?.id && !likeStatusLoadedRef.current) {
+      likeStatusLoadedRef.current = true
+      loadPosts(user.id)
+    }
+  }, [user?.id, loadPosts])
+
+  // Refresh when trigger changes (e.g. after posting)
   useEffect(() => {
     if (refreshTrigger) {
-      loadPosts()
+      loadPosts(user?.id)
     }
-  }, [refreshTrigger, loadPosts])
+  }, [refreshTrigger, loadPosts, user?.id])
 
   const handleLike = async (postId: string) => {
     if (!user) return
@@ -187,6 +195,9 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
   if (loading) {
     return (
       <div className="space-y-6">
+        <p className="text-sm text-space-whale-purple/70 font-space-whale-body text-center">
+          Gathering posts from the orbit — this may take a moment on first load...
+        </p>
         {[...Array(3)].map((_, i) => (
           <div key={i} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 animate-pulse">
             <div className="flex items-center space-x-3 mb-4">
