@@ -85,6 +85,8 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
     
     if (error) {
       setError(error.message)
+      setLoading(false)
+      return
     } else {
       // TEMPORARILY DISABLED: Invite code usage
       // TODO: Re-enable invite code usage before production
@@ -122,6 +124,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
 
     onSuccess?.()
     setLoading(false)
+    
   }
 
   return (
