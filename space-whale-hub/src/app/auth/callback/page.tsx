@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { storeRecoveryTokens } from '@/lib/recoverySession'
 import { Loader2 } from 'lucide-react'
 import { Suspense } from 'react'
 
@@ -37,14 +38,10 @@ function AuthCallbackContent() {
             router.replace('/auth/reset-password?error=otp_expired&error_description=The+reset+link+has+expired.+Please+request+a+new+one.')
             return
           }
-          // Stash the tokens in sessionStorage so the reset-password page can
-          // explicitly re-establish the session before calling updateUser.
-          // This avoids any localStorage persistence timing issues.
+          // Store tokens in a module-level variable — no localStorage/sessionStorage
+          // needed, so quota issues can't affect this path.
           if (data?.session) {
-            try {
-              sessionStorage.setItem('_sw_reset_at', data.session.access_token)
-              sessionStorage.setItem('_sw_reset_rt', data.session.refresh_token)
-            } catch (_) {}
+            storeRecoveryTokens(data.session.access_token, data.session.refresh_token)
           }
           router.replace('/auth/reset-password?verified=true')
         })

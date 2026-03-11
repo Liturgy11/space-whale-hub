@@ -11,48 +11,37 @@ if (!supabaseAnonKey) {
   throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable. Please set it in your deployment environment variables (Vercel, etc.) or .env.local file.')
 }
 
-// Custom storage that handles quota errors and prevents large values
+// Custom storage that gracefully handles quota errors.
+// No artificial size cap — let the browser decide what it can hold.
 const customStorage = {
   getItem: (key: string) => {
     try {
       return localStorage.getItem(key)
-    } catch (error) {
-      console.warn('Storage getItem failed:', error)
+    } catch {
       return null
     }
   },
   setItem: (key: string, value: string) => {
     try {
-      // Check if the value is too large (over 1MB)
-      const valueSize = new Blob([value]).size
-      if (valueSize > 1024 * 1024) { // 1MB limit
-        console.warn(`Value too large (${(valueSize / 1024 / 1024).toFixed(2)}MB), skipping storage`)
-        return
-      }
-
       localStorage.setItem(key, value)
-    } catch (error) {
-      console.warn('Storage setItem failed, clearing storage:', error)
-      // If quota exceeded, clear storage and try again
+    } catch {
+      // Quota exceeded — clear only auth keys and retry once
       try {
-        localStorage.clear()
-        // Only try to store if value is small enough
-        const valueSize = new Blob([value]).size
-        if (valueSize <= 1024 * 1024) {
-          localStorage.setItem(key, value)
-        } else {
-          console.warn('Value still too large after cleanup, skipping')
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const k = localStorage.key(i)
+          if (k && k.includes('supabase')) localStorage.removeItem(k)
         }
-      } catch (retryError) {
-        console.error('Storage retry failed:', retryError)
+        localStorage.setItem(key, value)
+      } catch {
+        // Storage unavailable — session will live in memory only
       }
     }
   },
   removeItem: (key: string) => {
     try {
       localStorage.removeItem(key)
-    } catch (error) {
-      console.warn('Storage removeItem failed:', error)
+    } catch {
+      // ignore
     }
   }
 }
