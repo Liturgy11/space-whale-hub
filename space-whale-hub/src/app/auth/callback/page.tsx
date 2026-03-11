@@ -11,11 +11,14 @@ function AuthCallbackContent() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
+    const tokenHash = searchParams.get('token_hash')
+    const code = searchParams.get('code')
+    const type = searchParams.get('type')
     const errorParam = searchParams.get('error')
-    const errorDescription = searchParams.get('error_description')
     const errorCode = searchParams.get('error_code')
+    const errorDescription = searchParams.get('error_description')
 
-    // Forward any explicit Supabase errors to the reset page
+    // Forward any explicit errors from Supabase
     if (errorParam || errorCode) {
       const params = new URLSearchParams()
       if (errorParam) params.set('error', errorParam)
@@ -25,41 +28,63 @@ function AuthCallbackContent() {
       return
     }
 
-    // With implicit flow, Supabase puts tokens in the URL hash fragment:
-    // /auth/callback#access_token=...&refresh_token=...&type=recovery
-    // detectSessionInUrl: true (set in supabase client) processes this automatically.
-    // We just need to listen for the resulting auth event and redirect accordingly.
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash
+    // Preferred path: token_hash in URL (email template sends this directly).
+    // Works in any browser — no PKCE verifier required.
+    if (tokenHash && type === 'recovery') {
+      supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
+        .then(({ error }) => {
+          if (error) {
+            router.replace('/auth/reset-password?error=otp_expired&error_description=The+reset+link+has+expired.+Please+request+a+new+one.')
+          } else {
+            router.replace('/auth/reset-password')
+          }
+        })
+      return
+    }
 
-      if (hash && (hash.includes('type=recovery') || hash.includes('access_token'))) {
-        // Supabase auto-processes the hash; listen for the resulting session event
+    // Fallback: PKCE code exchange (works only when opened in the same browser
+    // that initiated the reset — will fail in webviews / different browsers).
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code)
+        .then(({ error }) => {
+          if (error) {
+            // PKCE verifier missing — most likely opened in a different browser/webview
+            router.replace('/auth/reset-password?error=browser_mismatch&error_description=Please+open+the+reset+link+in+the+same+browser+you+used+to+request+it,+or+request+a+new+reset+link.')
+          } else {
+            router.replace(type === 'recovery' ? '/auth/reset-password' : '/')
+          }
+        })
+      return
+    }
+
+    // Hash fragment tokens (implicit flow)
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hash = window.location.hash
+      if (hash.includes('type=recovery') || hash.includes('access_token')) {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
           if (event === 'PASSWORD_RECOVERY' && session) {
             subscription.unsubscribe()
             router.replace('/auth/reset-password')
           } else if (event === 'SIGNED_IN' && session) {
-            // Non-recovery sign-in from hash (e.g. magic link)
             subscription.unsubscribe()
             router.replace('/')
           }
         })
 
-        // Timeout: if no auth event fires within 6s, something went wrong
         const timeout = setTimeout(() => {
           subscription.unsubscribe()
-          router.replace('/auth/reset-password?error=exchange_failed&error_description=The+reset+link+is+invalid+or+has+expired.')
-        }, 6000)
+          router.replace('/auth/reset-password?error=otp_expired&error_description=The+reset+link+has+expired.')
+        }, 8000)
 
         return () => {
           subscription.unsubscribe()
           clearTimeout(timeout)
         }
       }
-
-      // No hash and no error — redirect to auth
-      router.replace('/auth')
     }
+
+    // Nothing to process
+    router.replace('/auth')
   }, [router, searchParams])
 
   return (
