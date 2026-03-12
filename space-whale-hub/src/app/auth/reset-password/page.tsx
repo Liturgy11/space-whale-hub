@@ -55,8 +55,9 @@ function ResetPasswordContent() {
       })
         .then(r => r.json())
         .then(async (data) => {
+          // DEBUG: show raw response so we can see the actual shape
           if (data.error || data.error_description || !data.access_token) {
-            setLinkError('This reset link has expired or is invalid. Please request a new password reset email.')
+            setLinkError(`Debug — verify response: ${JSON.stringify(data)}`)
             setInitializing(false)
             return
           }
@@ -119,6 +120,8 @@ function ResetPasswordContent() {
         // which fails when localStorage is over-quota.
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qrmdgbzmdtvqcuzfkwar.supabase.co'
         const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+        // DEBUG: show what token we're sending (first 40 chars)
+        console.log('DEBUG accessToken prefix:', accessToken.substring(0, 40))
         const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
           method: 'PUT',
           headers: {
