@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { createPost } from '@/lib/database'
 import { uploadMedia } from '@/lib/storage-client'
 import { Image, Video, Send, X, AlertTriangle, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from '@/components/ui/Toast'
@@ -136,14 +135,21 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
         // Profile creation failed, but continue with post creation
       }
 
-      // Then create the post
-      await createPost({
-        content: content.trim(),
-        tags: tags.split(',').map(tag => tag.trim()).filter(Boolean),
-        content_warning: hasContentWarning ? contentWarning : undefined,
-        media_url: mediaUrl || undefined,
-        media_type: mediaType || undefined
-      }, user!.id)
+      // Then create the post via the secure server-side route (bypasses RLS/session issues)
+      const response = await fetch('/api/create-post-secure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: content.trim(),
+          tags: tags.split(',').map((tag: string) => tag.trim()).filter(Boolean),
+          content_warning: hasContentWarning ? contentWarning : undefined,
+          media_url: mediaUrl || undefined,
+          media_type: mediaType || undefined,
+          userId: user!.id,
+        }),
+      })
+      const result = await response.json()
+      if (!result.success) throw new Error(result.error || 'Failed to create post')
 
       setContent('')
       setTags('')
