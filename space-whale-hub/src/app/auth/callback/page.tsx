@@ -2,8 +2,6 @@
 
 import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import { storeRecoveryTokens } from '@/lib/recoverySession'
 import { Loader2 } from 'lucide-react'
 import { Suspense } from 'react'
 
@@ -13,13 +11,12 @@ function AuthCallbackContent() {
 
   useEffect(() => {
     const tokenHash = searchParams.get('token_hash')
-    const code = searchParams.get('code')
     const type = searchParams.get('type')
     const errorParam = searchParams.get('error')
     const errorCode = searchParams.get('error_code')
     const errorDescription = searchParams.get('error_description')
 
-    // Forward any explicit errors from Supabase
+    // Forward explicit Supabase errors to the reset page
     if (errorParam || errorCode) {
       const params = new URLSearchParams()
       if (errorParam) params.set('error', errorParam)
@@ -29,72 +26,31 @@ function AuthCallbackContent() {
       return
     }
 
-    // Preferred path: token_hash in URL (email template sends this directly).
-    // Works in any browser — no PKCE verifier required.
+    // Recovery flow: forward token_hash to reset-password so it can call
+    // verifyOtp and updateUser on the same page (no cross-page session transfer).
     if (tokenHash && type === 'recovery') {
-      supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
-        .then(({ data, error }) => {
-          if (error) {
-            router.replace('/auth/reset-password?error=otp_expired&error_description=The+reset+link+has+expired.+Please+request+a+new+one.')
-            return
-          }
-          if (data?.session) {
-            // Module-level variable: survives client-side navigation
-            storeRecoveryTokens(data.session.access_token, data.session.refresh_token)
-            // sessionStorage: survives full-page reloads in webviews.
-            // The individual token strings are tiny (< 5KB) — no quota issue.
-            try {
-              sessionStorage.setItem('_sw_reset_at', data.session.access_token)
-              sessionStorage.setItem('_sw_reset_rt', data.session.refresh_token)
-            } catch (_) {}
-          }
-          router.replace('/auth/reset-password?verified=true')
-        })
+      router.replace(`/auth/reset-password?token_hash=${encodeURIComponent(tokenHash)}&type=recovery`)
       return
     }
 
-    // Fallback: PKCE code exchange (works only when opened in the same browser
-    // that initiated the reset — will fail in webviews / different browsers).
-    if (code) {
-      supabase.auth.exchangeCodeForSession(code)
-        .then(({ error }) => {
-          if (error) {
-            // PKCE verifier missing — most likely opened in a different browser/webview
-            router.replace('/auth/reset-password?error=browser_mismatch&error_description=Please+open+the+reset+link+in+the+same+browser+you+used+to+request+it,+or+request+a+new+reset+link.')
-          } else {
-            router.replace(type === 'recovery' ? '/auth/reset-password' : '/')
-          }
-        })
+    // Fallback: PKCE code in query param
+    if (searchParams.get('code')) {
+      const code = searchParams.get('code')!
+      const type = searchParams.get('type')
+      router.replace(
+        type === 'recovery'
+          ? `/auth/reset-password?code=${encodeURIComponent(code)}&type=recovery`
+          : '/'
+      )
       return
     }
 
-    // Hash fragment tokens (implicit flow)
-    if (typeof window !== 'undefined' && window.location.hash) {
-      const hash = window.location.hash
-      if (hash.includes('type=recovery') || hash.includes('access_token')) {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-          if (event === 'PASSWORD_RECOVERY' && session) {
-            subscription.unsubscribe()
-            router.replace('/auth/reset-password')
-          } else if (event === 'SIGNED_IN' && session) {
-            subscription.unsubscribe()
-            router.replace('/')
-          }
-        })
-
-        const timeout = setTimeout(() => {
-          subscription.unsubscribe()
-          router.replace('/auth/reset-password?error=otp_expired&error_description=The+reset+link+has+expired.')
-        }, 8000)
-
-        return () => {
-          subscription.unsubscribe()
-          clearTimeout(timeout)
-        }
-      }
+    // Hash fragment tokens (implicit flow) — let Supabase auto-detect
+    if (typeof window !== 'undefined' && window.location.hash?.includes('type=recovery')) {
+      router.replace('/auth/reset-password' + window.location.hash)
+      return
     }
 
-    // Nothing to process
     router.replace('/auth')
   }, [router, searchParams])
 
