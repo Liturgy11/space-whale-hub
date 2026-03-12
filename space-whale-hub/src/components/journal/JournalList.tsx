@@ -672,10 +672,9 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                     <span className="capitalize">{entry.mood}</span>
                   </div>
                 )}
-                {entry.tags && entry.tags.length > 0 && entry.media_type === 'moodboard' && (
+                {entry.media_type === 'moodboard' && (
                   <div className="flex items-center flex-shrink-0">
-                    <span className="mr-1">✨</span>
-                    <span>{entry.tags.filter((url: string) => url && (url.startsWith('data:image/') || url.startsWith('https://'))).length} images</span>
+                    <span>✨ Mood board</span>
                   </div>
                 )}
               </div>
