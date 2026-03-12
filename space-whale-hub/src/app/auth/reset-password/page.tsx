@@ -2,7 +2,6 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import { Loader2, Eye, EyeOff, CheckCircle } from 'lucide-react'
 import Image from 'next/image'
 
@@ -16,18 +15,17 @@ function ResetPasswordContent() {
   const [linkError, setLinkError] = useState('') // fatal: expired/invalid link → shows "request new link" UI
   const [error, setError] = useState('')          // form validation: stays on the form
   const [success, setSuccess] = useState(false)
-  const [accessToken, setAccessToken] = useState<string | null>(null)
+  const [tokenHash, setTokenHash] = useState<string | null>(null)
 
   const router = useRouter()
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    const tokenHash = searchParams.get('token_hash')
+    const hash = searchParams.get('token_hash')
     const type = searchParams.get('type')
     const errorParam = searchParams.get('error')
     const errorDescription = searchParams.get('error_description')
 
-    // Errors forwarded from /auth/callback
     if (errorParam) {
       setLinkError(
         decodeURIComponent(errorDescription || '').replace(/\+/g, ' ') ||
@@ -37,64 +35,15 @@ function ResetPasswordContent() {
       return
     }
 
-    // Primary path: token_hash provided.
-    // Call Supabase's /auth/v1/verify REST endpoint directly, bypassing the
-    // SDK's PKCE layer which intercepts verifyOtp and prevents it returning a
-    // usable session when flowType is 'pkce'.
-    if (tokenHash && type === 'recovery') {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qrmdgbzmdtvqcuzfkwar.supabase.co'
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-
-      fetch(`${supabaseUrl}/auth/v1/verify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabaseAnonKey,
-        },
-        body: JSON.stringify({ token_hash: tokenHash, type: 'recovery' }),
-      })
-        .then(r => r.json())
-        .then(async (data) => {
-          // DEBUG: show raw response so we can see the actual shape
-          if (data.error || data.error_description || !data.access_token) {
-            setLinkError(`Debug — verify response: ${JSON.stringify(data)}`)
-            setInitializing(false)
-            return
-          }
-          // Store the access token in state — we'll use it directly for the
-          // password update fetch, bypassing setSession entirely.
-          setAccessToken(data.access_token)
-          setInitializing(false)
-        })
-        .catch(() => {
-          setLinkError('Network error verifying reset link. Please try again.')
-          setInitializing(false)
-        })
+    if (hash && type === 'recovery') {
+      // Store the token hash — actual verification happens server-side on submit
+      setTokenHash(hash)
+      setInitializing(false)
       return
     }
 
-    // Fallback: PKCE code (same-browser flow)
-    const code = searchParams.get('code')
-    if (code && type === 'recovery') {
-      supabase.auth.exchangeCodeForSession(code)
-        .then(({ error }) => {
-          if (error) {
-            setLinkError('This reset link has expired or could not be verified. Please request a new password reset email.')
-          }
-          setInitializing(false)
-        })
-      return
-    }
-
-    // No token at all — check for an existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setInitializing(false)
-      } else {
-        setLinkError('No valid reset session found. Please request a new password reset email.')
-        setInitializing(false)
-      }
-    })
+    setLinkError('Invalid reset link. Please request a new password reset email.')
+    setInitializing(false)
   }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -115,38 +64,17 @@ function ResetPasswordContent() {
     }
 
     try {
-      if (accessToken) {
-        // Use the access token directly — bypasses SDK session management
-        // which fails when localStorage is over-quota.
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qrmdgbzmdtvqcuzfkwar.supabase.co'
-        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-        // DEBUG: show what token we're sending (first 40 chars)
-        console.log('DEBUG accessToken prefix:', accessToken.substring(0, 40))
-        const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': supabaseAnonKey,
-            'Authorization': `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({ password }),
-        })
-        const data = await res.json()
-        if (!res.ok) {
-          setError(data?.msg || data?.message || 'Failed to update password. Please try again.')
-        } else {
-          setSuccess(true)
-          setTimeout(() => router.push('/auth'), 2000)
-        }
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token_hash: tokenHash, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data?.error || 'Failed to update password. Please try again.')
       } else {
-        // Fallback: SDK path for same-browser PKCE flow
-        const { error } = await supabase.auth.updateUser({ password })
-        if (error) {
-          setError(error.message || 'Failed to update password. Please try again.')
-        } else {
-          setSuccess(true)
-          setTimeout(() => router.push('/auth'), 2000)
-        }
+        setSuccess(true)
+        setTimeout(() => router.push('/auth'), 2000)
       }
     } catch {
       setError('An unexpected error occurred. Please try again.')
