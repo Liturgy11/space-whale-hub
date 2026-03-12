@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { deleteJournalEntry } from '@/lib/database'
 import { decryptJournalContent, isEncrypted, getEncryptionStatus } from '@/lib/journal-encryption'
 import { toast } from '@/components/ui/Toast'
 import { Calendar, Heart, Edit, Trash2, Lock, Eye, Share2, X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react'
@@ -105,7 +104,13 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
 
     try {
       setDeletingId(entryId)
-      await deleteJournalEntry(entryId)
+      const res = await fetch('/api/delete-journal-entry-secure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entryId, userId: user?.id }),
+      })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error || 'Failed to delete entry')
       setEntries(entries.filter(entry => entry.id !== entryId))
     } catch (err: any) {
       setError(err.message)

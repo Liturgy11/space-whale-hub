@@ -15,10 +15,11 @@ export async function POST(request: NextRequest) {
       userId 
     } = await request.json()
     
-    if (!entryId || !content || !userId) {
+    // content can be empty for media-only entries (mood boards)
+    if (!entryId || (!content && !media_url) || !userId) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required fields: entryId, content, and userId'
+        error: 'Missing required fields: entryId, userId, and either content or media'
       }, { status: 400 })
     }
 
