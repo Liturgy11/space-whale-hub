@@ -38,10 +38,15 @@ function AuthCallbackContent() {
             router.replace('/auth/reset-password?error=otp_expired&error_description=The+reset+link+has+expired.+Please+request+a+new+one.')
             return
           }
-          // Store tokens in a module-level variable — no localStorage/sessionStorage
-          // needed, so quota issues can't affect this path.
           if (data?.session) {
+            // Module-level variable: survives client-side navigation
             storeRecoveryTokens(data.session.access_token, data.session.refresh_token)
+            // sessionStorage: survives full-page reloads in webviews.
+            // The individual token strings are tiny (< 5KB) — no quota issue.
+            try {
+              sessionStorage.setItem('_sw_reset_at', data.session.access_token)
+              sessionStorage.setItem('_sw_reset_rt', data.session.refresh_token)
+            } catch (_) {}
           }
           router.replace('/auth/reset-password?verified=true')
         })

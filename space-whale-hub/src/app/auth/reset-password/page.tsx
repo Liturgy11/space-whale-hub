@@ -108,11 +108,20 @@ function ResetPasswordContent() {
     }
 
     try {
-      // Re-establish session from in-memory tokens (stored by /auth/callback).
-      // This works even when localStorage is over-quota or unavailable.
+      // Re-establish the recovery session from stashed tokens.
+      // Try module-level variable first (client-side nav), then sessionStorage
+      // (survives full-page reloads in webviews). The token strings are tiny
+      // so sessionStorage quota is never an issue.
       try {
-        const tokens = consumeRecoveryTokens()
+        let tokens = consumeRecoveryTokens()
+        if (!tokens) {
+          const at = sessionStorage.getItem('_sw_reset_at')
+          const rt = sessionStorage.getItem('_sw_reset_rt')
+          if (at && rt) tokens = { accessToken: at, refreshToken: rt }
+        }
         if (tokens) {
+          sessionStorage.removeItem('_sw_reset_at')
+          sessionStorage.removeItem('_sw_reset_rt')
           await supabase.auth.setSession({
             access_token: tokens.accessToken,
             refresh_token: tokens.refreshToken,
