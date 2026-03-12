@@ -13,7 +13,8 @@ function ResetPasswordContent() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [initializing, setInitializing] = useState(true)
-  const [error, setError] = useState('')
+  const [linkError, setLinkError] = useState('') // fatal: expired/invalid link → shows "request new link" UI
+  const [error, setError] = useState('')          // form validation: stays on the form
   const [success, setSuccess] = useState(false)
 
   const router = useRouter()
@@ -27,7 +28,7 @@ function ResetPasswordContent() {
 
     // Errors forwarded from /auth/callback
     if (errorParam) {
-      setError(
+      setLinkError(
         decodeURIComponent(errorDescription || '').replace(/\+/g, ' ') ||
         'This reset link is invalid or has expired. Please request a new password reset email.'
       )
@@ -54,7 +55,7 @@ function ResetPasswordContent() {
         .then(r => r.json())
         .then(async (data) => {
           if (data.error || data.error_description || !data.access_token) {
-            setError('This reset link has expired or is invalid. Please request a new password reset email.')
+            setLinkError('This reset link has expired or is invalid. Please request a new password reset email.')
             setInitializing(false)
             return
           }
@@ -71,7 +72,7 @@ function ResetPasswordContent() {
           setInitializing(false)
         })
         .catch(() => {
-          setError('Network error verifying reset link. Please try again.')
+          setLinkError('Network error verifying reset link. Please try again.')
           setInitializing(false)
         })
       return
@@ -83,7 +84,7 @@ function ResetPasswordContent() {
       supabase.auth.exchangeCodeForSession(code)
         .then(({ error }) => {
           if (error) {
-            setError('This reset link has expired or could not be verified. Please request a new password reset email.')
+            setLinkError('This reset link has expired or could not be verified. Please request a new password reset email.')
           }
           setInitializing(false)
         })
@@ -95,7 +96,7 @@ function ResetPasswordContent() {
       if (session) {
         setInitializing(false)
       } else {
-        setError('No valid reset session found. Please request a new password reset email.')
+        setLinkError('No valid reset session found. Please request a new password reset email.')
         setInitializing(false)
       }
     })
@@ -180,10 +181,10 @@ function ResetPasswordContent() {
         </div>
 
         <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
-          {error ? (
+          {linkError ? (
             <div className="text-center">
               <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-4">
-                <p className="text-red-600 text-sm mb-4 font-space-whale-body">{error}</p>
+                <p className="text-red-600 text-sm mb-4 font-space-whale-body">{linkError}</p>
                 <div className="space-y-3">
                   <button
                     onClick={() => router.push('/auth?forgot=true')}
