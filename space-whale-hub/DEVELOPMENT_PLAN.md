@@ -104,6 +104,12 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
 
 ## ⚠️ Temporary Solutions & Known Issues
 
+### ⚠️ Known Architectural Pattern — Client-Side Session & RLS
+- **Issue**: The Supabase session object is ~5.83MB, which exceeds the browser's localStorage quota. This means the client-side `supabase` instance (from `src/lib/supabase.ts`) cannot reliably persist the session, causing any direct database calls from `database.ts` to fail with "new row violates row-level security policy".
+- **Pattern to follow**: Any feature that writes to the database (insert, update, delete) must go through a **server-side API route** that uses the `SUPABASE_SERVICE_ROLE_KEY` (admin client), not the client-side `supabase` instance.
+- **Already fixed**: Post creation (`PostForm.tsx` → `/api/create-post-secure`), sharing from Inner Space, password reset
+- **Watch out for**: Any future features that call `supabase.from(...).insert/update/delete()` directly from a component or `database.ts` — these will likely fail in production with RLS errors. Always route through a secure API route instead.
+
 ### ✅ Password Reset Flow (RESOLVED)
 - **Status**: Fully working in production
 - **Root Causes Discovered & Fixed**:
