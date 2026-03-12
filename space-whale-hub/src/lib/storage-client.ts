@@ -184,8 +184,10 @@ export async function uploadMedia(
       }
 
       if (shouldFallbackToDirect) {
-        console.warn('⚠️ Server upload too large; falling back to direct storage upload')
-        return uploadDirect(file, options, userId)
+        // Direct upload requires an active session which isn't reliably available
+        // (5.83MB localStorage issue). Throw a clear message instead of silently failing.
+        const fileSizeMB = (file.size / 1024 / 1024).toFixed(1)
+        throw new Error(`File too large for upload (${fileSizeMB}MB). Please use a smaller or compressed image.`)
       }
 
       throw new Error(errorMessage)

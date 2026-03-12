@@ -141,9 +141,22 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
     setError('')
 
     try {
-      // Use new storage system for multiple files
+      // Compress images before uploading to stay well under Vercel's 4.5MB body limit
+      const compressedFiles: File[] = await Promise.all(
+        files.map(async (f) => {
+          try {
+            const dataUrl = await compressImage(f.file, 1200, 0.82)
+            const res = await fetch(dataUrl)
+            const blob = await res.blob()
+            return new File([blob], f.file.name, { type: 'image/jpeg' })
+          } catch {
+            return f.file // fall back to original if compression fails
+          }
+        })
+      )
+
       const results = await uploadMultipleMedia(
-        files.map(f => f.file),
+        compressedFiles,
         {
           category: 'journal',
           folder: 'moodboards'
