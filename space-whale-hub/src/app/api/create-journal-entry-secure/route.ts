@@ -19,8 +19,9 @@ export async function POST(request: NextRequest) {
       userId 
     } = await request.json()
     
-    // Content is required unless it's encrypted (then content_encrypted is required)
-    if (!content && !content_encrypted) {
+    // Content is required unless: encrypted, OR a media-only entry (mood board / image post)
+    const isMediaOnly = !content && !content_encrypted && media_url
+    if (!content && !content_encrypted && !isMediaOnly) {
       return NextResponse.json({
         success: false,
         error: 'Content or encrypted content is required'
@@ -72,9 +73,9 @@ export async function POST(request: NextRequest) {
       // Don't store plain text when encrypted
       finalContent = null
     } else {
-      // Store plain text content
+      // Store plain text content (may be null/empty for media-only entries like mood boards)
       finalContent = content?.trim() || null
-      if (!finalContent) {
+      if (!finalContent && !media_url) {
         return NextResponse.json({
           success: false,
           error: 'Content is required for non-encrypted entries'
