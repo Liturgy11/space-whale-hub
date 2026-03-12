@@ -35,15 +35,43 @@ function ResetPasswordContent() {
       return
     }
 
-    // Primary path: token_hash provided — verify it right here so that
-    // verifyOtp and updateUser happen in the same page/JS context.
+    // Primary path: token_hash provided.
+    // Call Supabase's /auth/v1/verify REST endpoint directly, bypassing the
+    // SDK's PKCE layer which intercepts verifyOtp and prevents it returning a
+    // usable session when flowType is 'pkce'.
     if (tokenHash && type === 'recovery') {
-      supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
-        .then(({ error }) => {
-          if (error) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qrmdgbzmdtvqcuzfkwar.supabase.co'
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+
+      fetch(`${supabaseUrl}/auth/v1/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseAnonKey,
+        },
+        body: JSON.stringify({ token_hash: tokenHash, type: 'recovery' }),
+      })
+        .then(r => r.json())
+        .then(async (data) => {
+          if (data.error || data.error_description || !data.access_token) {
             setError('This reset link has expired or is invalid. Please request a new password reset email.')
+            setInitializing(false)
+            return
           }
-          // On success the session is live in memory — show the form.
+          // Set the session on the Supabase client using the real tokens
+          try {
+            await supabase.auth.setSession({
+              access_token: data.access_token,
+              refresh_token: data.refresh_token,
+            })
+          } catch (_) {
+            // setSession may fail to persist due to storage quota, but the
+            // in-memory session is set — updateUser will still work.
+          }
+          setInitializing(false)
+        })
+        .catch(() => {
+          setError('Network error verifying reset link. Please try again.')
           setInitializing(false)
         })
       return
