@@ -82,27 +82,53 @@ export async function GET(request: NextRequest) {
     const commentsResult = results[2]
     const userLikesResult = userId ? results[3] : null
 
+    // Check for errors in parallel query results
+    if (profilesResult.error) {
+      console.error('Error fetching profiles:', profilesResult.error)
+      // Continue with empty profile map rather than failing entire request
+    }
+    if (likesResult.error) {
+      console.error('Error fetching likes:', likesResult.error)
+      // Continue with empty like count map rather than failing entire request
+    }
+    if (commentsResult.error) {
+      console.error('Error fetching comments:', commentsResult.error)
+      // Continue with empty comment count map rather than failing entire request
+    }
+    if (userLikesResult?.error) {
+      console.error('Error fetching user likes:', userLikesResult.error)
+      // Continue with empty user liked posts set rather than failing entire request
+    }
+
     // Build profile map
     const profileMap = new Map<string, any>()
-    profilesResult.data?.forEach((p: any) => profileMap.set(p.id, p))
+    if (profilesResult.data) {
+      profilesResult.data.forEach((p: any) => profileMap.set(p.id, p))
+    }
 
     // Build like count map
     const likeCountMap = new Map<string, number>()
-    likesResult.data?.forEach((like: any) => {
-      likeCountMap.set(like.post_id, (likeCountMap.get(like.post_id) || 0) + 1)
-    })
+    if (likesResult.data) {
+      likesResult.data.forEach((like: any) => {
+        likeCountMap.set(like.post_id, (likeCountMap.get(like.post_id) || 0) + 1)
+      })
+    }
 
     // Build comment count map
     const commentCountMap = new Map<string, number>()
-    commentsResult.data?.forEach((comment: any) => {
-      commentCountMap.set(comment.post_id, (commentCountMap.get(comment.post_id) || 0) + 1)
-    })
+    if (commentsResult.data) {
+      commentsResult.data.forEach((comment: any) => {
+        commentCountMap.set(comment.post_id, (commentCountMap.get(comment.post_id) || 0) + 1)
+      })
+    }
 
     // Build user liked posts set
     const userLikedPosts = new Set<string>()
-    userLikesResult?.data?.forEach((like: any) => {
-      userLikedPosts.add(like.post_id)
-    })
+    if (userLikesResult?.data) {
+      userLikesResult.data.forEach((like: any) => {
+        userLikedPosts.add(like.post_id)
+      })
+    }
 
     // Enrich posts with counts (no async needed now!)
     const enriched = posts.map((post) => ({

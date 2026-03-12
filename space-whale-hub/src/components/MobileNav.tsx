@@ -51,22 +51,26 @@ export default function MobileNav() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200 dark:bg-gray-900/95 dark:border-gray-700 md:hidden safe-area-inset-bottom">
-      <div className="flex items-center justify-between px-2 py-2 max-w-screen-sm mx-auto">
-        {navItems.map((item) => {
+      <div className="flex items-center justify-between px-1 py-2 max-w-screen-sm mx-auto">
+        {navItems.map((item, index) => {
           const Icon = item.icon
           const isActive = item.active
+          // Make Constellation slightly smaller, others get more space
+          const isConstellation = item.name === 'Constellation'
           return (
             <Link
               key={item.name}
               href={item.href}
-              className={`flex flex-col items-center justify-center space-y-0.5 px-2 py-1.5 rounded-lg transition-colors flex-1 min-w-0 ${
+              className={`flex flex-col items-center justify-center space-y-0.5 py-1.5 rounded-lg transition-colors ${
+                isConstellation ? 'px-1.5 flex-[0.85]' : 'px-1 flex-1'
+              } min-w-0 ${
                 isActive
                   ? 'bg-space-whale-lavender/20'
                   : 'hover:bg-space-whale-lavender/10 active:bg-space-whale-lavender/15'
               }`}
             >
-              <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? item.iconColor : item.iconColor} ${isActive ? 'opacity-100' : 'opacity-70'}`} />
-              <span className={`text-[10px] font-medium truncate w-full text-center ${isActive ? 'text-space-whale-purple' : 'text-gray-600 dark:text-gray-400'}`}>
+              <Icon className={`h-5 w-5 flex-shrink-0 ${item.iconColor} ${isActive ? 'opacity-100' : 'opacity-60'}`} />
+              <span className={`text-[10px] font-medium truncate w-full text-center leading-tight ${isActive ? 'text-space-whale-purple' : 'text-gray-600 dark:text-gray-400'}`}>
                 {item.name}
               </span>
             </Link>
