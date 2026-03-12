@@ -8,12 +8,14 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
 - **AUTHENTIC VOICE INTEGRATION** - Lit's therapeutic voice and creative philosophy embedded throughout
 - **GARDEN/NATURE METAPHORS** - Permission-giving, invitation-based language
 - **COMPLETE AUTHENTICATION SYSTEM** - Supabase integration with user profiles
+- **PASSWORD RESET** - Fully working end-to-end (server-side flow, PKCE-proof)
 - **PERSONAL SPACE** - Journal entries with mood tracking and media uploads
 - **COMMUNITY PORTAL** - Post creation, display, and media sharing with auto-refresh
+- **SHARE TO COMMUNITY ORBIT** - Share Inner Space posts to Community Orbit with optional caption
 - **COMPREHENSIVE STORAGE INFRASTRUCTURE** - Supabase Storage buckets, unified upload system, RLS policies, local fallback
 - **DATABASE SCHEMA** - Complete with proper relationships and RLS policies
 - **TRAUMA-INFORMED UI** - Neuroaffirming design with content warnings
-- **RESPONSIVE DESIGN** - Mobile-first approach
+- **RESPONSIVE DESIGN** - Mobile-first approach with iOS Safari modal fixes (React Portals)
 - **PRIVACY & SAFETY FOUNDATION** - RLS policies and user data isolation
 - **VOICE-ALIGNED COPY** - All text reflects authentic therapeutic approach
 - **GARDEN INVITATIONS** - Creative prompts transformed to embodied, permission-giving language
@@ -102,36 +104,21 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
 
 ## ⚠️ Temporary Solutions & Known Issues
 
-### 🔴 Password Reset Flow (IN PROGRESS - Needs Resolution)
-- **Status**: Partially implemented, not fully working
-- **What We Built Today**:
-  - ✅ **Resend SMTP Integration** - Set up custom SMTP with Resend service
-  - ✅ **Custom Domain Email** - Configured `hello@spacewhale.com.au` for sending emails
-  - ✅ **Domain Verification** - Verified `spacewhale.com.au` domain in Resend with DNS records
-  - ✅ **Supabase SMTP Configuration** - Connected Supabase to Resend SMTP
-  - ✅ **Password Reset UI** - Built forgot password form and reset password page
-  - ✅ **Error Handling** - Added comprehensive error detection and user-friendly messages
-  - ✅ **Redirect URL Configuration** - Added production URL to Supabase redirect URLs list
-- **Current Issues**:
-  - 🔴 **Password reset links not working** - Links in emails are either expired or redirect incorrectly
-  - 🔴 **Email links contain errors** - Some reset emails contain error parameters in the URL itself
-  - 🔴 **Redirect to /auth instead of /auth/reset-password** - Users sometimes redirected to login page
-  - 🔴 **Rate limiting** - Supabase rate limits after multiple reset attempts
-- **What We Tried**:
-  - Redirecting through Supabase verification endpoint when code detected in query params
-  - Using `token` parameter instead of `code` for verification
-  - Checking for errors before redirecting
-  - Waiting for auto-session establishment
-  - Multiple iterations of error handling and session detection
-- **Next Steps** (To Come Back To):
-  - Investigate why Supabase is generating links with error parameters
-  - Check if email template is using correct `{{ .ConfirmationURL }}` variable
-  - Verify redirect URL matches exactly in Supabase configuration
-  - Test with fresh reset email after all configuration changes
-  - Consider using Supabase's built-in password reset flow more directly
-  - Check if custom SMTP is causing issues with link generation
-  - Review Supabase documentation for password reset best practices
-- **Temporary Workaround**: Users can contact admin for manual password reset if needed
+### ✅ Password Reset Flow (RESOLVED)
+- **Status**: Fully working in production
+- **Root Causes Discovered & Fixed**:
+  - Supabase JS `flowType: 'pkce'` was intercepting `verifyOtp` client-side, preventing a usable session from being returned
+  - Custom `localStorage` had an artificial 1MB cap that silently dropped the 5.83MB Supabase session object
+  - All client-side approaches (verifyOtp, setSession, exchangeCodeForSession) failed due to PKCE/storage issues
+- **Final Solution**:
+  - Email template updated to send `token_hash` directly: `?token_hash={{ .TokenHash }}&type=recovery`
+  - `/auth/callback` page simply forwards `token_hash` to `/auth/reset-password`
+  - `/auth/reset-password` page shows form immediately (no client-side verification)
+  - On submit, calls server-side API route `/api/auth/reset-password`
+  - Server route creates a fresh Supabase client (no `flowType`) and calls `verifyOtp` server-side — no PKCE/storage issues
+  - Uses admin client with service role key to call `admin.updateUserById()` — completely bypasses session auth
+  - Spam folder note added to the reset email request UI
+- **Note**: Separation of `linkError` (fatal — shows "request new link" UI) vs `error` (form validation — stays on form) prevents validation errors from hijacking the reset screen
 
 ### Storage & Media Upload Infrastructure (Major Overhaul Completed)
 - **Previous Status**: Using base64 encoding for all media uploads to bypass Supabase Storage RLS issues
@@ -150,6 +137,21 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
   - Implement mood board styling improvements
 
 ## Recent Achievements (Latest Session) 🎉
+
+### Password Reset — Full Resolution 🎉
+- ✅ **Server-side reset flow** — `/api/auth/reset-password` route handles verify + update entirely server-side
+- ✅ **Bypassed PKCE client issues** — fresh server Supabase client (no flowType) + admin `updateUserById` with service role key
+- ✅ **Custom storage cap removed** — artificial 1MB localStorage limit removed; now gracefully handles true quota exceeded
+- ✅ **Email template updated** — sends `token_hash` directly for reliable cross-browser/webview support
+- ✅ **UX fix** — separated `linkError` (fatal) from `error` (form validation) so mismatched passwords don't replace the form with "request new link"
+- ✅ **Spam note** — users prompted to check spam on the forgot password form
+
+### Inner Space UI Fixes
+- ✅ **React Portals** — all modals in JournalList (single image, mood board lightbox, share, decrypt) rendered via `createPortal` into `document.body`, fixing iOS Safari `overflow: hidden` clipping
+- ✅ **Image sizing** — `dvh`/`vw` units for reliable modal image sizing on iOS
+- ✅ **Share to Community Orbit** — caption/description field added to the share modal, prefills with existing post content
+- ✅ **Mood board text removed** — auto-generated "Created a mood board with X images" text removed from posts
+- ✅ **Community Orbit loading** — added loading message note for slower feed
 
 ### Password Reset & Email Infrastructure (Today - Session 1)
 - ✅ **Resend SMTP Setup**
@@ -291,13 +293,6 @@ All changes are committed and pushed to GitHub.
      - 🔄 Test creating new encrypted entries and decrypting them
    - **Note**: Currently debugging decryption - may need to verify data format or re-encrypt existing entries
 
-2. **Deployment Verification**
-   - ✅ Environment variables properly configured
-   - Test all features in production deployment
-   - Verify albums display correctly
-   - Verify personal space loads without errors
-   - Monitor for any remaining environment variable issues
-
 2. **UX Polish & Refinement**
    - Continue simplifying web copy where needed
    - Review and refine any remaining verbose text
@@ -305,10 +300,9 @@ All changes are committed and pushed to GitHub.
    - Consider adding loading skeletons for better perceived performance
 
 3. **Mobile Experience**
-   - Test all features on mobile devices
-   - Verify scrolling works smoothly everywhere
-   - Ensure all modals are properly sized on mobile
-   - Check touch targets are adequate
+   - ✅ iOS Safari modals fixed (React Portals in JournalList)
+   - ✅ All Inner Space modals (image, mood board, share, decrypt) render correctly on iOS
+   - Continue testing edge cases on mobile
 
 ### Medium Priority
 - **Archive Enhancements**
