@@ -16,6 +16,7 @@ function ResetPasswordContent() {
   const [linkError, setLinkError] = useState('') // fatal: expired/invalid link → shows "request new link" UI
   const [error, setError] = useState('')          // form validation: stays on the form
   const [success, setSuccess] = useState(false)
+  const [accessToken, setAccessToken] = useState<string | null>(null)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -59,16 +60,9 @@ function ResetPasswordContent() {
             setInitializing(false)
             return
           }
-          // Set the session on the Supabase client using the real tokens
-          try {
-            await supabase.auth.setSession({
-              access_token: data.access_token,
-              refresh_token: data.refresh_token,
-            })
-          } catch (_) {
-            // setSession may fail to persist due to storage quota, but the
-            // in-memory session is set — updateUser will still work.
-          }
+          // Store the access token in state — we'll use it directly for the
+          // password update fetch, bypassing setSession entirely.
+          setAccessToken(data.access_token)
           setInitializing(false)
         })
         .catch(() => {
@@ -120,12 +114,36 @@ function ResetPasswordContent() {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({ password })
-      if (error) {
-        setError(error.message || 'Failed to update password. Please try again.')
+      if (accessToken) {
+        // Use the access token directly — bypasses SDK session management
+        // which fails when localStorage is over-quota.
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qrmdgbzmdtvqcuzfkwar.supabase.co'
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+        const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabaseAnonKey,
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ password }),
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          setError(data?.msg || data?.message || 'Failed to update password. Please try again.')
+        } else {
+          setSuccess(true)
+          setTimeout(() => router.push('/auth'), 2000)
+        }
       } else {
-        setSuccess(true)
-        setTimeout(() => router.push('/auth'), 2000)
+        // Fallback: SDK path for same-browser PKCE flow
+        const { error } = await supabase.auth.updateUser({ password })
+        if (error) {
+          setError(error.message || 'Failed to update password. Please try again.')
+        } else {
+          setSuccess(true)
+          setTimeout(() => router.push('/auth'), 2000)
+        }
       }
     } catch {
       setError('An unexpected error occurred. Please try again.')
