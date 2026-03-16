@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { decryptJournalContent, isEncrypted, getEncryptionStatus } from '@/lib/journal-encryption'
+import { encryptJournalContent, decryptJournalContent, isEncrypted, getEncryptionStatus } from '@/lib/journal-encryption'
 import { toast } from '@/components/ui/Toast'
 import { Calendar, Heart, Edit, Trash2, Lock, Eye, Share2, X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react'
 
@@ -28,6 +28,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   const [editMediaUrl, setEditMediaUrl] = useState('')
   const [editMediaType, setEditMediaType] = useState('')
   const [editLoading, setEditLoading] = useState(false)
+  const [editIsEncrypted, setEditIsEncrypted] = useState(false)
   
   // Simple image modal state (single image click - matches Community Orbit)
   const [showImageModal, setShowImageModal] = useState(false)
@@ -198,13 +199,18 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   }
 
   const handleEdit = (entry: any) => {
+    // Block editing encrypted entries that haven't been decrypted yet
+    if (entry.is_encrypted && !decryptedContent[entry.id]) {
+      toast('Please decrypt this entry first before editing.', 'error')
+      return
+    }
     setEditingId(entry.id)
     setEditTitle(entry.title || '')
-    // Use decrypted content if available, otherwise use plain content
     setEditContent(decryptedContent[entry.id] || entry.content || '')
     setEditMood(entry.mood || '')
     setEditMediaUrl(entry.media_url || '')
     setEditMediaType(entry.media_type || '')
+    setEditIsEncrypted(!!entry.is_encrypted)
   }
 
   const handleEditCancel = () => {
@@ -214,6 +220,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
     setEditMood('')
     setEditMediaUrl('')
     setEditMediaType('')
+    setEditIsEncrypted(false)
   }
 
   // Lightbox functions
@@ -288,6 +295,20 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
 
     try {
       setEditLoading(true)
+
+      let encryptedData = null
+      let finalContent = editContent.trim()
+
+      // Re-encrypt if the entry was originally encrypted
+      if (editIsEncrypted) {
+        if (!masterPassphrase) {
+          toast('Cannot save — no passphrase in session. Please decrypt the entry again first.', 'error')
+          setEditLoading(false)
+          return
+        }
+        encryptedData = await encryptJournalContent(finalContent, masterPassphrase)
+        finalContent = '' // don't send plaintext when encrypting
+      }
       
       // Use the secure API route for updating
       const response = await fetch('/api/update-journal-entry-secure', {
@@ -298,9 +319,14 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
         body: JSON.stringify({
           entryId: editingId,
           title: editTitle.trim() || undefined,
-          content: editContent.trim(),
+          content: finalContent,
+          content_encrypted: encryptedData?.encrypted || null,
+          is_encrypted: editIsEncrypted,
+          encryption_key_id: encryptedData?.keyId || null,
+          encryption_salt: encryptedData?.salt || null,
+          encryption_iv: encryptedData?.iv || null,
           mood: editMood || undefined,
-          tags: [], // You can add tag functionality later
+          tags: [],
           media_url: editMediaUrl || undefined,
           media_type: editMediaType || undefined,
           is_private: true,

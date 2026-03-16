@@ -6,7 +6,12 @@ export async function POST(request: NextRequest) {
     const { 
       entryId,
       title, 
-      content, 
+      content,
+      content_encrypted,
+      is_encrypted,
+      encryption_key_id,
+      encryption_salt,
+      encryption_iv,
       mood, 
       tags, 
       media_url, 
@@ -15,13 +20,23 @@ export async function POST(request: NextRequest) {
       userId 
     } = await request.json()
     
-    // content can be empty for media-only entries (mood boards)
-    if (!entryId || (!content && !media_url) || !userId) {
+    // content can be empty for encrypted or media-only entries (mood boards)
+    if (!entryId || (!content && !content_encrypted && !media_url) || !userId) {
       return NextResponse.json({
         success: false,
         error: 'Missing required fields: entryId, userId, and either content or media'
       }, { status: 400 })
     }
+
+    // If encrypted, validate encryption fields
+    if (is_encrypted && (!content_encrypted || !encryption_salt || !encryption_iv)) {
+      return NextResponse.json({
+        success: false,
+        error: 'Encrypted entries require content_encrypted, encryption_salt, and encryption_iv'
+      }, { status: 400 })
+    }
+
+    const finalContent = is_encrypted ? null : (content?.trim() || null)
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -50,7 +65,12 @@ export async function POST(request: NextRequest) {
       .from('journal_entries')
       .update({
         title: title || null,
-        content: content.trim(),
+        content: finalContent,
+        content_encrypted: is_encrypted ? content_encrypted : null,
+        is_encrypted: is_encrypted || false,
+        encryption_key_id: is_encrypted ? encryption_key_id : null,
+        encryption_salt: is_encrypted ? encryption_salt : null,
+        encryption_iv: is_encrypted ? encryption_iv : null,
         mood: mood || null,
         tags: tags || [],
         media_url: media_url || null,
