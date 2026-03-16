@@ -30,6 +30,9 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   const [editLoading, setEditLoading] = useState(false)
   const [editIsEncrypted, setEditIsEncrypted] = useState(false)
   
+  // Full entry modal state
+  const [fullEntryId, setFullEntryId] = useState<string | null>(null)
+
   // Simple image modal state (single image click - matches Community Orbit)
   const [showImageModal, setShowImageModal] = useState(false)
   const [showImageUrl, setShowImageUrl] = useState('')
@@ -661,6 +664,66 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
           </div>
         </div>
       )}
+
+      {/* Full Entry Modal */}
+      {fullEntryId && (() => {
+        const entry = entries.find(e => e.id === fullEntryId)
+        if (!entry) return null
+        const content = isEncrypted(entry)
+          ? decryptedContent[entry.id] || null
+          : entry.content
+        return (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[10000] p-4"
+            onClick={() => setFullEntryId(null)}
+          >
+            <div
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[85dvh] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between p-6 pb-4 border-b border-gray-100 dark:border-gray-700">
+                <div className="flex-1 min-w-0 pr-4">
+                  {entry.title && (
+                    <h3 className="text-xl font-bold text-space-whale-navy dark:text-white mb-1 leading-snug">
+                      {entry.title}
+                    </h3>
+                  )}
+                  <div className="flex items-center gap-2 flex-wrap text-xs text-gray-400">
+                    <span>{new Date(entry.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                    {entry.mood && <span>· {entry.mood}</span>}
+                    {isEncrypted(entry) && <span className="flex items-center gap-1"><Lock className="h-3 w-3" /> Encrypted</span>}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setFullEntryId(null)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="overflow-y-auto p-6 flex-1">
+                {isEncrypted(entry) && !content ? (
+                  <div className="flex flex-col items-center justify-center py-8 gap-4">
+                    <Lock className="h-8 w-8 text-space-whale-purple/50" />
+                    <p className="text-sm text-gray-500 text-center">This entry is encrypted.<br />Decrypt it first to read the full content.</p>
+                    <button
+                      onClick={() => { setFullEntryId(null); setDecryptingId(entry.id) }}
+                      className="px-4 py-2 bg-space-whale-purple text-white text-sm rounded-lg hover:bg-space-whale-purple/90 transition-colors"
+                    >
+                      Decrypt entry
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-space-whale-navy dark:text-gray-100 whitespace-pre-wrap font-space-whale-body leading-relaxed">
+                    {content}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </>,
     document.body
   ) : null
@@ -809,7 +872,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                   <div className="mb-3">
                     {isEncrypted(entry) ? (
                       decryptedContent[entry.id] ? (
-                        <p className="text-space-whale-navy whitespace-pre-wrap font-space-whale-body">
+                        <p className="text-space-whale-navy whitespace-pre-wrap font-space-whale-body line-clamp-4">
                           {decryptedContent[entry.id]}
                         </p>
                       ) : (
@@ -834,7 +897,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                         </div>
                       )
                     ) : (
-                      <p className="text-space-whale-navy whitespace-pre-wrap font-space-whale-body">
+                      <p className="text-space-whale-navy whitespace-pre-wrap font-space-whale-body line-clamp-4">
                         {entry.content}
                       </p>
                     )}
@@ -1016,7 +1079,10 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
           </div>
           
           <div className="mt-4 flex justify-between items-center">
-            <button className="flex items-center text-space-whale-purple hover:text-space-whale-navy text-sm font-space-whale-accent transition-colors">
+            <button
+              onClick={() => setFullEntryId(entry.id)}
+              className="flex items-center text-space-whale-purple hover:text-space-whale-navy text-sm font-space-whale-accent transition-colors"
+            >
               <Eye className="h-4 w-4 mr-1" />
               Read full entry
             </button>
