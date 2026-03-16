@@ -110,6 +110,12 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
 - **Already fixed**: Post creation (`PostForm.tsx` → `/api/create-post-secure`), sharing from Inner Space, password reset
 - **Watch out for**: Any future features that call `supabase.from(...).insert/update/delete()` directly from a component or `database.ts` — these will likely fail in production with RLS errors. Always route through a secure API route instead.
 
+### ⚠️ Known Trade-off — Server Route Authentication (Future Hardening)
+- **Issue**: All secure API routes (`toggle-like-secure`, `delete-post-secure`, `create-post-secure`, etc.) currently trust the `userId` passed in from the client without verifying it server-side. The service role key is used purely to work around the localStorage/session storage constraint, not as an intentional trust-the-client decision.
+- **Risk**: A malicious client could theoretically pass a different `userId` to act on another user's behalf. In practice, most routes have ownership checks (e.g. `delete-post-secure` verifies the post belongs to the userId before deleting), which mitigates the worst cases.
+- **Future fix**: Add JWT verification on the server side — read the `Authorization` header from the request, verify it with Supabase's `auth.getUser(token)`, and use the verified user ID from the token rather than the client-supplied one. This is the right long-term solution once the session storage issue is resolved or a workaround is in place.
+- **Priority**: Medium — low immediate risk given the closed/invite-only community, but should be addressed before any public launch.
+
 ### ✅ Password Reset Flow (RESOLVED)
 - **Status**: Fully working in production
 - **Root Causes Discovered & Fixed**:
@@ -285,19 +291,19 @@ All changes are committed and pushed to GitHub.
 ## Next Priority Features 🎯
 
 ### Immediate Next Steps (High Priority)
-1. **Inner Space Encryption Testing** ⚠️
-   - **Status**: Encryption infrastructure implemented, decryption needs testing
+1. **Inner Space Encryption** ✅ COMPLETE
+   - **Status**: Fully tested and working end-to-end
    - **What's Done**:
      - ✅ Client-side encryption with AES-GCM and PBKDF2 key derivation
      - ✅ Encryption UI with passphrase input and user-friendly explanations
      - ✅ Database migration from BYTEA to TEXT for content_encrypted column
-     - ✅ Comprehensive error logging for debugging
-   - **What's Needed**:
-     - 🔄 Test decryption with existing encrypted entries
-     - 🔄 Verify passphrase validation and error handling
-     - 🔄 Check if data format issues are resolved after migration
-     - 🔄 Test creating new encrypted entries and decrypting them
-   - **Note**: Currently debugging decryption - may need to verify data format or re-encrypt existing entries
+     - ✅ Create new encrypted entry — tested and working
+     - ✅ Decrypt entry in session — tested and working
+     - ✅ Edit encrypted entry re-encrypts on save (bug fixed this session)
+     - ✅ Editing blocked until entry is decrypted first
+     - ✅ "Read full entry" modal wired up (was a dead button — fixed this session)
+     - ✅ Card content truncated to 4 lines with full content in modal
+     - ✅ Decryption is session-only — database always holds encrypted version
 
 2. **UX Polish & Refinement**
    - Continue simplifying web copy where needed
