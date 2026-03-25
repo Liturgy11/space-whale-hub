@@ -93,7 +93,7 @@ function AdminContent() {
               <FolderOpen className="h-12 w-12 text-yellow-500 mb-4 mx-auto float-gentle" />
               <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">Album Management</h3>
               <p className="text-space-whale-navy text-sm font-space-whale-body">
-                Curate and organize content in the Constellation. Create albums and manage collections.
+                Curate and organise content in the Constellation. Create albums and manage collections.
               </p>
             </div>
           </Link>
