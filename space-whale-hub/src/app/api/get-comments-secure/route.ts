@@ -39,14 +39,28 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
-    // For now, return comments with basic user info
-    // TODO: In the future, we can implement a proper profiles system
-    const commentsWithProfiles = data.map(comment => ({
+    // Fetch profiles for all commenters in one query
+    const userIds = [...new Set(data.map((c: any) => c.user_id))]
+    const profileMap = new Map<string, any>()
+
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabaseAdmin
+        .from('profiles')
+        .select('id, display_name, pronouns, avatar_url, country')
+        .in('id', userIds)
+
+      if (profiles) {
+        profiles.forEach((p: any) => profileMap.set(p.id, p))
+      }
+    }
+
+    const commentsWithProfiles = data.map((comment: any) => ({
       ...comment,
       profiles: {
-        display_name: 'Space Whale', // Generic name for now
-        pronouns: null,
-        avatar_url: null
+        display_name: profileMap.get(comment.user_id)?.display_name || 'Space Whale',
+        pronouns: profileMap.get(comment.user_id)?.pronouns || null,
+        avatar_url: profileMap.get(comment.user_id)?.avatar_url || null,
+        country: profileMap.get(comment.user_id)?.country || null,
       }
     }))
 

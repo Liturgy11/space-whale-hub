@@ -16,6 +16,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
   const [confirmPassword, setConfirmPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [pronouns, setPronouns] = useState('')
+  const [country, setCountry] = useState('')
   const [inviteCode, setInviteCode] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -81,7 +82,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
     */
 
     // Proceed with signup
-    const { error } = await signUp(email, password, displayName)
+    const { error } = await signUp(email, password, displayName, pronouns, country)
     
     if (error) {
       setError(error.message)
@@ -170,6 +171,23 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
               className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors font-space-whale-body"
               placeholder="e.g., they/them, she/her, he/him"
             />
+          </div>
+
+          <div>
+            <label htmlFor="country" className="block text-sm font-space-whale-accent text-space-whale-navy mb-2">
+              Country (Aboriginal & Torres Strait Islander land, optional)
+            </label>
+            <input
+              id="country"
+              type="text"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors font-space-whale-body"
+              placeholder="e.g., Darkinjung, Dharawal, Wurundjeri"
+            />
+            <p className="text-xs font-space-whale-body text-space-whale-purple mt-1">
+              Whose Country are you on? You can update this anytime.
+            </p>
           </div>
 
           {/* TEMPORARILY DISABLED: Invite code field for testing */}

@@ -19,6 +19,7 @@ interface Post {
     display_name: string
     pronouns?: string
     avatar_url?: string
+    country?: string
   }
   likes_count: number
   comments_count: number
@@ -151,6 +152,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
             </div>
             <p className="text-xs sm:text-sm font-space-whale-body text-space-whale-purple">
               {post.author.pronouns && `${post.author.pronouns} • `}
+              {post.author.country && `${post.author.country} Country • `}
               {formatDate(post.created_at)}
             </p>
           </div>

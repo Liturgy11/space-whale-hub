@@ -16,6 +16,7 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
   const [avatarUrl, setAvatarUrl] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [pronouns, setPronouns] = useState('')
+  const [country, setCountry] = useState('')
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState('')
@@ -28,6 +29,7 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
       setAvatarUrl(user.user_metadata?.avatar_url || '')
       setDisplayName(user.user_metadata?.display_name || '')
       setPronouns(user.user_metadata?.pronouns || '')
+      setCountry(user.user_metadata?.country || '')
     }
   }, [user])
 
@@ -85,24 +87,41 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
     setSuccess('')
 
     try {
+      // Update auth metadata
       const { error: updateError } = await supabase.auth.updateUser({
         data: { 
           ...user.user_metadata,
           display_name: displayName,
-          pronouns: pronouns
+          pronouns: pronouns,
+          country: country,
         }
       })
 
       if (updateError) {
         setError('Failed to update profile. Please try again.')
         toast('Failed to update profile', 'error')
-      } else {
-        setSuccess('✨ Profile updated successfully! ✨')
-        toast('Profile updated successfully!', 'success')
-        await refreshUser()
-        if (onClose) {
-          setTimeout(() => onClose(), 800)
-        }
+        setSaving(false)
+        return
+      }
+
+      // Also sync to profiles table so the feed picks up the changes
+      await fetch('/api/update-profile-secure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          display_name: displayName,
+          pronouns: pronouns || null,
+          country: country || null,
+          avatar_url: avatarUrl || null,
+        })
+      })
+
+      setSuccess('✨ Profile updated successfully! ✨')
+      toast('Profile updated successfully!', 'success')
+      await refreshUser()
+      if (onClose) {
+        setTimeout(() => onClose(), 800)
       }
       
       setSaving(false)
@@ -203,6 +222,22 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
               className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors font-space-whale-body"
               placeholder="e.g., they/them, she/her, he/him"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-space-whale-accent text-space-whale-navy mb-2">
+              Country (optional)
+            </label>
+            <input
+              type="text"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className="w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors font-space-whale-body"
+              placeholder="e.g., Darkinjung, Dharawal, Wurundjeri"
+            />
+            <p className="text-xs font-space-whale-body text-space-whale-purple mt-1">
+              Whose Country are you on?
+            </p>
           </div>
 
         </div>

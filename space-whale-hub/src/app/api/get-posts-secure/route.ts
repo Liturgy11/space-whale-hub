@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       // Fetch minimal author profiles
       Promise.resolve(supabaseAdmin
         .from('profiles')
-        .select('id, display_name, pronouns, avatar_url')
+        .select('id, display_name, pronouns, avatar_url, country')
         .in('id', Array.from(new Set(posts.map((p: any) => p.user_id))))),
       
       // Fetch all likes for these posts (just post_id, no need for full data)
@@ -144,6 +144,7 @@ export async function GET(request: NextRequest) {
         display_name: profileMap.get(post.user_id)?.display_name || 'Space Whale',
         pronouns: profileMap.get(post.user_id)?.pronouns || null,
         avatar_url: profileMap.get(post.user_id)?.avatar_url || null,
+        country: profileMap.get(post.user_id)?.country || null,
       },
       likes_count: likeCountMap.get(post.id) || 0,
       comments_count: commentCountMap.get(post.id) || 0,

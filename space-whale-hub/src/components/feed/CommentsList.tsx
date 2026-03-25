@@ -13,6 +13,7 @@ interface Comment {
     display_name: string
     pronouns?: string
     avatar_url?: string
+    country?: string
   }
 }
 
@@ -174,6 +175,11 @@ export default function CommentsList({ postId, refreshTrigger }: CommentsListPro
                     {comment.profiles.pronouns && (
                       <span className="text-xs text-space-whale-purple font-space-whale-body">
                         {comment.profiles.pronouns}
+                      </span>
+                    )}
+                    {comment.profiles.country && (
+                      <span className="text-xs text-space-whale-purple font-space-whale-body">
+                        {comment.profiles.country} Country
                       </span>
                     )}
                     <span className="text-xs text-space-whale-purple font-space-whale-body">
