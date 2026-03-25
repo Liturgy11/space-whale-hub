@@ -735,36 +735,37 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
         <div key={entry.id} className="bg-lofi-card rounded-xl shadow-lg p-3 sm:p-5 hover:shadow-xl transition-all duration-300 rainbow-border-soft overflow-hidden">
           <div className="flex flex-row justify-between items-start gap-2 mb-2">
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h3 className="text-base sm:text-lg font-space-whale-subheading text-space-whale-navy break-words">
-                  {entry.title || 'Untitled Entry'}
-                </h3>
-                <div className="flex items-center space-x-1 flex-shrink-0">
-                  <Lock className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-space-whale-purple" />
-                  <span className="text-xs text-space-whale-purple font-space-whale-body">Private</span>
-                  {isEncrypted(entry) && (
-                    <span className="text-xs text-space-whale-purple font-space-whale-body ml-1">
-                      • 🔒 Encrypted
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-space-whale-purple font-space-whale-body">
-                <div className="flex items-center flex-shrink-0">
-                  <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1" />
+              <h3 className="text-base sm:text-lg font-space-whale-subheading text-space-whale-navy break-words mb-1">
+                {entry.title || 'Untitled Entry'}
+              </h3>
+
+              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-space-whale-purple font-space-whale-body">
+                <span className="flex items-center gap-1 flex-shrink-0">
+                  <Lock className="h-3 w-3" />
+                  Private
+                </span>
+                {isEncrypted(entry) && (
+                  <>
+                    <span className="opacity-40">·</span>
+                    <span className="flex-shrink-0">🔒 Encrypted</span>
+                  </>
+                )}
+                <span className="opacity-40">·</span>
+                <span className="flex items-center gap-1 flex-shrink-0">
+                  <Calendar className="h-3 w-3" />
                   {formatDate(entry.created_at)}
-                </div>
+                </span>
                 {entry.mood && (
-                  <div className="flex items-center flex-shrink-0">
-                    <span className="mr-1">{getMoodEmoji(entry.mood)}</span>
-                    <span className="capitalize">{entry.mood}</span>
-                  </div>
+                  <>
+                    <span className="opacity-40">·</span>
+                    <span className="flex-shrink-0 capitalize">{getMoodEmoji(entry.mood)} {entry.mood}</span>
+                  </>
                 )}
                 {entry.media_type === 'moodboard' && (
-                  <div className="flex items-center flex-shrink-0">
-                    <span>✨ Mood board</span>
-                  </div>
+                  <>
+                    <span className="opacity-40">·</span>
+                    <span className="flex-shrink-0">✨ Mood board</span>
+                  </>
                 )}
               </div>
             </div>
