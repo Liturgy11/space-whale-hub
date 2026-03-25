@@ -943,109 +943,58 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                     </div>
                   </div>
                 ) : entry.media_type === 'moodboard' ? (
-                  <div className="space-y-4">
+                  <div>
                     {(() => {
                       const imageUrls = entry.tags?.filter(
                         (url: string) => url && (url.startsWith('data:image/') || url.startsWith('https://'))
                       ) || []
-                      const displayImages = imageUrls.slice(0, 6)
-                      const remainingCount = imageUrls.length - 6
+
+                      if (imageUrls.length === 0) return null
+
+                      if (imageUrls.length === 1) return (
+                        <div
+                          className="cursor-pointer group"
+                          onClick={() => openImageLightbox(imageUrls[0], imageUrls, 0)}
+                        >
+                          <div className="relative overflow-hidden rounded-xl">
+                            <img
+                              src={imageUrls[0]}
+                              alt="Mood board image"
+                              className="w-full h-auto rounded-xl shadow-md transition-transform duration-300 group-hover:scale-[1.02]"
+                              loading="lazy"
+                              decoding="async"
+                              onError={(e) => { e.currentTarget.style.display = 'none' }}
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-xl" />
+                          </div>
+                        </div>
+                      )
 
                       return (
-                        <>
-                          <div className="text-sm text-space-whale-purple font-space-whale-body mb-4">
-                            ✨ {imageUrls.length || 1} image{imageUrls.length > 1 ? 's' : ''}
-                          </div>
-
-                          {imageUrls.length > 0 ? (
-                            <div className="relative">
-                              <div className="mood-board-collage">
-                                {displayImages.map((imageUrl: string, index: number) => {
-                                  if (index === 0) {
-                                    return (
-                                      <div
-                                        key={index}
-                                        className="mood-board-hero cursor-pointer group"
-                                        onClick={() => openImageLightbox(imageUrl, imageUrls, index)}
-                                      >
-                                        <div className="relative overflow-hidden rounded-xl h-full">
-                                          <img
-                                            src={imageUrl}
-                                            alt={`Mood board image ${index + 1}`}
-                                            className="w-full h-64 sm:h-80 object-cover transition-transform duration-300 group-hover:scale-105"
-                                            loading="lazy"
-                                            decoding="async"
-                                            onError={(e) => {
-                                              e.currentTarget.style.display = 'none'
-                                            }}
-                                          />
-                                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                        </div>
-                                      </div>
-                                    )
-                                  }
-
-                                  return (
-                                    <div
-                                      key={index}
-                                      className="mood-board-thumb cursor-pointer group"
-                                      onClick={() => openImageLightbox(imageUrl, imageUrls, index)}
-                                    >
-                                      <div className="relative overflow-hidden rounded-lg border-2 border-white/50 shadow-md">
-                                        <img
-                                          src={imageUrl}
-                                          alt={`Mood board image ${index + 1}`}
-                                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                                          loading="lazy"
-                                          decoding="async"
-                                          onError={(e) => {
-                                            e.currentTarget.style.display = 'none'
-                                          }}
-                                        />
-                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-
-                                {remainingCount > 0 && displayImages.length >= 6 && (
-                                  <div
-                                    className="mood-board-more cursor-pointer group"
-                                    onClick={() => openImageLightbox(imageUrls[5], imageUrls, 5)}
-                                  >
-                                    <div className="relative overflow-hidden rounded-lg border-2 border-white/50 shadow-md">
-                                      <img
-                                        src={imageUrls[5]}
-                                        alt="More images"
-                                        className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
-                                        loading="lazy"
-                                        decoding="async"
-                                      />
-                                      <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/80 to-purple-600/80 flex items-center justify-center">
-                                        <div className="text-center">
-                                          <div className="text-2xl font-bold text-white mb-1">+{remainingCount}</div>
-                                          <div className="text-xs text-white/90">more</div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
+                        <div className="columns-2 gap-2">
+                          {imageUrls.map((imageUrl: string, index: number) => (
+                            <div
+                              key={index}
+                              className="break-inside-avoid mb-2 cursor-pointer group"
+                              onClick={() => openImageLightbox(imageUrl, imageUrls, index)}
+                            >
+                              <div className="relative overflow-hidden rounded-lg">
+                                <img
+                                  src={imageUrl}
+                                  alt={`Mood board image ${index + 1}`}
+                                  className="w-full h-auto rounded-lg shadow-sm transition-transform duration-300 group-hover:scale-[1.02]"
+                                  loading="lazy"
+                                  decoding="async"
+                                  onError={(e) => {
+                                    const parent = e.currentTarget.closest('.break-inside-avoid') as HTMLElement
+                                    if (parent) parent.style.display = 'none'
+                                  }}
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
                               </div>
                             </div>
-                          ) : (
-                            <div className="mood-board-empty">
-                              <div className="text-center py-12">
-                                <div className="text-6xl mb-4">✨</div>
-                                <p className="text-space-whale-navy/60 font-space-whale-body mb-4">
-                                  Your mood board is empty. Add images to begin.
-                                </p>
-                                <button className="px-6 py-3 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-colors font-space-whale-accent">
-                                  + Add Images
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </>
+                          ))}
+                        </div>
                       )
                     })()}
                   </div>
