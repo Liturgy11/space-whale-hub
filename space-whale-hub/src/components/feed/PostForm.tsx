@@ -25,6 +25,31 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
   const [error, setError] = useState('')
   const [isDragging, setIsDragging] = useState(false)
 
+  const compressImage = (file: File, maxWidth = 1200, quality = 0.82): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new window.Image()
+      img.onload = () => {
+        let { width, height } = img
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width)
+          width = maxWidth
+        }
+        canvas.width = width
+        canvas.height = height
+        ctx?.drawImage(img, 0, 0, width, height)
+        canvas.toBlob((blob) => {
+          resolve(blob
+            ? new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })
+            : file)
+        }, 'image/jpeg', quality)
+      }
+      img.onerror = () => resolve(file)
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
   const handleFileUpload = async (file: File) => {
     if (!user) {
       return
@@ -38,6 +63,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif']
     const videoExtensions = ['.mp4', '.webm']
     const isValidExtension = imageExtensions.includes(fileExtension) || videoExtensions.includes(fileExtension)
+    const isImage = file.type.startsWith('image/') || imageExtensions.includes(fileExtension)
     
     if (!isValidMimeType && !isValidExtension) {
       const errorMsg = 'Please upload an image or video file'
@@ -50,7 +76,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
     const maxSize = 10 * 1024 * 1024 // 10MB
     if (file.size > maxSize) {
       const fileSizeMB = (file.size / 1024 / 1024).toFixed(1)
-      const errorMsg = `File too large: ${fileSizeMB}MB. Maximum size for posts is 10MB. Please choose a smaller file or compress the image.`
+      const errorMsg = `File too large: ${fileSizeMB}MB. Maximum size for posts is 10MB. Please choose a smaller file.`
       setError(errorMsg)
       toast(errorMsg, 'error')
       return
@@ -61,15 +87,15 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
     setIsDragging(false)
 
     try {
-      // Use new storage system instead of base64
-      const result = await uploadMedia(file, {
+      // Compress images before uploading to stay under Vercel's 4.5MB body limit
+      const fileToUpload = isImage ? await compressImage(file) : file
+
+      const result = await uploadMedia(fileToUpload, {
         category: 'posts',
-        filename: `${Date.now()}-${file.name}`
+        filename: `${Date.now()}-${fileToUpload.name}`
       }, user.id)
       
       setMediaUrl(result.url)
-      // Determine media type (handle Android empty MIME types)
-      const isImage = file.type.startsWith('image/') || imageExtensions.includes(fileExtension)
       setMediaType(isImage ? 'image' : 'video')
       setShowMediaUpload(false)
       toast('Media uploaded successfully', 'success')

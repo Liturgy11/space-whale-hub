@@ -27,6 +27,33 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
 
   // Removed emoji mood selection - keeping it simple
 
+  const compressImage = (file: File, maxWidth = 1200, quality = 0.82): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new window.Image()
+      img.onload = () => {
+        let { width, height } = img
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width)
+          width = maxWidth
+        }
+        canvas.width = width
+        canvas.height = height
+        ctx?.drawImage(img, 0, 0, width, height)
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }))
+          } else {
+            resolve(file) // fallback to original
+          }
+        }, 'image/jpeg', quality)
+      }
+      img.onerror = () => resolve(file)
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
   const handleFileUpload = async (file: File) => {
     if (!user) return
 
@@ -39,6 +66,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
     const videoExtensions = ['.mp4', '.webm']
     const audioExtensions = ['.mp3', '.wav']
     const isValidExtension = imageExtensions.includes(fileExtension) || videoExtensions.includes(fileExtension) || audioExtensions.includes(fileExtension)
+    const isImage = file.type.startsWith('image/') || imageExtensions.includes(fileExtension)
     
     if (!isValidMimeType && !isValidExtension) {
       setError('Please upload an image, video, or audio file')
@@ -49,20 +77,20 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
     const maxSize = 10 * 1024 * 1024 // 10MB
     if (file.size > maxSize) {
       const fileSizeMB = (file.size / 1024 / 1024).toFixed(1)
-      setError(`File too large: ${fileSizeMB}MB. Maximum size for journal entries is 10MB. Please choose a smaller file or compress the image.`)
+      setError(`File too large: ${fileSizeMB}MB. Maximum size for journal entries is 10MB. Please choose a smaller file.`)
       return
     }
 
     try {
-      // Use new storage system instead of base64
-      const result = await uploadMedia(file, {
+      // Compress images before uploading to stay under Vercel's 4.5MB body limit
+      const fileToUpload = isImage ? await compressImage(file) : file
+
+      const result = await uploadMedia(fileToUpload, {
         category: 'journal',
-        filename: `${Date.now()}-${file.name}`
+        filename: `${Date.now()}-${fileToUpload.name}`
       }, user.id)
       
       setMediaUrl(result.url)
-      // Determine media type (handle Android empty MIME types)
-      const isImage = file.type.startsWith('image/') || imageExtensions.includes(fileExtension)
       const isVideo = file.type.startsWith('video/') || videoExtensions.includes(fileExtension)
       setMediaType(isImage ? 'image' : isVideo ? 'video' : 'document')
       setShowMediaUpload(false)
