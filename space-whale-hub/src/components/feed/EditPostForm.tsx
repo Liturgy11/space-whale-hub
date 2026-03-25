@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { updatePost } from '@/lib/database'
 import { uploadMedia } from '@/lib/storage-client'
 import { Image, Video, Smile, Save, X, AlertTriangle, Loader2 } from 'lucide-react'
 
@@ -33,8 +32,10 @@ interface EditPostFormProps {
 
 export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPostFormProps) {
   const { user } = useAuth()
+  // Separate image URLs (mood board) from text tags — only show text tags in the edit field
+  const urlTags = post.tags?.filter((t: string) => t.startsWith('https://') || t.startsWith('data:')) || []
   const [content, setContent] = useState(post.content)
-  const [tags, setTags] = useState(post.tags?.join(', ') || '')
+  const [tags, setTags] = useState(post.tags?.filter((t: string) => !t.startsWith('https://') && !t.startsWith('data:')).join(', ') || '')
   const [contentWarning, setContentWarning] = useState(post.content_warning || '')
   const [hasContentWarning, setHasContentWarning] = useState(!!post.content_warning)
   const [mediaUrl, setMediaUrl] = useState(post.media_url || '')
@@ -84,20 +85,31 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
     setError('')
 
     try {
-      const tagsArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
-      
-      await updatePost(post.id, {
-        content: content.trim(),
-        tags: tagsArray,
-        content_warning: hasContentWarning ? contentWarning.trim() : undefined,
-        media_url: mediaUrl || undefined,
-        media_type: mediaType || undefined
-      }, user.id)
+      // Preserve mood board image URL tags, merge with edited text tags
+      const textTagsArray = tags.split(',').map((t: string) => t.trim()).filter((t: string) => t.length > 0)
+      const finalTags = [...urlTags, ...textTagsArray]
+
+      const res = await fetch('/api/update-post-secure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          postId: post.id,
+          userId: user.id,
+          content: content.trim(),
+          tags: finalTags,
+          content_warning: hasContentWarning ? contentWarning.trim() : null,
+          media_url: mediaUrl || null,
+          media_type: mediaType || null,
+        })
+      })
+
+      const result = await res.json()
+      if (!result.success) throw new Error(result.error || 'Failed to update post')
 
       onPostUpdated?.()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating post:', err)
-      setError('Failed to update post. Please try again.')
+      setError(err.message || 'Failed to update post. Please try again.')
     } finally {
       setUploading(false)
     }
