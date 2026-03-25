@@ -105,7 +105,8 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
 
       const result = await res.json()
       if (!result.success) {
-        setError('Failed to update profile. Please try again.')
+        const msg = result.error ? `Failed to update profile: ${result.error}` : 'Failed to update profile. Please try again.'
+        setError(msg)
         toast('Failed to update profile', 'error')
         setSaving(false)
         return
