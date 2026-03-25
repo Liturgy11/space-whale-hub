@@ -1,11 +1,30 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { encryptJournalContent, decryptJournalContent, isEncrypted, getEncryptionStatus } from '@/lib/journal-encryption'
 import { toast } from '@/components/ui/Toast'
 import { Calendar, Heart, Edit, Trash2, Lock, Eye, Share2, X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react'
+
+const JOURNAL_CACHE_KEY = 'swp_journal_cache'
+const JOURNAL_CACHE_TTL = 3 * 60 * 1000 // 3 minutes
+
+function readJournalCache(userId: string) {
+  try {
+    const raw = sessionStorage.getItem(`${JOURNAL_CACHE_KEY}_${userId}`)
+    if (!raw) return null
+    const { data, ts } = JSON.parse(raw)
+    if (Date.now() - ts > JOURNAL_CACHE_TTL) return null
+    return data
+  } catch { return null }
+}
+
+function writeJournalCache(userId: string, data: any[]) {
+  try {
+    sessionStorage.setItem(`${JOURNAL_CACHE_KEY}_${userId}`, JSON.stringify({ data, ts: Date.now() }))
+  } catch {}
+}
 
 interface JournalListProps {
   refreshTrigger?: number
@@ -15,7 +34,9 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   const { user } = useAuth()
   const [entries, setEntries] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
+  const initialLoadDone = useRef(false)
   const [mounted, setMounted] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [sharingId, setSharingId] = useState<string | null>(null)
@@ -54,28 +75,38 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
-    if (user) {
-      loadEntries()
-    }
-  }, [user, refreshTrigger])
+    if (!user) return
+    if (initialLoadDone.current) return
+    initialLoadDone.current = true
 
-  const loadEntries = async () => {
-    if (!user) {
-      return
+    const cached = readJournalCache(user.id)
+    if (cached) {
+      setEntries(cached)
+      setLoading(false)
+      loadEntries(true) // silent background refresh
+    } else {
+      loadEntries(false)
     }
+  }, [user])
+
+  // Force-refresh when refreshTrigger changes (e.g. after creating a new entry)
+  useEffect(() => {
+    if (!refreshTrigger || !user) return
+    initialLoadDone.current = false // allow re-run after new entry
+    loadEntries(false)
+  }, [refreshTrigger])
+
+  const loadEntries = async (silent = false) => {
+    if (!user) return
 
     try {
-      setLoading(true)
+      if (silent) setRefreshing(true)
+      else setLoading(true)
       
-      // Use the secure API route instead of direct database function
       const response = await fetch('/api/get-journal-entries', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.id
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
       })
 
       const result = await response.json()
@@ -84,20 +115,15 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
         throw new Error(result.error || 'Failed to load journal entries')
       }
 
-      const data = result.entries
-      
-      data?.forEach((entry: any, index: number) => {
-        if (entry.media_url) {
-        }
-      })
-      
-      setEntries(data || [])
+      const data = result.entries || []
+      setEntries(data)
+      writeJournalCache(user.id, data)
     } catch (err: any) {
       console.error('Error loading entries:', err)
-      console.error('Error details:', err.message, err.code, err.details)
-      setError(err.message)
+      if (!silent) setError(err.message)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
@@ -439,7 +465,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
         <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
         <button
-          onClick={loadEntries}
+          onClick={() => loadEntries(false)}
           className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
         >
           Try Again
@@ -731,6 +757,11 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   return (
     <>
     <div className="space-y-4 overflow-x-hidden">
+      {refreshing && (
+        <p className="text-xs text-space-whale-purple/50 font-space-whale-body text-center">
+          Updating entries…
+        </p>
+      )}
       {entries.map((entry) => (
         <div key={entry.id} className="bg-lofi-card rounded-xl shadow-lg p-3 sm:p-5 hover:shadow-xl transition-all duration-300 rainbow-border-soft overflow-hidden">
           <div className="flex flex-row justify-between items-start gap-2 mb-2">
