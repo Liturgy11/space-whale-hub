@@ -151,7 +151,13 @@ export async function GET(request: NextRequest) {
       is_liked: userLikedPosts.has(post.id)
     }))
 
-    return NextResponse.json({ success: true, data: enriched })
+    // Cache the public (no-userId) feed at Vercel's CDN edge for fast repeat loads.
+    // Personalized responses (with userId) are never cached.
+    const cacheHeaders = userId
+      ? { 'Cache-Control': 'private, no-store' }
+      : { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' }
+
+    return NextResponse.json({ success: true, data: enriched }, { headers: cacheHeaders })
   } catch (e: any) {
     console.error('API error fetching posts:', e)
     return NextResponse.json({ success: false, error: e.message }, { status: 500 })

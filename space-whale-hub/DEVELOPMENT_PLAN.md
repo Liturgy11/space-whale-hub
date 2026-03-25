@@ -148,6 +148,29 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
   - Complete UI rendering updates (render from URLs instead of base64)
   - Implement mood board styling improvements
 
+## Recent Achievements (Session — 25 Mar 2026) 🎉
+
+### Performance & Load Speed
+- ✅ **Feed no longer blocks on auth** — Community Orbit now fetches immediately on mount, then silently refreshes once auth resolves to update is_liked state. Eliminated the 1-2 second blank screen caused by waiting for session.
+- ✅ **Inner Space stale-while-revalidate cache** — Journal entries cached in `sessionStorage` (3min TTL). Cached entries appear instantly on revisit with a silent background refresh, matching Community Orbit's pattern.
+- ✅ **Fire-and-forget access logging** — `get-journal-entries` no longer awaits N individual RPC calls before sending the response. Logging happens in the background, response is immediate.
+
+### Image Upload Fixes
+- ✅ **Single image compression** — `JournalEntryForm` and `PostForm` now compress images client-side (max 1200px, 0.82 JPEG quality) before upload, matching MoodBoardUpload. Fixes "File too large" errors for Live Photos and large phone images that exceeded Vercel's 4.5MB serverless body limit.
+
+### Profile Settings Fix
+- ✅ **Profile save no longer fails** — Removed broken `supabase.auth.updateUser()` client-side call (fails due to session storage issue). Both profile save and avatar upload now go entirely through `/api/update-profile-secure` which uses the admin client server-side.
+- ✅ **Auth metadata synced server-side** — The secure route now also calls `supabaseAdmin.auth.admin.updateUserById()` to keep the client-side user object in sync.
+
+### Country / Aboriginal Land Feature (completed & verified)
+- ✅ **Country field live and working** — Displays as "Darkinjung Country" in posts and comments automatically (users just type the name, " Country" is appended in display)
+- ✅ **Consistent framing** — "Whose Country are you on?" prompt in both sign-up and profile settings naturally guides the input format
+
+### Bug Fixes
+- ✅ **`g.rpc(...).catch is not a function`** — Fixed by wrapping Supabase `rpc()` in `Promise.resolve()` before calling `.catch()` (PostgrestFilterBuilder is thenable but not a full Promise)
+
+---
+
 ## Recent Achievements (Latest Session) 🎉
 
 ### Password Reset — Full Resolution 🎉

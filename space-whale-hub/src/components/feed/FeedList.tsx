@@ -84,7 +84,7 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
     }
   }, [])
 
-  // On mount: show cache instantly and start fetching immediately — don't wait for auth
+  // On mount: show cache instantly; if no cache start fetching immediately
   useEffect(() => {
     if (initialLoadDone.current) return
     initialLoadDone.current = true
@@ -93,18 +93,19 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
     if (cached) {
       setPosts(cached)
       setLoading(false)
-      // Refresh in background without userId first — will re-refresh once auth resolves
-      fetchPosts(null, true)
+      // Don't fetch yet — wait for auth so we do exactly one fetch with userId
     } else {
+      // No cache — fetch right away without waiting for auth
       fetchPosts(null, false)
     }
   }, [fetchPosts])
 
-  // Once auth resolves, silently refresh to get correct is_liked status
+  // Once auth state is known, do one authoritative fetch
+  // (silent if we already have posts from cache or the initial null-fetch)
   useEffect(() => {
-    if (authLoading || !user?.id) return
-    fetchPosts(user.id, true)
-  }, [authLoading, user?.id, fetchPosts])
+    if (authLoading) return
+    fetchPosts(user?.id ?? null, posts.length > 0)
+  }, [authLoading, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Refresh when trigger changes (e.g. after posting) — always force fresh
   useEffect(() => {
