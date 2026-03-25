@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { getPosts } from '@/lib/database'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/ui/Toast'
 import PostCard from './PostCard'
@@ -28,62 +27,86 @@ interface FeedListProps {
   refreshTrigger?: number
 }
 
+const CACHE_KEY = 'swp_feed_cache'
+const CACHE_TTL = 3 * 60 * 1000 // 3 minutes
+
+function readCache(): Post[] | null {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY)
+    if (!raw) return null
+    const { posts, ts } = JSON.parse(raw)
+    if (Date.now() - ts > CACHE_TTL) return null
+    return posts
+  } catch {
+    return null
+  }
+}
+
+function writeCache(posts: Post[]) {
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ posts, ts: Date.now() }))
+  } catch {
+    // sessionStorage unavailable — silently skip
+  }
+}
+
 export default function FeedList({ refreshTrigger }: FeedListProps) {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
   const [editingPost, setEditingPost] = useState<Post | null>(null)
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
-  const likeStatusLoadedRef = useRef(false)
+  const initialLoadDone = useRef(false)
 
-  const loadPosts = useCallback(async (userId?: string | null) => {
+  const fetchPosts = useCallback(async (userId?: string | null, silent = false) => {
     try {
-      setLoading(true)
+      if (silent) setRefreshing(true)
+      else setLoading(true)
       setError('')
-      try {
-        const url = userId
-          ? `/api/get-posts-secure?userId=${encodeURIComponent(userId)}`
-          : '/api/get-posts-secure'
-        const res = await fetch(url)
-        if (res.ok) {
-          const json = await res.json()
-          if (json.success) {
-            setPosts(json.data)
-            setLoading(false)
-            return
-          }
-        }
-      } catch (_) {}
 
-      const postsData = await getPosts()
-      setPosts(postsData)
+      const url = userId
+        ? `/api/get-posts-secure?userId=${encodeURIComponent(userId)}`
+        : '/api/get-posts-secure'
+      const res = await fetch(url)
+      if (!res.ok) throw new Error('Failed to fetch posts')
+      const json = await res.json()
+      if (!json.success) throw new Error(json.error || 'Failed to fetch posts')
+
+      setPosts(json.data)
+      writeCache(json.data)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      if (!silent) setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }, [])
 
-  // Fire immediately on mount — no auth wait needed for posts to appear
+  // On mount: show cache instantly, then refresh in background once auth resolves
   useEffect(() => {
-    loadPosts()
-  }, [loadPosts])
+    if (initialLoadDone.current) return
+    if (authLoading) return // wait briefly for auth so we can do a single fetch with userId
 
-  // Once user resolves, silently refresh to get correct is_liked status
-  useEffect(() => {
-    if (user?.id && !likeStatusLoadedRef.current) {
-      likeStatusLoadedRef.current = true
-      loadPosts(user.id)
+    initialLoadDone.current = true
+    const cached = readCache()
+    if (cached) {
+      setPosts(cached)
+      setLoading(false)
+      // Silently refresh in background to get fresh data + correct is_liked
+      fetchPosts(user?.id, true)
+    } else {
+      fetchPosts(user?.id, false)
     }
-  }, [user?.id, loadPosts])
+  }, [authLoading, user?.id, fetchPosts])
 
-  // Refresh when trigger changes (e.g. after posting)
+  // Refresh when trigger changes (e.g. after posting) — always force fresh
   useEffect(() => {
-    if (refreshTrigger) {
-      loadPosts(user?.id)
-    }
-  }, [refreshTrigger, loadPosts, user?.id])
+    if (!refreshTrigger) return
+    sessionStorage.removeItem(CACHE_KEY)
+    fetchPosts(user?.id, false)
+  }, [refreshTrigger, fetchPosts, user?.id])
 
   const handleLike = async (postId: string) => {
     if (!user) return
@@ -196,7 +219,7 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
     return (
       <div className="space-y-6">
         <p className="text-sm text-space-whale-purple/70 font-space-whale-body text-center">
-          Gathering posts from the orbit — this may take a moment on first load...
+          Gathering posts from the orbit…
         </p>
         {[...Array(3)].map((_, i) => (
           <div key={i} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 animate-pulse">
@@ -256,6 +279,11 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
 
   return (
     <div className="space-y-6">
+      {refreshing && (
+        <p className="text-xs text-space-whale-purple/50 font-space-whale-body text-center">
+          Updating orbit…
+        </p>
+      )}
       {posts.map((post) => (
         <div key={post.id}>
           {editingPost && editingPost.id === post.id ? (
