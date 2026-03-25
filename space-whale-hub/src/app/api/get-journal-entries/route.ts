@@ -81,13 +81,13 @@ export async function POST(request: NextRequest) {
       const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null
       const userAgent = request.headers.get('user-agent') || null
       data.forEach((entry: any) => {
-        supabaseAdmin.rpc('log_journal_access', {
+        Promise.resolve(supabaseAdmin.rpc('log_journal_access', {
           p_entry_id: entry.id,
           p_user_id: userId,
           p_action: 'view',
           p_ip_address: ipAddress,
           p_user_agent: userAgent
-        }).catch((err: any) => console.error(`Failed to log access for entry ${entry.id}:`, err))
+        })).catch((err: any) => console.error(`Failed to log access for entry ${entry.id}:`, err))
       })
     }
 
