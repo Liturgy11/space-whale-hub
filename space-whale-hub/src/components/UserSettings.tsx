@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
-import { supabase } from '@/lib/supabase'
 import { User, Camera, X, Sparkles, Edit3, Save, Loader2 } from 'lucide-react'
 import { toast } from '@/components/ui/Toast'
 
@@ -48,25 +47,29 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
       const publicUrl = result.url
       const bustUrl = `${publicUrl}?v=${Date.now()}`
 
-      // Update user metadata with new avatar URL
-      const { error: updateError } = await supabase.auth.updateUser({
-        data: { 
-          ...user.user_metadata,
-          avatar_url: bustUrl 
-        }
+      // Sync avatar to profiles table + auth metadata via secure route
+      const avatarRes = await fetch('/api/update-profile-secure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          display_name: displayName || user.user_metadata?.display_name || null,
+          pronouns: pronouns || user.user_metadata?.pronouns || null,
+          country: country || user.user_metadata?.country || null,
+          avatar_url: bustUrl,
+        })
       })
+      const avatarResult = await avatarRes.json()
 
-      if (updateError) {
-        console.error('Profile update error:', updateError)
+      if (!avatarResult.success) {
+        console.error('Profile update error:', avatarResult.error)
         setError('Avatar uploaded but profile update failed.')
         toast('Failed to update avatar', 'error')
       } else {
         setAvatarUrl(bustUrl)
         setSuccess('✨ Avatar updated successfully! ✨')
         toast('Avatar updated successfully!', 'success')
-        // Ensure global auth user metadata reflects the new avatar
         await refreshUser()
-        // Auto-close shortly after avatar success
         if (onClose) {
           setTimeout(() => onClose(), 800)
         }
@@ -87,25 +90,8 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
     setSuccess('')
 
     try {
-      // Update auth metadata
-      const { error: updateError } = await supabase.auth.updateUser({
-        data: { 
-          ...user.user_metadata,
-          display_name: displayName,
-          pronouns: pronouns,
-          country: country,
-        }
-      })
-
-      if (updateError) {
-        setError('Failed to update profile. Please try again.')
-        toast('Failed to update profile', 'error')
-        setSaving(false)
-        return
-      }
-
-      // Also sync to profiles table so the feed picks up the changes
-      await fetch('/api/update-profile-secure', {
+      // Update profiles table + auth metadata via secure server-side route
+      const res = await fetch('/api/update-profile-secure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -116,6 +102,14 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
           avatar_url: avatarUrl || null,
         })
       })
+
+      const result = await res.json()
+      if (!result.success) {
+        setError('Failed to update profile. Please try again.')
+        toast('Failed to update profile', 'error')
+        setSaving(false)
+        return
+      }
 
       setSuccess('✨ Profile updated successfully! ✨')
       toast('Profile updated successfully!', 'success')

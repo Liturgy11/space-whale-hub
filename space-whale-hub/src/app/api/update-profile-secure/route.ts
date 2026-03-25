@@ -20,7 +20,8 @@ export async function POST(request: NextRequest) {
       auth: { autoRefreshToken: false, persistSession: false }
     })
 
-    const { error } = await supabaseAdmin
+    // Update the profiles table (used by feed, comments, etc.)
+    const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .upsert({
         id: userId,
@@ -31,9 +32,24 @@ export async function POST(request: NextRequest) {
         updated_at: new Date().toISOString(),
       }, { onConflict: 'id' })
 
-    if (error) {
-      console.error('Profile upsert error:', error)
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+    if (profileError) {
+      console.error('Profile upsert error:', profileError)
+      return NextResponse.json({ success: false, error: profileError.message }, { status: 500 })
+    }
+
+    // Also update auth user_metadata so the client-side user object stays in sync
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      user_metadata: {
+        display_name: display_name || null,
+        pronouns: pronouns || null,
+        country: country || null,
+        avatar_url: avatar_url || null,
+      }
+    })
+
+    if (authError) {
+      // Non-fatal — profiles table is the source of truth for display
+      console.error('Auth metadata update error (non-fatal):', authError)
     }
 
     return NextResponse.json({ success: true })
