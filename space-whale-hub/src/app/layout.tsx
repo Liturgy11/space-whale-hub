@@ -34,7 +34,7 @@ const quicksand = Quicksand({
 });
 
 export const metadata: Metadata = {
-  title: "Space Whale Portal - A Sanctuary for Creative Becoming",
+  title: "Space Whale Portal - a safe(r) space for creative souls",
   description: "A portal where your sensitivity is honoured, your creativity is sacred, and your becoming is witnessed. A sanctuary for space whales navigating by starlight and whale song.",
 };
 
