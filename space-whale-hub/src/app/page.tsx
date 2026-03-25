@@ -140,7 +140,7 @@ function HomeContent() {
           </div>
           
           <h1 className="text-4xl md:text-6xl font-space-whale-heading text-space-whale-navy mb-8">
-            Welcome fellow travelers{" "}
+            Welcome fellow travellers{" "}
             <span className="bg-gradient-to-r from-space-whale-purple via-accent-pink to-accent-orange bg-clip-text text-transparent">
               to the Space Whale Portal
             </span>
