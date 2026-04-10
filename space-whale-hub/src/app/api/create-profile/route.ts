@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase'
 
 export async function POST(request: Request) {
   try {
-    const { userId, displayName } = await request.json()
+    const { userId, displayName, emailOptIn } = await request.json()
     
     if (!userId) {
       return NextResponse.json({
@@ -21,6 +21,7 @@ export async function POST(request: Request) {
         pronouns: null,
         avatar_url: null,
         is_public: true,
+        email_opt_in: emailOptIn ?? false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })

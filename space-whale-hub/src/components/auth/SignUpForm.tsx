@@ -18,6 +18,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
   const [pronouns, setPronouns] = useState('')
   const [country, setCountry] = useState('')
   const [inviteCode, setInviteCode] = useState('')
+  const [emailOptIn, setEmailOptIn] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -82,7 +83,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
     */
 
     // Proceed with signup
-    const { error } = await signUp(email, password, displayName, pronouns, country)
+    const { error } = await signUp(email, password, displayName, pronouns, country, emailOptIn)
     
     if (error) {
       setError(error.message)
@@ -309,6 +310,19 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
               <p className="text-red-600 text-sm font-space-whale-body">{error}</p>
             </div>
           )}
+
+          <div className="flex items-start gap-3">
+            <input
+              id="emailOptIn"
+              type="checkbox"
+              checked={emailOptIn}
+              onChange={(e) => setEmailOptIn(e.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-space-whale-lavender/40 text-space-whale-purple focus:ring-space-whale-purple cursor-pointer"
+            />
+            <label htmlFor="emailOptIn" className="text-sm font-space-whale-body text-space-whale-navy cursor-pointer">
+              Send me occasional news about Space Whale offerings, workshops, and portal updates
+            </label>
+          </div>
 
           <div className="bg-gradient-to-r from-space-whale-lavender/20 to-accent-pink/20 border border-space-whale-lavender/30 rounded-lg p-4">
             <p className="text-sm font-space-whale-body text-space-whale-navy">
