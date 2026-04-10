@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import FirstPostModal from "@/components/FirstPostModal";
 
 function CommunityFeedContent() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [showPostForm, setShowPostForm] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showFirstPostNote, setShowFirstPostNote] = useState(false);
@@ -21,18 +21,13 @@ function CommunityFeedContent() {
   }, [user]);
 
   function hasAcknowledged(): boolean {
-    if (!user) return true; // if unknown, don't block
-    const key = `first_post_ack_${user.id}`;
-    const local = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
-    return Boolean(user.user_metadata?.first_post_ack_at || local);
+    if (!user) return true;
+    return Boolean(user.user_metadata?.first_post_ack_at);
   }
 
   async function acknowledgeFirstPost() {
     if (!user) return;
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(`first_post_ack_${user.id}`, new Date().toISOString());
-      }
       const { supabase } = await import("@/lib/supabase");
       await supabase.auth.updateUser({
         data: {
@@ -40,8 +35,9 @@ function CommunityFeedContent() {
           first_post_ack_at: new Date().toISOString(),
         },
       });
+      await refreshUser();
     } catch (_e) {
-      // localStorage fallback already set
+      // silently fail — modal won't reappear this session
     }
   }
 
