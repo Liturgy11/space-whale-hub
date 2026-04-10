@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Filter, Search, Tag } from "lucide-react";
-import ArchivePage from "@/components/archive/ArchivePage";
+import ConstellationTabs from "@/components/constellation/ConstellationTabs";
 
 export default function Archive() {
   return (
@@ -22,14 +21,11 @@ export default function Archive() {
                 <span className="text-xl font-space-whale-heading text-space-whale-navy">Constellation</span>
               </Link>
             </div>
-            <div className="flex items-center space-x-4">
-              {/* Search moved to ArchivePage component */}
-            </div>
           </div>
         </div>
       </nav>
 
-      <ArchivePage />
+      <ConstellationTabs />
     </div>
   );
 }
