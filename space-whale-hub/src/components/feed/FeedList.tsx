@@ -225,7 +225,7 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
     return (
       <div className="space-y-6">
         <p className="text-sm text-space-whale-purple/70 font-space-whale-body text-center">
-          Gathering posts from the orbit…
+          Gathering posts from the orbit… (takes about a minute to load)
         </p>
         {[...Array(3)].map((_, i) => (
           <div key={i} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 animate-pulse">
