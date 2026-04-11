@@ -47,9 +47,13 @@ export default function Workshops() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white relative">
+      <div
+        className="fixed inset-0 bg-cover bg-center pointer-events-none z-0"
+        style={{ backgroundImage: 'url(/vivid-mushrooms.png)', opacity: 0.12 }}
+      />
       {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-sm border-b border-space-whale-lavender/20 sticky top-0 z-50">
+      <nav className="relative z-10 bg-white/80 backdrop-blur-sm border-b border-space-whale-lavender/20 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">

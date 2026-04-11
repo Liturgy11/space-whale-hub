@@ -55,6 +55,13 @@ function PersonalSpaceContent() {
 
   return (
     <div className={getWallpaperClass()} style={isCustomImage ? { backgroundImage: `url(${currentWallpaper})` } : {}}>
+      {/* Teal landscape — only shows when no custom wallpaper is set */}
+      {!isCustomImage && (
+        <div
+          className="fixed inset-0 bg-cover bg-center pointer-events-none z-0"
+          style={{ backgroundImage: 'url(/teal-landscape.png)', opacity: 0.18 }}
+        />
+      )}
       {/* Navigation */}
       <nav className="bg-white/80 backdrop-blur-sm border-b border-space-whale-lavender/20 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
