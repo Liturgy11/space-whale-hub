@@ -40,46 +40,51 @@ function AuthPageContent() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Artwork panel — hidden on mobile */}
+      {/* Artwork panel — left on desktop, full background on mobile */}
       <div
-        className="hidden md:block md:w-1/2 lg:w-3/5 relative"
+        className="hidden md:block md:w-1/2 lg:w-3/5 relative flex-shrink-0"
         style={{
           backgroundImage: 'url(/cosmic-rainbow.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
       >
-        {/* Subtle overlay so the logo reads over the art */}
         <div className="absolute inset-0 bg-black/20" />
         <div className="absolute bottom-8 left-8">
           <Image
-            src="/Space Whale_Horizontal.jpg"
+            src="/space-whale-social.png"
             alt="Space Whale"
-            width={200}
-            height={60}
+            width={80}
+            height={80}
             className="opacity-90"
             priority
           />
         </div>
       </div>
 
-      {/* Form panel */}
-      <div className="w-full md:w-1/2 lg:w-2/5 flex items-center justify-center p-6 bg-white overflow-y-auto">
-        <div className="w-full max-w-md">
-          {/* Logo — mobile only */}
-          <div className="md:hidden text-center mb-8">
+      {/* Form panel — artwork as faded background on mobile */}
+      <div
+        className="relative w-full md:w-1/2 lg:w-2/5 flex items-center justify-center p-6 overflow-y-auto"
+        style={{ backgroundColor: 'white' }}
+      >
+        {/* Mobile artwork background */}
+        <div
+          className="md:hidden absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: 'url(/cosmic-rainbow.png)', opacity: 0.15 }}
+        />
+
+        <div className="relative w-full max-w-md">
+          {/* Logo */}
+          <div className="text-center mb-6">
             <Image
-              src="/Space Whale_Horizontal.jpg"
+              src="/space-whale-social.png"
               alt="Space Whale"
-              width={240}
-              height={72}
-              className="mx-auto mb-4"
+              width={100}
+              height={100}
+              className="mx-auto mb-3"
               priority
             />
-          </div>
-
-          <div className="text-center mb-8">
-            <h2 className="text-xl font-space-whale-body text-space-whale-navy mb-2">
+            <h2 className="text-xl font-space-whale-body text-space-whale-navy mb-1">
               Space Whale Portal
             </h2>
             <p className="text-base font-space-whale-body text-space-whale-navy">
