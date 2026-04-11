@@ -84,13 +84,23 @@ export default function ConstellationTabs() {
           )}
 
           {/* Network viz */}
-          <div className="bg-gradient-to-br from-space-whale-lavender/10 via-white to-accent-pink/5 rounded-2xl border border-space-whale-lavender/20 overflow-hidden shadow-sm">
-            <MycelialNetwork
-              key={sporeKey}
-              currentUserId={user?.id}
-              onEditSpore={() => setShowSporeForm(true)}
-              onCurrentSporeLoaded={setCurrentSpore}
+          <div className="relative rounded-2xl border border-space-whale-lavender/20 overflow-hidden shadow-sm">
+            {/* Forest background artwork */}
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{
+                backgroundImage: 'url(/forest-background.png)',
+                opacity: 0.18,
+              }}
             />
+            <div className="relative">
+              <MycelialNetwork
+                key={sporeKey}
+                currentUserId={user?.id}
+                onEditSpore={() => setShowSporeForm(true)}
+                onCurrentSporeLoaded={setCurrentSpore}
+              />
+            </div>
           </div>
 
           {/* Invite to join — only if not in network yet */}
