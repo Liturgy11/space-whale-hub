@@ -93,11 +93,11 @@ function CommunityFeedContent() {
           {showNetworkBanner && (
             <div className="mb-6 flex items-start justify-between gap-3 bg-gradient-to-r from-space-whale-lavender/30 to-accent-pink/20 border border-space-whale-lavender/40 rounded-xl px-4 py-3">
               <p className="text-sm font-space-whale-body text-space-whale-navy">
-                🍄 <strong>New:</strong> Add yourself to the{' '}
+                🍄 <strong>New:</strong> The{' '}
                 <Link href="/archive" className="underline underline-offset-2 hover:text-space-whale-purple transition-colors">
                   Mycelial Network
                 </Link>{' '}
-                to explore how we might connect.
+                is here — place your spore in the forest.
               </p>
               <button
                 onClick={() => {
