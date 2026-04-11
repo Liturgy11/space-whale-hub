@@ -210,9 +210,18 @@ export default function MycelialNetwork({ currentUserId, onEditSpore }: Mycelial
         <div className="text-center max-w-md mx-auto px-4">
           <div className="text-5xl mb-4">🌱</div>
           <h3 className="text-lg font-space-whale-heading text-space-whale-navy mb-2">The forest is waiting</h3>
-          <p className="text-sm text-space-whale-purple/70 font-space-whale-body">
+          <p className="text-sm text-space-whale-purple/70 font-space-whale-body mb-6">
             Be the first to place yourself in the network. When you are ready.
           </p>
+          {currentUserId && onEditSpore && (
+            <button
+              onClick={onEditSpore}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg text-sm font-space-whale-accent shadow-lg hover:opacity-90 transition-opacity"
+            >
+              <Sparkles className="h-4 w-4" />
+              Place yourself in the forest
+            </button>
+          )}
         </div>
       </div>
     )
