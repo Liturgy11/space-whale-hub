@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, Star, Eye, CircleDotDashed, Zap, RotateCcw, Orbit } from "lucide-react";
+import { Heart, Star, Eye, CircleDotDashed, Zap, RotateCcw, Orbit, Sprout } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 function AboutContent() {
@@ -98,6 +98,36 @@ function AboutContent() {
           </div>
         </section>
 
+        {/* Mycelial Network feature banner */}
+        <section className="mb-16">
+          <div className="bg-gradient-to-r from-space-whale-lavender/30 to-accent-pink/20 border border-space-whale-lavender/40 rounded-xl p-8 shadow-lg">
+            <div className="flex items-center mb-4">
+              <Sprout className="h-6 w-6 mr-3 text-space-whale-purple flex-shrink-0" />
+              <h2 className="text-2xl font-space-whale-subheading text-space-whale-navy">
+                New: The Mycelial Network 🍄
+              </h2>
+            </div>
+            <div className="space-y-3 text-space-whale-navy font-space-whale-body mb-6">
+              <p>
+                Just like mycelium connects trees in a forest, the Mycelial Network is a place to find your people in the Space Whale community.
+              </p>
+              <p>
+                Place your spore in the forest — share a little about who you are, what you offer, and what you're curious to explore. The network will draw connections between you and others with shared interests, complementary offerings, and ways of being.
+              </p>
+              <p>
+                There is no pressure to appear before you are ready. When you feel it, step in.
+              </p>
+            </div>
+            <Link
+              href="/archive"
+              className="btn-space-whale-secondary inline-flex items-center justify-center"
+            >
+              <Sprout className="h-4 w-4 mr-2" />
+              Visit the Mycelial Network
+            </Link>
+          </div>
+        </section>
+
         {/* The Four Spaces */}
         <section className="mb-16">
           <h2 className="text-2xl font-space-whale-subheading text-space-whale-navy mb-8 text-center">
@@ -130,7 +160,7 @@ function AboutContent() {
                 <h3 className="text-xl font-space-whale-subheading text-space-whale-navy">Constellation</h3>
               </div>
               <p className="text-space-whale-navy font-space-whale-body">
-                Archive of Space Whale events. I'll be uploading albums from past workshops and Pride Poetry gatherings over time.
+                Home of the Mycelial Network — place your spore in the forest and find your people through shared offerings, curiosities, and ways of connecting.
               </p>
             </div>
 
