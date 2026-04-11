@@ -16,6 +16,7 @@ function CommunityFeedContent() {
   const [showPostForm, setShowPostForm] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showFirstPostNote, setShowFirstPostNote] = useState(false);
+  const [acknowledgedThisSession, setAcknowledgedThisSession] = useState(false);
   const [showNetworkBanner, setShowNetworkBanner] = useState(() => {
     if (typeof window === 'undefined') return false;
     return !localStorage.getItem('network_banner_dismissed');
@@ -26,10 +27,12 @@ function CommunityFeedContent() {
 
   function hasAcknowledged(): boolean {
     if (!user) return true;
+    if (acknowledgedThisSession) return true;
     return Boolean(user.user_metadata?.first_post_ack_at);
   }
 
   async function acknowledgeFirstPost() {
+    setAcknowledgedThisSession(true); // always prevents re-show this session
     if (!user) return;
     try {
       const { supabase } = await import("@/lib/supabase");
@@ -41,7 +44,7 @@ function CommunityFeedContent() {
       });
       await refreshUser();
     } catch (_e) {
-      // silently fail — modal won't reappear this session
+      // silently fail — session flag above ensures modal won't reappear
     }
   }
 
@@ -122,7 +125,7 @@ function CommunityFeedContent() {
           <div className="mb-6 sm:mb-8">
             <button 
               onClick={handleShareClick}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-space-whale-navy text-white font-space-whale-accent text-sm shadow-md hover:bg-space-whale-navy/80 hover:-translate-y-0.5 transition-all duration-200 w-full sm:w-auto"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-space-whale-navy text-white font-space-whale-accent text-sm shadow-md hover:bg-space-whale-navy/80 hover:-translate-y-0.5 transition-all duration-200"
             >
               <Plus className="h-4 w-4" />
               Share

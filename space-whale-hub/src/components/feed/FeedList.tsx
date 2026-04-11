@@ -224,7 +224,7 @@ export default function FeedList({ refreshTrigger }: FeedListProps) {
   if (loading) {
     return (
       <div className="space-y-6">
-        <p className="text-sm text-space-whale-purple/70 font-space-whale-body text-center">
+        <p className="text-sm text-space-whale-navy font-space-whale-body text-center">
           Gathering posts from the orbit… (takes about a minute to load)
         </p>
         {[...Array(3)].map((_, i) => (

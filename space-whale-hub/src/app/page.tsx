@@ -167,48 +167,25 @@ function HomeContent() {
               
               {/* Explore Menu Dropdown */}
               {showCreateMenu && (
-                <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-3 w-72 bg-white/90 backdrop-blur-md rounded-2xl shadow-xl z-50 border border-space-whale-lavender/30">
+                <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-3 w-72 rounded-2xl shadow-xl z-50 border border-space-whale-purple/20 overflow-hidden"
+                  style={{ background: 'linear-gradient(135deg, rgba(232,221,243,0.97) 0%, rgba(255,230,240,0.97) 60%, rgba(255,220,200,0.97) 100%)', backdropFilter: 'blur(12px)' }}>
                   <div className="p-2">
-                    <Link href="/personal" onClick={() => setShowCreateMenu(false)}
-                      className="flex items-center gap-4 p-3 hover:bg-space-whale-lavender/20 rounded-xl transition-colors">
-                      <span className="text-2xl">👁️</span>
-                      <div>
-                        <div className="font-medium text-space-whale-navy">Inner Space</div>
-                        <div className="text-xs text-space-whale-purple">Journal & reflect</div>
-                      </div>
-                    </Link>
-                    <Link href="/feed" onClick={() => setShowCreateMenu(false)}
-                      className="flex items-center gap-4 p-3 hover:bg-space-whale-lavender/20 rounded-xl transition-colors">
-                      <span className="text-2xl">🪐</span>
-                      <div>
-                        <div className="font-medium text-space-whale-navy">Community Orbit</div>
-                        <div className="text-xs text-space-whale-purple">Share with community</div>
-                      </div>
-                    </Link>
-                    <Link href="/workshops" onClick={() => setShowCreateMenu(false)}
-                      className="flex items-center gap-4 p-3 hover:bg-space-whale-lavender/20 rounded-xl transition-colors">
-                      <span className="text-2xl">🔭</span>
-                      <div>
-                        <div className="font-medium text-space-whale-navy">Deep Space</div>
-                        <div className="text-xs text-space-whale-purple">Workshops & resources</div>
-                      </div>
-                    </Link>
-                    <Link href="/archive?tab=network" onClick={() => setShowCreateMenu(false)}
-                      className="flex items-center gap-4 p-3 hover:bg-space-whale-lavender/20 rounded-xl transition-colors">
-                      <span className="text-2xl">🍄</span>
-                      <div>
-                        <div className="font-medium text-space-whale-navy">Mycelial Network</div>
-                        <div className="text-xs text-space-whale-purple">Find your people</div>
-                      </div>
-                    </Link>
-                    <Link href="/archive" onClick={() => setShowCreateMenu(false)}
-                      className="flex items-center gap-4 p-3 hover:bg-space-whale-lavender/20 rounded-xl transition-colors">
-                      <span className="text-2xl">✦</span>
-                      <div>
-                        <div className="font-medium text-space-whale-navy">Constellation</div>
-                        <div className="text-xs text-space-whale-purple">Archive & gallery</div>
-                      </div>
-                    </Link>
+                    {[
+                      { href: '/personal', emoji: '👁️', label: 'Inner Space', sub: 'Journal & reflect' },
+                      { href: '/feed', emoji: '🪐', label: 'Community Orbit', sub: 'Share with community' },
+                      { href: '/workshops', emoji: '🔭', label: 'Deep Space', sub: 'Workshops & resources' },
+                      { href: '/archive?tab=network', emoji: '🍄', label: 'Mycelial Network', sub: 'Find your people' },
+                      { href: '/archive', emoji: '✦', label: 'Constellation', sub: 'Archive & gallery' },
+                    ].map(({ href, emoji, label, sub }) => (
+                      <Link key={href} href={href} onClick={() => setShowCreateMenu(false)}
+                        className="flex items-center gap-4 p-3 hover:bg-space-whale-purple/10 rounded-xl transition-colors text-left">
+                        <span className="text-2xl w-8 text-center flex-shrink-0">{emoji}</span>
+                        <div className="text-left">
+                          <div className="font-medium text-space-whale-navy">{label}</div>
+                          <div className="text-xs text-space-whale-purple">{sub}</div>
+                        </div>
+                      </Link>
+                    ))}
                   </div>
                 </div>
               )}
