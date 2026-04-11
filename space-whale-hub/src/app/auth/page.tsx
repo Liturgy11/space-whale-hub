@@ -56,7 +56,7 @@ function AuthPageContent() {
             alt="Space Whale"
             width={80}
             height={80}
-            className="opacity-90"
+            className="opacity-90 rounded-full"
             priority
           />
         </div>
@@ -77,11 +77,11 @@ function AuthPageContent() {
           {/* Logo */}
           <div className="text-center mb-6">
             <Image
-              src="/space-whale-social.png"
-              alt="Space Whale"
-              width={100}
-              height={100}
-              className="mx-auto mb-3"
+            src="/space-whale-social.png"
+            alt="Space Whale"
+            width={100}
+            height={100}
+            className="mx-auto mb-3 rounded-full"
               priority
             />
             <h2 className="text-xl font-space-whale-body text-space-whale-navy mb-1">
