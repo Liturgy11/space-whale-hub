@@ -311,6 +311,30 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
   
 All changes are committed and pushed to GitHub.
 
+## Recent Achievements (Session — 7 Apr 2026) 🎉
+
+### Artwork Integration — Your Own Art Across the Portal
+- ✅ **Constellation page background** — `mycelial-landscape.png` (your watercolour with dancing mycelium figures) placed as a fixed faded background, giving the page its own story
+- ✅ All backgrounds now using original Space Whale artwork across: Home (`deep-space-orbits.png`), Community Orbit (`fun-stars.png`), Inner Space (`teal-landscape.png`), About (`cosmic-rainbow.png`), Auth (`cosmic-rainbow.png`), Workshops (`vivid-mushrooms.png`), Mycelial Network (`forest-background.png`)
+
+### Explore Button & Navigation Redesign
+- ✅ **Explore button** restyled as a rounded pill with a gradient rainbow border, whale emoji 🐋, and a rotating chevron — much more visually present on the home page
+- ✅ **Dropdown expanded** — emoji icons replace lucide icons; added direct links to **🍄 Mycelial Network** (`/archive?tab=network`) and **✦ Constellation** alongside existing sections
+- ✅ **Frosted glass dropdown** with cleaner card layout
+
+### Community Orbit Readability Fix
+- ✅ **Share button** replaced from faded `btn-lofi` to solid navy pill with white text — visible against the starfield background
+- ✅ **Background opacity** bumped from `0.2` → `0.28` for more atmosphere
+
+### Moodboard Editor — Major UX Upgrade
+- ✅ **Bug fix: images no longer disappear on edit** — root cause was `tags: []` hardcoded in `handleEditSave`, which wiped all moodboard image URLs (stored in `tags`) on every save. Fixed by preserving `editTags` from the original entry
+- ✅ **Add images in edit mode** — multi-file picker with compression + upload to Supabase storage, appends new URLs to the moodboard
+- ✅ **Remove individual images** — hover ✕ button on each image in the edit grid
+- ✅ **Caption field** — relabelled from "Content" to "Caption" for moodboards; optional (images-only moodboards can save without text)
+- ✅ **API validation fixed** — `update-journal-entry-secure` now accepts moodboard entries with images in `tags` even when `content`, `media_url`, and `content_encrypted` are all empty
+
+---
+
 ## Next Priority Features 🎯
 
 ### Immediate Next Steps (High Priority)
