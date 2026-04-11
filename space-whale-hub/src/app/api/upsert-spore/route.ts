@@ -17,15 +17,13 @@ async function getAuthenticatedUserId(request: NextRequest): Promise<string | nu
   const token = authHeader?.replace('Bearer ', '')
   if (!token) return null
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!supabaseUrl || !supabaseAnonKey) return null
-
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  })
-  const { data: { user } } = await supabase.auth.getUser(token)
-  return user?.id ?? null
+  try {
+    const supabaseAdmin = getSupabaseAdmin()
+    const { data: { user } } = await supabaseAdmin.auth.getUser(token)
+    return user?.id ?? null
+  } catch {
+    return null
+  }
 }
 
 export async function POST(request: NextRequest) {
