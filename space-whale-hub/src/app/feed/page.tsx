@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { Plus, Filter, Search } from "lucide-react";
+import { Plus, Filter, Search, X } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UserProfile from "@/components/UserProfile";
 import PostForm from "@/components/feed/PostForm";
@@ -16,6 +16,10 @@ function CommunityFeedContent() {
   const [showPostForm, setShowPostForm] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showFirstPostNote, setShowFirstPostNote] = useState(false);
+  const [showNetworkBanner, setShowNetworkBanner] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !localStorage.getItem('network_banner_dismissed');
+  });
   useEffect(() => {
     // No-op, but ensures we respond to user changes if needed
   }, [user]);
@@ -85,6 +89,29 @@ function CommunityFeedContent() {
             Share your art, poetry, reflections, and inspiration. A cosy place to share and witness each other.
           </p>
           
+          {/* Mycelial Network banner */}
+          {showNetworkBanner && (
+            <div className="mb-6 flex items-start justify-between gap-3 bg-gradient-to-r from-space-whale-lavender/30 to-accent-pink/20 border border-space-whale-lavender/40 rounded-xl px-4 py-3">
+              <p className="text-sm font-space-whale-body text-space-whale-navy">
+                🍄 <strong>New:</strong> Add yourself to the{' '}
+                <Link href="/archive" className="underline underline-offset-2 hover:text-space-whale-purple transition-colors">
+                  Mycelial Network
+                </Link>{' '}
+                and find your people.
+              </p>
+              <button
+                onClick={() => {
+                  localStorage.setItem('network_banner_dismissed', '1');
+                  setShowNetworkBanner(false);
+                }}
+                aria-label="Dismiss"
+                className="text-space-whale-purple/60 hover:text-space-whale-purple transition-colors flex-shrink-0 mt-0.5"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
           {/* Share Button */}
           <div className="mb-6 sm:mb-8">
             <button 
