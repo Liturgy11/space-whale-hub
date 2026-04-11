@@ -97,7 +97,7 @@ function CommunityFeedContent() {
                 <Link href="/archive" className="underline underline-offset-2 hover:text-space-whale-purple transition-colors">
                   Mycelial Network
                 </Link>{' '}
-                and find your people.
+                to explore how we might connect.
               </p>
               <button
                 onClick={() => {
