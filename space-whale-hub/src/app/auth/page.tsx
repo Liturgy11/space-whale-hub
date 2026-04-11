@@ -39,27 +39,54 @@ function AuthPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-white star-field flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
+    <div className="min-h-screen flex">
+      {/* Artwork panel — hidden on mobile */}
+      <div
+        className="hidden md:block md:w-1/2 lg:w-3/5 relative"
+        style={{
+          backgroundImage: 'url(/cosmic-rainbow.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {/* Subtle overlay so the logo reads over the art */}
+        <div className="absolute inset-0 bg-black/20" />
+        <div className="absolute bottom-8 left-8">
           <Image
             src="/Space Whale_Horizontal.jpg"
             alt="Space Whale"
-            width={300}
-            height={90}
-            className="mx-auto mb-4"
+            width={200}
+            height={60}
+            className="opacity-90"
             priority
           />
-          <h2 className="text-xl font-space-whale-body text-space-whale-navy mb-4">
-            Space Whale Portal
-          </h2>
-          <p className="text-base font-space-whale-body text-space-whale-navy mb-6">
-            Create, share, and connect.
-          </p>
-          <div className="w-24 h-px bg-space-whale-lavender/30 mx-auto"></div>
         </div>
+      </div>
 
-        <div className="flex justify-center">
+      {/* Form panel */}
+      <div className="w-full md:w-1/2 lg:w-2/5 flex items-center justify-center p-6 bg-white overflow-y-auto">
+        <div className="w-full max-w-md">
+          {/* Logo — mobile only */}
+          <div className="md:hidden text-center mb-8">
+            <Image
+              src="/Space Whale_Horizontal.jpg"
+              alt="Space Whale"
+              width={240}
+              height={72}
+              className="mx-auto mb-4"
+              priority
+            />
+          </div>
+
+          <div className="text-center mb-8">
+            <h2 className="text-xl font-space-whale-body text-space-whale-navy mb-2">
+              Space Whale Portal
+            </h2>
+            <p className="text-base font-space-whale-body text-space-whale-navy">
+              Create, share, and connect.
+            </p>
+          </div>
+
           {isLogin ? (
             <Suspense fallback={
               <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft w-full">
@@ -69,13 +96,13 @@ function AuthPageContent() {
                 </div>
               </div>
             }>
-              <LoginForm 
+              <LoginForm
                 onSuccess={handleSuccess}
                 onSwitchToSignUp={() => setIsLogin(false)}
               />
             </Suspense>
           ) : (
-            <SignUpForm 
+            <SignUpForm
               onSuccess={handleSuccess}
               onSwitchToLogin={() => setIsLogin(true)}
             />
@@ -89,23 +116,8 @@ function AuthPageContent() {
 export default function AuthPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-white star-field flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <Image
-              src="/Space Whale_Horizontal.jpg"
-              alt="Space Whale"
-              width={300}
-              height={90}
-              className="mx-auto mb-4"
-              priority
-            />
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-space-whale-purple mx-auto mb-4" />
-              <p className="text-space-whale-navy font-space-whale-body">Loading...</p>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-space-whale-purple" />
       </div>
     }>
       <AuthPageContent />

@@ -125,7 +125,13 @@ function HomeContent() {
       </nav>
 
       {/* Hero Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="relative">
+        {/* Deep space background */}
+        <div
+          className="absolute inset-0 bg-cover bg-center pointer-events-none"
+          style={{ backgroundImage: 'url(/deep-space-orbits.png)', opacity: 0.12 }}
+        />
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           {/* Space Whale Logo */}
           <div className="mb-8">
@@ -250,6 +256,7 @@ function HomeContent() {
           </div>
 
         </div>
+      </div>
       </main>
 
       {/* Land Acknowledgement */}
