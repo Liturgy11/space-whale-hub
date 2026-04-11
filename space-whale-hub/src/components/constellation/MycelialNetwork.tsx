@@ -121,9 +121,10 @@ function computeLayout(spores: Spore[]): { id: string; x: number; y: number }[] 
 interface MycelialNetworkProps {
   currentUserId?: string
   onEditSpore?: () => void
+  onCurrentSporeLoaded?: (spore: Spore | null) => void
 }
 
-export default function MycelialNetwork({ currentUserId, onEditSpore }: MycelialNetworkProps) {
+export default function MycelialNetwork({ currentUserId, onEditSpore, onCurrentSporeLoaded }: MycelialNetworkProps) {
   const [spores, setSpores] = useState<Spore[]>([])
   const [connections, setConnections] = useState<Connection[]>([])
   const [loading, setLoading] = useState(true)
@@ -138,13 +139,17 @@ export default function MycelialNetwork({ currentUserId, onEditSpore }: Mycelial
       if (json.success) {
         setSpores(json.spores)
         setConnections(json.connections)
+        if (onCurrentSporeLoaded) {
+          const mine = json.spores.find((s: Spore) => s.user_id === currentUserId) ?? null
+          onCurrentSporeLoaded(mine)
+        }
       }
     } catch (err) {
       console.error('Failed to load spores:', err)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [currentUserId, onCurrentSporeLoaded])
 
   useEffect(() => { fetchSpores() }, [fetchSpores])
 

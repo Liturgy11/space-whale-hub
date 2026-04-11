@@ -12,6 +12,7 @@ export default function ConstellationTabs() {
   const [tab, setTab] = useState<'archive' | 'network'>('archive')
   const [showSporeForm, setShowSporeForm] = useState(false)
   const [sporeKey, setSporeKey] = useState(0) // bump to re-fetch network after save
+  const [currentSpore, setCurrentSpore] = useState<any>(null)
 
   return (
     <div>
@@ -71,6 +72,7 @@ export default function ConstellationTabs() {
                   </button>
                 </div>
                 <SporeForm
+                  existingSpore={currentSpore}
                   onSaved={() => {
                     setShowSporeForm(false)
                     setSporeKey(k => k + 1)
@@ -87,6 +89,7 @@ export default function ConstellationTabs() {
               key={sporeKey}
               currentUserId={user?.id}
               onEditSpore={() => setShowSporeForm(true)}
+              onCurrentSporeLoaded={setCurrentSpore}
             />
           </div>
 
