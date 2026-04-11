@@ -140,7 +140,7 @@ function HomeContent() {
               alt="Space Whale"
               width={180}
               height={180}
-              className="mx-auto rounded-full"
+              className="mx-auto rounded-full w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44"
               priority
             />
           </div>
