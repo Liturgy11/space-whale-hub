@@ -7,7 +7,11 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 function AboutContent() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white relative">
+      <div
+        className="fixed inset-0 bg-cover bg-center pointer-events-none z-0"
+        style={{ backgroundImage: 'url(/cosmic-rainbow.png)', opacity: 0.15 }}
+      />
       {/* Navigation */}
       <nav className="bg-white/80 backdrop-blur-sm border-b border-space-whale-lavender/20 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -26,27 +30,15 @@ function AboutContent() {
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Hero Section */}
         <div className="text-center mb-16">
-          <div className="mb-8">
-            <Image
-              src="/Space Whale_Horizontal.jpg"
-              alt="Space Whale - Art Therapy"
-              width={300}
-              height={90}
-              className="mx-auto"
-              priority
-            />
-          </div>
-          
           <h1 className="text-4xl md:text-5xl font-space-whale-heading text-space-whale-navy mb-6">
             About the{" "}
             <span className="bg-gradient-to-r from-space-whale-purple via-accent-pink to-accent-orange bg-clip-text text-transparent">
               Space Whale Portal
             </span>
           </h1>
-          
         </div>
 
         {/* About Space Whale Portal */}
