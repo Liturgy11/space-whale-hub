@@ -129,17 +129,17 @@ function HomeContent() {
         {/* Deep space background */}
         <div
           className="absolute inset-0 bg-cover bg-center pointer-events-none"
-          style={{ backgroundImage: 'url(/deep-space-orbits.png)', opacity: 0.12 }}
+          style={{ backgroundImage: 'url(/deep-space-orbits.png)', opacity: 0.22 }}
         />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           {/* Space Whale Logo */}
           <div className="mb-8">
             <Image
-              src="/Space Whale_Horizontal.jpg"
-              alt="Space Whale - Art Therapy"
-              width={400}
-              height={120}
+              src="/space-whale-social.png"
+              alt="Space Whale"
+              width={180}
+              height={180}
               className="mx-auto"
               priority
             />
