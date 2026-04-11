@@ -90,7 +90,7 @@ export default function ConstellationTabs() {
               className="absolute inset-0 bg-cover bg-center"
               style={{
                 backgroundImage: 'url(/forest-background.png)',
-                opacity: 0.18,
+                opacity: 0.35,
               }}
             />
             <div className="relative">
