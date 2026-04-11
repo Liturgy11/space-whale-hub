@@ -20,8 +20,9 @@ export async function POST(request: NextRequest) {
       userId 
     } = await request.json()
     
-    // content can be empty for encrypted or media-only entries (mood boards)
-    if (!entryId || (!content && !content_encrypted && !media_url) || !userId) {
+    // content can be empty for encrypted or media-only entries (mood boards store images in tags)
+    const hasTags = Array.isArray(tags) && tags.length > 0
+    if (!entryId || (!content && !content_encrypted && !media_url && !hasTags) || !userId) {
       return NextResponse.json({
         success: false,
         error: 'Missing required fields: entryId, userId, and either content or media'

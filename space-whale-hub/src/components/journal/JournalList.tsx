@@ -5,7 +5,8 @@ import { createPortal } from 'react-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { encryptJournalContent, decryptJournalContent, isEncrypted, getEncryptionStatus } from '@/lib/journal-encryption'
 import { toast } from '@/components/ui/Toast'
-import { Calendar, Heart, Edit, Trash2, Lock, Eye, Share2, X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react'
+import { Calendar, Heart, Edit, Trash2, Lock, Eye, Share2, X, ChevronLeft, ChevronRight, ZoomIn, Plus, Loader2 } from 'lucide-react'
+import { uploadMultipleMedia } from '@/lib/storage-client'
 
 const JOURNAL_CACHE_KEY = 'swp_journal_cache'
 const JOURNAL_CACHE_TTL = 3 * 60 * 1000 // 3 minutes
@@ -48,8 +49,11 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
   const [editMood, setEditMood] = useState('')
   const [editMediaUrl, setEditMediaUrl] = useState('')
   const [editMediaType, setEditMediaType] = useState('')
+  const [editTags, setEditTags] = useState<string[]>([])
   const [editLoading, setEditLoading] = useState(false)
   const [editIsEncrypted, setEditIsEncrypted] = useState(false)
+  const [editImageUploading, setEditImageUploading] = useState(false)
+  const editFileInputRef = useRef<HTMLInputElement>(null)
   
   // Full entry modal state
   const [fullEntryId, setFullEntryId] = useState<string | null>(null)
@@ -239,6 +243,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
     setEditMood(entry.mood || '')
     setEditMediaUrl(entry.media_url || '')
     setEditMediaType(entry.media_type || '')
+    setEditTags(entry.tags || [])
     setEditIsEncrypted(!!entry.is_encrypted)
   }
 
@@ -249,6 +254,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
     setEditMood('')
     setEditMediaUrl('')
     setEditMediaType('')
+    setEditTags([])
     setEditIsEncrypted(false)
   }
 
@@ -319,8 +325,60 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
     }
   }, [lightboxOpen, lightboxIndex, lightboxImages, shareModalEntry, showImageModal])
 
+  const compressForMoodboard = (file: File, maxWidth = 1200, quality = 0.82): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new window.Image()
+      img.onload = () => {
+        let { width, height } = img
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width)
+          width = maxWidth
+        }
+        canvas.width = width
+        canvas.height = height
+        ctx?.drawImage(img, 0, 0, width, height)
+        canvas.toBlob((blob) => {
+          resolve(blob ? new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }) : file)
+        }, 'image/jpeg', quality)
+      }
+      img.onerror = () => resolve(file)
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
+  const handleEditAddImages = async (files: FileList | null) => {
+    if (!files || !user) return
+    setEditImageUploading(true)
+    try {
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif']
+      const validFiles = Array.from(files).filter(f => {
+        const ext = f.name.toLowerCase().substring(f.name.lastIndexOf('.'))
+        return f.type.startsWith('image/') || imageExtensions.includes(ext)
+      })
+      if (validFiles.length === 0) { toast('Only image files are supported', 'error'); return }
+
+      const compressed = await Promise.all(validFiles.map(f => compressForMoodboard(f)))
+      const results = await uploadMultipleMedia(compressed, { category: 'journal', folder: 'moodboards' }, user.id)
+      const newUrls = results.map(r => r.url)
+      setEditTags(prev => [...prev, ...newUrls])
+      toast(`${newUrls.length} image${newUrls.length > 1 ? 's' : ''} added`, 'success')
+    } catch (err: any) {
+      toast(`Upload failed: ${err.message}`, 'error')
+    } finally {
+      setEditImageUploading(false)
+      if (editFileInputRef.current) editFileInputRef.current.value = ''
+    }
+  }
+
+  const handleEditRemoveImage = (indexToRemove: number) => {
+    setEditTags(prev => prev.filter((_, i) => i !== indexToRemove))
+  }
+
   const handleEditSave = async () => {
-    if (!user || !editingId || !editContent.trim()) return
+    if (!user || !editingId) return
+    if (editMediaType !== 'moodboard' && !editContent.trim()) return
 
     try {
       setEditLoading(true)
@@ -355,7 +413,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
           encryption_salt: encryptedData?.salt || null,
           encryption_iv: encryptedData?.iv || null,
           mood: editMood || undefined,
-          tags: [],
+          tags: editTags,
           media_url: editMediaUrl || undefined,
           media_type: editMediaType || undefined,
           is_private: true,
@@ -857,16 +915,70 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                     placeholder="Add a title..."
                   />
                 </div>
+
+                {/* Moodboard image editor */}
+                {editMediaType === 'moodboard' && (
+                  <div>
+                    <label className="block text-sm font-medium text-space-whale-navy mb-2">
+                      Images ({editTags.filter(u => u.startsWith('https://')).length})
+                    </label>
+                    {editTags.filter(u => u.startsWith('https://')).length > 0 && (
+                      <div className="grid grid-cols-3 gap-2 mb-3">
+                        {editTags.map((url, idx) => {
+                          if (!url.startsWith('https://')) return null
+                          return (
+                            <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100">
+                              <img
+                                src={url}
+                                alt={`Mood board image ${idx + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleEditRemoveImage(idx)}
+                                className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                aria-label="Remove image"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                    <input
+                      ref={editFileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => handleEditAddImages(e.target.files)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => editFileInputRef.current?.click()}
+                      disabled={editImageUploading}
+                      className="flex items-center gap-2 px-3 py-2 border border-dashed border-space-whale-lavender/50 text-space-whale-purple text-sm rounded-lg hover:bg-space-whale-lavender/10 transition-colors disabled:opacity-50"
+                    >
+                      {editImageUploading ? (
+                        <><Loader2 className="h-4 w-4 animate-spin" /> Uploading…</>
+                      ) : (
+                        <><Plus className="h-4 w-4" /> Add images</>
+                      )}
+                    </button>
+                  </div>
+                )}
                 
                 <div>
-                  <label className="block text-sm font-medium text-space-whale-navy mb-2">Content *</label>
+                  <label className="block text-sm font-medium text-space-whale-navy mb-2">
+                    {editMediaType === 'moodboard' ? 'Caption (optional)' : 'Content *'}
+                  </label>
                   <textarea
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
                     className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
                     rows={4}
-                    placeholder="What's on your mind?"
-                    required
+                    placeholder={editMediaType === 'moodboard' ? 'Add a caption or thoughts...' : "What's on your mind?"}
                   />
                 </div>
                 
@@ -884,7 +996,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                 <div className="flex space-x-3">
                   <button
                     onClick={handleEditSave}
-                    disabled={editLoading || !editContent.trim()}
+                    disabled={editLoading || editImageUploading || (!editContent.trim() && editMediaType !== 'moodboard')}
                     className="px-4 py-2 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {editLoading ? 'Saving...' : 'Save Changes'}

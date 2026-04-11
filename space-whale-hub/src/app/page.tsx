@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
-import { Archive, Users, BookOpen, User, Sparkles, Plus, ChevronDown, FileText, Image as ImageIcon, Video, Music, Share2, Star, Orbit, Heart, Key, Zap, Compass, Layers, RotateCcw, Loader2, Eye, Users2, Circle, Shield, CircleDot, CircleDotDashed } from "lucide-react";
+import { Archive, Users, BookOpen, User, Sparkles, ChevronDown, FileText, Image as ImageIcon, Video, Music, Share2, Star, Orbit, Heart, Key, Zap, Layers, RotateCcw, Loader2, Eye, Users2, Circle, Shield, CircleDot, CircleDotDashed } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UserProfile from "@/components/UserProfile";
 import SetDisplayName from "@/components/SetDisplayName";
@@ -152,58 +152,61 @@ function HomeContent() {
             </span>
           </h1>
 
-          {/* Create Button */}
+          {/* Explore Button */}
           <div className="mb-12">
             <div className="relative inline-block" ref={createMenuRef}>
               <button
                 onClick={() => setShowCreateMenu(!showCreateMenu)}
-                className="btn-lofi flex items-center mx-auto text-lg px-6 py-3"
+                className="group relative inline-flex items-center gap-2 px-8 py-3 rounded-full font-space-whale-accent text-space-whale-navy text-base bg-white/70 backdrop-blur-sm border-2 border-transparent hover:border-space-whale-purple/40 shadow-lg hover:shadow-space-whale-purple/20 transition-all duration-300"
+                style={{ background: 'linear-gradient(white, white) padding-box, linear-gradient(135deg, #a78bfa, #f472b6, #fb923c) border-box' }}
               >
-                <Compass className="h-5 w-5 mr-2" />
+                <span className="text-xl">🐋</span>
                 Explore
-                <ChevronDown className="h-5 w-5 ml-2" />
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showCreateMenu ? 'rotate-180' : ''}`} />
               </button>
               
               {/* Explore Menu Dropdown */}
               {showCreateMenu && (
-                <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-4 w-72 bg-lofi-card rounded-xl shadow-xl z-50 rainbow-border-soft">
-                  <div className="p-3">
-                    {/* Inner Space */}
-                    <Link 
-                      href="/personal" 
-                      onClick={() => setShowCreateMenu(false)}
-                      className="flex items-center p-4 hover:bg-space-whale-lavender/20 rounded-lg transition-colors mb-2"
-                    >
-                      <Eye className="h-6 w-6 text-pink-400 mr-4 flex-shrink-0" />
-                      <div className="flex-1">
-                        <div className="font-medium text-space-whale-navy text-lg">Inner Space</div>
-                        <div className="text-sm text-space-whale-purple">Journal & reflect</div>
+                <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-3 w-72 bg-white/90 backdrop-blur-md rounded-2xl shadow-xl z-50 border border-space-whale-lavender/30">
+                  <div className="p-2">
+                    <Link href="/personal" onClick={() => setShowCreateMenu(false)}
+                      className="flex items-center gap-4 p-3 hover:bg-space-whale-lavender/20 rounded-xl transition-colors">
+                      <span className="text-2xl">👁️</span>
+                      <div>
+                        <div className="font-medium text-space-whale-navy">Inner Space</div>
+                        <div className="text-xs text-space-whale-purple">Journal & reflect</div>
                       </div>
                     </Link>
-                    
-                    {/* Community Orbit */}
-                    <Link 
-                      href="/feed" 
-                      onClick={() => setShowCreateMenu(false)}
-                      className="flex items-center p-4 hover:bg-space-whale-lavender/20 rounded-lg transition-colors mb-2"
-                    >
-                      <Orbit className="h-6 w-6 text-yellow-500 mr-4 flex-shrink-0" />
-                      <div className="flex-1">
-                        <div className="font-medium text-space-whale-navy text-lg">Community Orbit</div>
-                        <div className="text-sm text-space-whale-purple">Share with community</div>
+                    <Link href="/feed" onClick={() => setShowCreateMenu(false)}
+                      className="flex items-center gap-4 p-3 hover:bg-space-whale-lavender/20 rounded-xl transition-colors">
+                      <span className="text-2xl">🪐</span>
+                      <div>
+                        <div className="font-medium text-space-whale-navy">Community Orbit</div>
+                        <div className="text-xs text-space-whale-purple">Share with community</div>
                       </div>
                     </Link>
-                    
-                    {/* Deep Space */}
-                    <Link 
-                      href="/workshops" 
-                      onClick={() => setShowCreateMenu(false)}
-                      className="flex items-center p-4 hover:bg-space-whale-lavender/20 rounded-lg transition-colors"
-                    >
-                      <CircleDotDashed className="h-6 w-6 text-cyan-500 mr-4 flex-shrink-0" />
-                      <div className="flex-1">
-                        <div className="font-medium text-space-whale-navy text-lg">Deep Space</div>
-                        <div className="text-sm text-space-whale-purple">Workshops & resources</div>
+                    <Link href="/workshops" onClick={() => setShowCreateMenu(false)}
+                      className="flex items-center gap-4 p-3 hover:bg-space-whale-lavender/20 rounded-xl transition-colors">
+                      <span className="text-2xl">🔭</span>
+                      <div>
+                        <div className="font-medium text-space-whale-navy">Deep Space</div>
+                        <div className="text-xs text-space-whale-purple">Workshops & resources</div>
+                      </div>
+                    </Link>
+                    <Link href="/archive?tab=network" onClick={() => setShowCreateMenu(false)}
+                      className="flex items-center gap-4 p-3 hover:bg-space-whale-lavender/20 rounded-xl transition-colors">
+                      <span className="text-2xl">🍄</span>
+                      <div>
+                        <div className="font-medium text-space-whale-navy">Mycelial Network</div>
+                        <div className="text-xs text-space-whale-purple">Find your people</div>
+                      </div>
+                    </Link>
+                    <Link href="/archive" onClick={() => setShowCreateMenu(false)}
+                      className="flex items-center gap-4 p-3 hover:bg-space-whale-lavender/20 rounded-xl transition-colors">
+                      <span className="text-2xl">✦</span>
+                      <div>
+                        <div className="font-medium text-space-whale-navy">Constellation</div>
+                        <div className="text-xs text-space-whale-purple">Archive & gallery</div>
                       </div>
                     </Link>
                   </div>

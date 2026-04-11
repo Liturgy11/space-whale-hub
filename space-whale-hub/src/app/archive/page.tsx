@@ -6,8 +6,14 @@ import ConstellationTabs from "@/components/constellation/ConstellationTabs";
 export default function Archive() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-space-whale-lavender/20 via-white to-space-whale-purple/10">
+      {/* Mycelial landscape background */}
+      <div
+        className="fixed inset-0 bg-cover bg-center pointer-events-none z-0"
+        style={{ backgroundImage: 'url(/mycelial-landscape.png)', opacity: 0.18 }}
+      />
+
       {/* Navigation */}
-      <nav className="bg-gradient-to-r from-space-whale-lavender/80 to-space-whale-purple/80 backdrop-blur-md border-b border-space-whale-purple/30 sticky top-0 z-50">
+      <nav className="relative z-50 bg-gradient-to-r from-space-whale-lavender/80 to-space-whale-purple/80 backdrop-blur-md border-b border-space-whale-purple/30 sticky top-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16" suppressHydrationWarning>
             <div className="flex items-center space-x-4" suppressHydrationWarning>
@@ -26,9 +32,11 @@ export default function Archive() {
         </div>
       </nav>
 
-      <Suspense fallback={null}>
-        <ConstellationTabs />
-      </Suspense>
+      <div className="relative z-10">
+        <Suspense fallback={null}>
+          <ConstellationTabs />
+        </Suspense>
+      </div>
     </div>
   );
 }
