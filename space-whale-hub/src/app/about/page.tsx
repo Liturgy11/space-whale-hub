@@ -119,7 +119,7 @@ function AboutContent() {
               </p>
             </div>
             <Link
-              href="/archive"
+              href="/archive?tab=network"
               className="btn-space-whale-secondary inline-flex items-center justify-center"
             >
               <Sprout className="h-4 w-4 mr-2" />

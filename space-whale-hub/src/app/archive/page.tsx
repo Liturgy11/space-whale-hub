@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
 import ConstellationTabs from "@/components/constellation/ConstellationTabs";
 
 export default function Archive() {
@@ -25,7 +26,9 @@ export default function Archive() {
         </div>
       </nav>
 
-      <ConstellationTabs />
+      <Suspense fallback={null}>
+        <ConstellationTabs />
+      </Suspense>
     </div>
   );
 }

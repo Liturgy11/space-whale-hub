@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import ArchivePage from '@/components/archive/ArchivePage'
 import MycelialNetwork from './MycelialNetwork'
@@ -9,7 +10,14 @@ import { X } from 'lucide-react'
 
 export default function ConstellationTabs() {
   const { user } = useAuth()
+  const searchParams = useSearchParams()
   const [tab, setTab] = useState<'archive' | 'network'>('archive')
+
+  useEffect(() => {
+    if (searchParams.get('tab') === 'network') {
+      setTab('network')
+    }
+  }, [searchParams])
   const [showSporeForm, setShowSporeForm] = useState(false)
   const [sporeKey, setSporeKey] = useState(0) // bump to re-fetch network after save
   const [currentSpore, setCurrentSpore] = useState<any>(null)
