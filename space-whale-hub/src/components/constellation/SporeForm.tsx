@@ -137,7 +137,7 @@ function TagSelector({
 }
 
 export default function SporeForm({ existingSpore, onSaved, onCancel }: SporeFormProps) {
-  const { user, session } = useAuth()
+  const { user } = useAuth()
   const [bio, setBio] = useState(existingSpore?.bio || '')
   const [location, setLocation] = useState(existingSpore?.location || '')
   const [offerings, setOfferings] = useState<string[]>(existingSpore?.offerings || [])
@@ -156,10 +156,7 @@ export default function SporeForm({ existingSpore, onSaved, onCancel }: SporeFor
     try {
       const res = await fetch('/api/upsert-spore', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.id,
           display_name: user.user_metadata?.display_name || null,
@@ -171,6 +168,11 @@ export default function SporeForm({ existingSpore, onSaved, onCancel }: SporeFor
           connection_formats: connectionFormats,
         })
       })
+
+      if (!res.ok) {
+        const result = await res.json().catch(() => ({}))
+        throw new Error(result.error || `Server error ${res.status}`)
+      }
 
       const result = await res.json()
       if (!result.success) throw new Error(result.error || 'Failed to save')
