@@ -70,7 +70,7 @@ function AuthPageContent() {
         {/* Mobile artwork background */}
         <div
           className="md:hidden absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: 'url(/cosmic-rainbow.png)', opacity: 0.15 }}
+          style={{ backgroundImage: 'url(/cosmic-rainbow.png)', opacity: 0.28 }}
         />
 
         <div className="relative w-full max-w-md">
