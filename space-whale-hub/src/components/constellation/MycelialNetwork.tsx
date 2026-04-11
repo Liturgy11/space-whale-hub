@@ -267,6 +267,7 @@ export default function MycelialNetwork({ currentUserId, onEditSpore, onCurrentS
         fitViewOptions={{ padding: 0.3 }}
         minZoom={0.3}
         maxZoom={2}
+        nodesDraggable={false}
         proOptions={{ hideAttribution: true }}
       >
         <Background
