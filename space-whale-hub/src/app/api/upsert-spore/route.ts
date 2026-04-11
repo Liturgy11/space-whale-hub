@@ -5,28 +5,19 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization')
-    const token = authHeader?.replace('Bearer ', '')
-
-    if (!token) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
-    }
-
     const { userId, display_name, avatar_url, bio, location, offerings, curiosities, connection_formats } = await request.json()
 
     if (!userId) return NextResponse.json({ success: false, error: 'Missing userId' }, { status: 400 })
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    if (!supabaseUrl || !supabaseAnonKey) throw new Error('Missing Supabase env vars')
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!supabaseUrl || !supabaseServiceKey) throw new Error('Missing Supabase env vars')
 
-    // Use the user's own JWT — RLS policies enforce they can only write their own spore
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     })
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('spores')
       .upsert({
         user_id: userId,
