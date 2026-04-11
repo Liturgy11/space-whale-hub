@@ -79,7 +79,13 @@ function CommunityFeedContent() {
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 pb-20 md:pb-8">
+      {/* Mushroom artwork background */}
+      <div
+        className="fixed inset-0 bg-cover bg-center pointer-events-none z-0"
+        style={{ backgroundImage: 'url(/vivid-mushrooms.png)', opacity: 0.07 }}
+      />
+
+      <main className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 pb-20 md:pb-8">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-space-whale-heading text-space-whale-navy mb-4">
