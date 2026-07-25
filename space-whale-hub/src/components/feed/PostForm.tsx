@@ -478,14 +478,14 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
 
   if (onCancel && mounted) {
     return createPortal(
-      <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4">
+      <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center px-4 pt-[12dvh] pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:p-4 sm:pt-4">
         <button
           type="button"
           className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
           onClick={onCancel}
           aria-label="Close share form"
         />
-        <div className="relative w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl overflow-hidden">
+        <div className="relative w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl overflow-hidden max-h-[min(88dvh,900px)]">
           {panel}
         </div>
       </div>,

@@ -290,50 +290,48 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
         />
       </div>
 
-      {files.length > 0 && (
-        <div className="shrink-0 border-t border-space-whale-lavender/20 bg-lofi-card/95 backdrop-blur-sm px-4 sm:px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex justify-end gap-3">
-          {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="px-5 py-2.5 min-h-[44px] border border-space-whale-lavender/30 text-space-whale-navy rounded-lg hover:bg-space-whale-lavender/10 transition-colors font-space-whale-accent touch-manipulation"
-            >
-              Cancel
-            </button>
-          )}
+      <div className="shrink-0 border-t border-space-whale-lavender/20 bg-lofi-card/95 backdrop-blur-sm px-4 sm:px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex justify-end gap-3">
+        {onCancel && (
           <button
             type="button"
-            onClick={uploadFiles}
-            disabled={uploading}
-            className="flex items-center px-5 py-2.5 min-h-[44px] bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg font-space-whale-accent hover:from-space-whale-purple/90 hover:to-accent-pink/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg touch-manipulation"
+            onClick={onCancel}
+            className="px-5 py-2.5 min-h-[44px] border border-space-whale-lavender/30 text-space-whale-navy rounded-lg hover:bg-space-whale-lavender/10 transition-colors font-space-whale-accent touch-manipulation"
           >
-            {uploading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Creating…
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Create Mood Board
-              </>
-            )}
+            Cancel
           </button>
-        </div>
-      )}
+        )}
+        <button
+          type="button"
+          onClick={uploadFiles}
+          disabled={uploading || files.length === 0}
+          className="flex items-center px-5 py-2.5 min-h-[44px] bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg font-space-whale-accent hover:from-space-whale-purple/90 hover:to-accent-pink/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg touch-manipulation"
+        >
+          {uploading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Creating…
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4 mr-2" />
+              Create Mood Board
+            </>
+          )}
+        </button>
+      </div>
     </div>
   )
 
   if (onCancel && mounted) {
     return createPortal(
-      <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4">
+      <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center px-4 pt-[12dvh] pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:p-4 sm:pt-4">
         <button
           type="button"
           className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
           onClick={onCancel}
           aria-label="Close mood board form"
         />
-        <div className="relative w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl overflow-hidden">
+        <div className="relative w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl overflow-hidden max-h-[min(88dvh,900px)]">
           {panel}
         </div>
       </div>,
