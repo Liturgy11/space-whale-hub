@@ -3,29 +3,76 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
-import { ChevronDown, Star, Orbit, Eye, CircleDotDashed, type LucideIcon } from "lucide-react";
+import { ChevronDown, Eye, type LucideIcon } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/layout/AppShell";
 import SetDisplayName from "@/components/SetDisplayName";
 import WelcomeModal from "@/components/WelcomeModal";
 import { useAuth } from "@/contexts/AuthContext";
 
+type SpaceIconConfig =
+  | { iconSrc: string }
+  | { icon: LucideIcon; iconClassName?: string };
+
+function SpaceIcon({ config, className = "h-7 w-7" }: { config: SpaceIconConfig; className?: string }) {
+  if ("iconSrc" in config) {
+    return (
+      <Image
+        src={config.iconSrc}
+        alt=""
+        width={48}
+        height={48}
+        aria-hidden
+        className={`object-contain ${className}`}
+      />
+    );
+  }
+
+  const Icon = config.icon;
+  return <Icon className={`${config.iconClassName ?? "text-space-whale-navy"} ${className}`} aria-hidden />;
+}
+
 type ExploreMenuItem = {
   href: string;
   label: string;
   sub: string;
-} & (
-  | { iconSrc: string }
-  | { icon: LucideIcon; iconClassName?: string }
-);
+  icon: SpaceIconConfig;
+};
 
 const exploreMenuItems: ExploreMenuItem[] = [
-  { href: '/personal', icon: Eye, iconClassName: 'text-pink-400', label: 'Inner Space', sub: 'Journal & reflect' },
-  { href: '/feed', iconSrc: '/illustrations/star-baby.png', label: 'Community Orbit', sub: 'Share with community' },
-  { href: '/workshops', iconSrc: '/illustrations/whale.png', label: 'Deep Space', sub: 'Workshops & resources' },
-  { href: '/archive?tab=network', iconSrc: '/illustrations/mushroom-3.png', label: 'Mycelial Network', sub: 'Find your people' },
-  { href: '/archive', iconSrc: '/illustrations/star.png', label: 'Constellation', sub: 'Archive & gallery' },
+  { href: "/personal", icon: { icon: Eye, iconClassName: "text-pink-400" }, label: "Inner Space", sub: "Journal & reflect" },
+  { href: "/feed", icon: { iconSrc: "/illustrations/star-baby.png" }, label: "Community Orbit", sub: "Share with community" },
+  { href: "/workshops", icon: { iconSrc: "/illustrations/whale.png" }, label: "Deep Space", sub: "Workshops & resources" },
+  { href: "/archive?tab=network", icon: { iconSrc: "/illustrations/mushroom-3.png" }, label: "Mycelial Network", sub: "Find your people" },
+  { href: "/archive", icon: { iconSrc: "/illustrations/star.png" }, label: "Constellation", sub: "Archive & gallery" },
 ];
+
+const featureCards = [
+  {
+    href: "/archive",
+    label: "Constellation",
+    description: "Archive of Space Whale events - pride poetry, community workshops, and creative gatherings.",
+    icon: { iconSrc: "/illustrations/star.png" },
+  },
+  {
+    href: "/feed",
+    label: "Community Orbit",
+    description: "The community stream. Connect with ND queers, nature lovers, artists, and seekers.",
+    icon: { iconSrc: "/illustrations/star-baby.png" },
+  },
+  {
+    href: "/workshops",
+    label: "Deep Space",
+    description: "Workshops and creative offerings to support your journey. Explore resources, online groups, and spaces to grow together.",
+    icon: { iconSrc: "/illustrations/whale.png" },
+  },
+  {
+    href: "/personal",
+    label: "Inner Space",
+    description: "Your private journal for reflection and creativity. Write, collect inspiration, and explore prompts.",
+    icon: { icon: Eye, iconClassName: "text-pink-400" },
+  },
+] as const;
 
 function HomeContent() {
   const { user } = useAuth();
@@ -161,18 +208,7 @@ function HomeContent() {
                       <Link key={item.href} href={item.href} onClick={() => setShowCreateMenu(false)}
                         className="flex items-center gap-4 p-3 hover:bg-space-whale-purple/10 rounded-xl transition-colors text-left">
                         <span className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
-                          {'iconSrc' in item ? (
-                            <Image
-                              src={item.iconSrc}
-                              alt=""
-                              width={28}
-                              height={28}
-                              aria-hidden
-                              className="h-7 w-7 object-contain"
-                            />
-                          ) : (
-                            <item.icon className={`h-7 w-7 ${item.iconClassName ?? 'text-space-whale-navy'}`} aria-hidden />
-                          )}
+                          <SpaceIcon config={item.icon} />
                         </span>
                         <div className="text-left">
                           <div className="font-medium text-space-whale-navy">{item.label}</div>
@@ -188,45 +224,17 @@ function HomeContent() {
 
           {/* Feature Cards */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
-            <Link href="/archive" className="group">
-              <div className="bg-lofi-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105 rainbow-border-soft glow-soft">
-                <Star className="h-12 w-12 text-purple-800 mb-4 mx-auto float-gentle" />
-                <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">Constellation</h3>
-                <p className="text-space-whale-navy text-sm font-space-whale-body">
-                  Archive of Space Whale events - pride poetry, community workshops, and creative gatherings.
-                </p>
-              </div>
-            </Link>
-
-            <Link href="/feed" className="group">
-              <div className="bg-lofi-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105 rainbow-border-soft glow-soft">
-                <Orbit className="h-12 w-12 text-yellow-500 mb-4 mx-auto float-gentle" />
-                <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">Community Orbit</h3>
-                <p className="text-space-whale-navy text-sm font-space-whale-body">
-                  The community stream. Connect with ND queers, nature lovers, artists, and seekers.
-                </p>
-              </div>
-            </Link>
-
-            <Link href="/workshops" className="group">
-              <div className="bg-lofi-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105 rainbow-border-soft glow-soft group-hover:shadow-purple-200/50">
-                <CircleDotDashed className="h-12 w-12 text-cyan-500 mb-4 mx-auto float-gentle group-hover:text-cyan-600" />
-                <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">Deep Space</h3>
-                <p className="text-space-whale-navy text-sm font-space-whale-body">
-                  Workshops and creative offerings to support your journey. Explore resources, online groups, and spaces to grow together.
-                </p>
-              </div>
-            </Link>
-
-            <Link href="/personal" className="group">
-              <div className="bg-lofi-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105 rainbow-border-soft glow-soft">
-                <Eye className="h-12 w-12 text-pink-400 mb-4 mx-auto float-gentle" />
-                <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">Inner Space</h3>
-                <p className="text-space-whale-navy text-sm font-space-whale-body">
-                  Your private journal for reflection and creativity. Write, collect inspiration, and explore prompts.
-                </p>
-              </div>
-            </Link>
+            {featureCards.map(({ href, label, description, icon }) => (
+              <Link key={href} href={href} className="group">
+                <div className="bg-lofi-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105 rainbow-border-soft glow-soft">
+                  <div className="h-12 w-12 mb-4 mx-auto float-gentle flex items-center justify-center">
+                    <SpaceIcon config={icon} className="h-12 w-12" />
+                  </div>
+                  <h3 className="text-lg font-space-whale-subheading text-space-whale-navy mb-2">{label}</h3>
+                  <p className="text-space-whale-navy text-sm font-space-whale-body">{description}</p>
+                </div>
+              </Link>
+            ))}
           </div>
 
         </div>
