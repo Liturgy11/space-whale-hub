@@ -188,7 +188,7 @@ function HomeContent() {
                 }}
               >
                 <Image
-                  src="/illustrations/star-baby.png"
+                  src="/illustrations/mushroom-1.png"
                   alt=""
                   width={28}
                   height={28}
