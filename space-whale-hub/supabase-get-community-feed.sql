@@ -22,6 +22,10 @@ AS $$
       coalesce(p.tags, ARRAY[]::text[]) AS tags,
       p.content_warning_text,
       p.media_url,
+      coalesce(
+        p.media_urls,
+        CASE WHEN p.media_url IS NOT NULL THEN ARRAY[p.media_url] ELSE ARRAY[]::text[] END
+      ) AS media_urls,
       p.media_type,
       p.created_at,
       json_build_object(

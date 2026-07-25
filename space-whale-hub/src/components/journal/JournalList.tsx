@@ -7,6 +7,9 @@ import { encryptJournalContent, decryptJournalContent, isEncrypted, getEncryptio
 import { toast } from '@/components/ui/Toast'
 import { Calendar, Heart, Edit, Trash2, Lock, Eye, Share2, X, ChevronLeft, ChevronRight, ZoomIn, Plus, Loader2 } from 'lucide-react'
 import { uploadMultipleMedia } from '@/lib/storage-client'
+import MoodBoardGallery from '@/components/media/MoodBoardGallery'
+import ReorderableImageGrid from '@/components/media/ReorderableImageGrid'
+import { getMoodBoardImageUrls } from '@/lib/mood-board'
 
 const JOURNAL_CACHE_KEY = 'swp_journal_cache'
 const JOURNAL_CACHE_TTL = 3 * 60 * 1000 // 3 minutes
@@ -362,7 +365,11 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       const compressed = await Promise.all(validFiles.map(f => compressForMoodboard(f)))
       const results = await uploadMultipleMedia(compressed, { category: 'journal', folder: 'moodboards' }, user.id)
       const newUrls = results.map(r => r.url)
-      setEditTags(prev => [...prev, ...newUrls])
+      setEditTags(prev => {
+        const next = [...prev, ...newUrls]
+        setEditMediaUrl((current) => current || next[0] || '')
+        return next
+      })
       toast(`${newUrls.length} image${newUrls.length > 1 ? 's' : ''} added`, 'success')
     } catch (err: any) {
       toast(`Upload failed: ${err.message}`, 'error')
@@ -372,8 +379,20 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
     }
   }
 
-  const handleEditRemoveImage = (indexToRemove: number) => {
-    setEditTags(prev => prev.filter((_, i) => i !== indexToRemove))
+  const handleEditRemoveImage = (imageIndex: number) => {
+    const urls = getMoodBoardImageUrls(editTags)
+    const target = urls[imageIndex]
+    if (!target) return
+    setEditTags((prev) => {
+      const next = prev.filter((u) => u !== target)
+      setEditMediaUrl(getMoodBoardImageUrls(next)[0] || '')
+      return next
+    })
+  }
+
+  const handleEditReorderImages = (newUrls: string[]) => {
+    setEditTags(newUrls)
+    setEditMediaUrl(newUrls[0] || '')
   }
 
   const handleEditSave = async () => {
@@ -414,7 +433,10 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
           encryption_iv: encryptedData?.iv || null,
           mood: editMood || undefined,
           tags: editTags,
-          media_url: editMediaUrl || undefined,
+          media_url:
+            editMediaType === 'moodboard'
+              ? getMoodBoardImageUrls(editTags)[0] || editMediaUrl || undefined
+              : editMediaUrl || undefined,
           media_type: editMediaType || undefined,
           is_private: true,
           userId: user.id
@@ -920,30 +942,15 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                 {editMediaType === 'moodboard' && (
                   <div>
                     <label className="block text-sm font-medium text-space-whale-navy mb-2">
-                      Images ({editTags.filter(u => u.startsWith('https://')).length})
+                      Images ({getMoodBoardImageUrls(editTags).length})
                     </label>
-                    {editTags.filter(u => u.startsWith('https://')).length > 0 && (
-                      <div className="grid grid-cols-3 gap-2 mb-3">
-                        {editTags.map((url, idx) => {
-                          if (!url.startsWith('https://')) return null
-                          return (
-                            <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100">
-                              <img
-                                src={url}
-                                alt={`Mood board image ${idx + 1}`}
-                                className="w-full h-full object-cover"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleEditRemoveImage(idx)}
-                                className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                                aria-label="Remove image"
-                              >
-                                <X className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-                          )
-                        })}
+                    {getMoodBoardImageUrls(editTags).length > 0 && (
+                      <div className="mb-3">
+                        <ReorderableImageGrid
+                          urls={getMoodBoardImageUrls(editTags)}
+                          onChange={handleEditReorderImages}
+                          onRemove={handleEditRemoveImage}
+                        />
                       </div>
                     )}
                     <input
@@ -1087,60 +1094,18 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                     </div>
                   </div>
                 ) : entry.media_type === 'moodboard' ? (
-                  <div>
-                    {(() => {
-                      const imageUrls = entry.tags?.filter(
-                        (url: string) => url && (url.startsWith('data:image/') || url.startsWith('https://'))
-                      ) || []
-
-                      if (imageUrls.length === 0) return null
-
-                      if (imageUrls.length === 1) return (
-                        <div
-                          className="cursor-pointer group"
-                          onClick={() => openImageLightbox(imageUrls[0], imageUrls, 0)}
-                        >
-                          <div className="relative overflow-hidden rounded-xl">
-                            <img
-                              src={imageUrls[0]}
-                              alt="Mood board image"
-                              className="w-full h-auto rounded-xl shadow-md transition-transform duration-300 group-hover:scale-[1.02]"
-                              loading="lazy"
-                              decoding="async"
-                              onError={(e) => { e.currentTarget.style.display = 'none' }}
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-xl" />
-                          </div>
-                        </div>
-                      )
-
-                      return (
-                        <div className="columns-2 gap-2">
-                          {imageUrls.map((imageUrl: string, index: number) => (
-                            <div
-                              key={index}
-                              className="break-inside-avoid mb-2 cursor-pointer group"
-                              onClick={() => openImageLightbox(imageUrl, imageUrls, index)}
-                            >
-                              <div className="relative overflow-hidden rounded-lg">
-                                <img
-                                  src={imageUrl}
-                                  alt={`Mood board image ${index + 1}`}
-                                  className="w-full h-auto rounded-lg shadow-sm transition-transform duration-300 group-hover:scale-[1.02]"
-                                  loading="lazy"
-                                  decoding="async"
-                                  onError={(e) => {
-                                    const parent = e.currentTarget.closest('.break-inside-avoid') as HTMLElement
-                                    if (parent) parent.style.display = 'none'
-                                  }}
-                                />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )
-                    })()}
+                  <div className="space-y-3">
+                    <MoodBoardGallery
+                      tags={entry.tags}
+                      onImageClick={(index, allUrls) =>
+                        openImageLightbox(allUrls[index], allUrls, index)
+                      }
+                    />
+                    {entry.content?.trim() && (
+                      <p className="text-space-whale-navy font-space-whale-body whitespace-pre-wrap text-sm sm:text-base">
+                        {entry.content}
+                      </p>
+                    )}
                   </div>
                 ) : entry.media_type === 'video' ? (
                   <video

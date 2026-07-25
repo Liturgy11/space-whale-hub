@@ -18,6 +18,7 @@ interface Post {
   tags: string[]
   content_warning?: string
   media_url?: string
+  media_urls?: string[]
   media_type?: string
   created_at: string
   author: {

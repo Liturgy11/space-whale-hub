@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Heart, MessageCircle, MoreHorizontal, Bookmark, Edit, Trash2, X, ZoomIn, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react'
+import { Heart, MessageCircle, MoreHorizontal, Bookmark, Edit, Trash2, X, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react'
 import CommentForm from './CommentForm'
 import CommentsList from './CommentsList'
+import MediaCarousel from '@/components/media/MediaCarousel'
+import MoodBoardGallery from '@/components/media/MoodBoardGallery'
+import { getPostMediaUrls } from '@/lib/post-media'
 
 interface Post {
   id: string
@@ -12,6 +15,7 @@ interface Post {
   tags: string[]
   content_warning?: string
   media_url?: string
+  media_urls?: string[]
   media_type?: string
   created_at: string
   author: {
@@ -49,6 +53,9 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
   const [lightboxImage, setLightboxImage] = useState('')
   const [lightboxImages, setLightboxImages] = useState<string[]>([])
   const [lightboxIndex, setLightboxIndex] = useState(0)
+
+  const galleryUrls = getPostMediaUrls(post)
+  const isGallery = galleryUrls.length > 1 || post.media_type === 'gallery'
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -280,108 +287,77 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
           )}
           
           {/* Media Display */}
-          {post.media_url && (
-            <div className={post.media_type !== 'moodboard' ? 'mt-3' : ''}>
-              {post.media_type === 'image' ? (
-                <div className="relative group cursor-pointer" onClick={() => setShowImageModal(true)}>
-                  <img
-                    src={post.media_url}
-                    alt="Post media"
-                    className="w-full h-72 sm:h-96 object-cover rounded-xl shadow-md transition-transform group-hover:scale-[1.02]"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <div className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ZoomIn className="h-4 w-4 text-white" />
-                  </div>
+          {post.media_type === 'mood' && post.media_url && (
+            <div className="mt-3 border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900 dark:to-purple-900">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-100 dark:bg-indigo-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-xl sm:text-2xl">😊</span>
                 </div>
-              ) : post.media_type === 'video' ? (
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-gray-900 dark:text-white text-sm sm:text-base">Mood Shared</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">User shared their current mood</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {post.media_type === 'moodboard' && (
+            <div className="mt-3">
+              <MoodBoardGallery
+                tags={post.tags}
+                onImageClick={(index, allUrls) =>
+                  openImageLightbox(allUrls[index], allUrls, index)
+                }
+              />
+            </div>
+          )}
+
+          {post.media_type !== 'moodboard' && post.media_type !== 'mood' && galleryUrls.length > 0 && (
+            <div className="mt-3">
+              {post.media_type === 'video' ? (
                 <video
-                  src={post.media_url}
+                  src={galleryUrls[0]}
                   controls
                   className="w-full h-72 sm:h-96 object-cover rounded-xl shadow-md"
                 />
-              ) : post.media_type === 'mood' ? (
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900 dark:to-purple-900">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-100 dark:bg-indigo-800 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <span className="text-xl sm:text-2xl">😊</span>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 dark:text-white text-sm sm:text-base">Mood Shared</p>
-                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">User shared their current mood</p>
-                    </div>
-                  </div>
-                </div>
-              ) : post.media_type === 'moodboard' ? (
-                <div>
-                  {(() => {
-                    const imageUrls = (post.tags || []).filter((url: string) => url && (url.startsWith('data:image/') || url.startsWith('https://')))
-
-                    if (imageUrls.length === 0) return null
-
-                    if (imageUrls.length === 1) return (
-                      <div
-                        className="cursor-pointer group"
-                        onClick={() => openImageLightbox(imageUrls[0], imageUrls, 0)}
-                      >
-                        <div className="relative overflow-hidden rounded-xl">
-                          <img
-                            src={imageUrls[0]}
-                            alt="Mood board image"
-                            className="w-full h-auto rounded-xl shadow-md transition-transform duration-300 group-hover:scale-[1.02]"
-                            loading="lazy"
-                            decoding="async"
-                            onError={(e) => { e.currentTarget.style.display = 'none' }}
-                          />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-xl" />
-                        </div>
-                      </div>
-                    )
-
-                    return (
-                      <div className="columns-2 gap-2">
-                        {imageUrls.map((imageUrl: string, index: number) => (
-                          <div
-                            key={index}
-                            className="break-inside-avoid mb-2 cursor-pointer group"
-                            onClick={() => openImageLightbox(imageUrl, imageUrls, index)}
-                          >
-                            <div className="relative overflow-hidden rounded-lg">
-                              <img
-                                src={imageUrl}
-                                alt={`Mood board image ${index + 1}`}
-                                className="w-full h-auto rounded-lg shadow-sm transition-transform duration-300 group-hover:scale-[1.02]"
-                                loading="lazy"
-                                decoding="async"
-                                onError={(e) => {
-                                  const parent = e.currentTarget.closest('.break-inside-avoid') as HTMLElement
-                                  if (parent) parent.style.display = 'none'
-                                }}
-                              />
-                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )
-                  })()}
-                </div>
+              ) : isGallery ? (
+                <MediaCarousel
+                  urls={galleryUrls}
+                  mediaType="gallery"
+                  variant="feed"
+                  onSlideClick={(index) =>
+                    openImageLightbox(galleryUrls[index], galleryUrls, index)
+                  }
+                />
               ) : (
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 bg-gray-50 dark:bg-gray-700">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <span className="text-indigo-600 dark:text-indigo-400 font-semibold text-sm sm:text-base">📄</span>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 dark:text-white text-sm sm:text-base">Media File</p>
-                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
-                        {post.media_url.split('/').pop()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <MediaCarousel
+                  urls={galleryUrls}
+                  mediaType="image"
+                  variant="feed"
+                  onSlideClick={() =>
+                    openImageLightbox(galleryUrls[0], galleryUrls, 0)
+                  }
+                />
               )}
+            </div>
+          )}
+
+          {post.media_type !== 'moodboard' &&
+            post.media_type !== 'mood' &&
+            galleryUrls.length === 0 &&
+            post.media_url && (
+            <div className="mt-3 border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 bg-gray-50 dark:bg-gray-700">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-indigo-600 dark:text-indigo-400 font-semibold text-sm sm:text-base">📄</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-gray-900 dark:text-white text-sm sm:text-base">Media File</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
+                    {post.media_url.split('/').pop()}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
           

@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: NextRequest) {
   try {
-    const { postId, userId, content, tags, content_warning, media_url, media_type } = await request.json()
+    const { postId, userId, content, tags, content_warning, media_url, media_urls, media_type } = await request.json()
 
     if (!postId || !userId || !content?.trim()) {
       return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 })
@@ -35,14 +35,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorised: You can only edit your own posts' }, { status: 403 })
     }
 
+    const urlList: string[] = Array.isArray(media_urls)
+      ? media_urls.filter((u: unknown) => typeof u === 'string' && u.length > 0)
+      : media_url
+        ? [media_url]
+        : []
+
+    const primaryUrl = urlList[0] || media_url || null
+    const resolvedType =
+      urlList.length > 1
+        ? 'gallery'
+        : urlList.length === 1
+          ? media_type || 'image'
+          : null
+
     const { data, error } = await supabaseAdmin
       .from('posts')
       .update({
         content: content.trim(),
         tags: tags || [],
         content_warning_text: content_warning || null,
-        media_url: media_url || null,
-        media_type: media_type || null,
+        media_url: primaryUrl,
+        media_urls: urlList.length > 0 ? urlList : null,
+        media_type: resolvedType,
         updated_at: new Date().toISOString(),
       })
       .eq('id', postId)

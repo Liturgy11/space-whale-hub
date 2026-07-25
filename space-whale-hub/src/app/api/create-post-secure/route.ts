@@ -8,6 +8,7 @@ export async function POST(request: NextRequest) {
       tags, 
       content_warning, 
       media_url, 
+      media_urls,
       media_type,
       userId 
     } = await request.json()
@@ -48,6 +49,20 @@ export async function POST(request: NextRequest) {
       }
     )
 
+    const urlList: string[] = Array.isArray(media_urls)
+      ? media_urls.filter((u: unknown) => typeof u === 'string' && u.length > 0)
+      : media_url
+        ? [media_url]
+        : []
+
+    const primaryUrl = urlList[0] || media_url || null
+    const resolvedType =
+      urlList.length > 1
+        ? 'gallery'
+        : urlList.length === 1
+          ? media_type || 'image'
+          : media_type || null
+
     // Create the post using service role
     const { data, error } = await supabaseAdmin
       .from('posts')
@@ -57,8 +72,9 @@ export async function POST(request: NextRequest) {
         tags: tags || [],
         has_content_warning: !!content_warning,
         content_warning_text: content_warning || null,
-        media_url: media_url || null,
-        media_type: media_type || null
+        media_url: primaryUrl,
+        media_urls: urlList.length > 0 ? urlList : null,
+        media_type: resolvedType,
       })
       .select('*')
       .single()

@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
-import { Image, Video, Smile, Save, X, AlertTriangle, Loader2 } from 'lucide-react'
+import { getPostMediaUrls, MAX_POST_IMAGES } from '@/lib/post-media'
+import MediaCarousel from '@/components/media/MediaCarousel'
+import ReorderableImageGrid from '@/components/media/ReorderableImageGrid'
+import { Save, X, AlertTriangle, Loader2, Plus, Upload } from 'lucide-react'
 
 interface Post {
   id: string
@@ -11,6 +14,7 @@ interface Post {
   tags: string[]
   content_warning?: string
   media_url?: string
+  media_urls?: string[]
   media_type?: string
   created_at: string
   author: {
@@ -30,29 +34,55 @@ interface EditPostFormProps {
   onCancel?: () => void
 }
 
+interface MediaItem {
+  url: string
+  type: 'image' | 'video'
+}
+
 export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPostFormProps) {
   const { user } = useAuth()
-  // Separate image URLs (mood board) from text tags — only show text tags in the edit field
   const urlTags = post.tags?.filter((t: string) => t.startsWith('https://') || t.startsWith('data:')) || []
   const [content, setContent] = useState(post.content)
-  const [tags, setTags] = useState(post.tags?.filter((t: string) => !t.startsWith('https://') && !t.startsWith('data:')).join(', ') || '')
+  const [tags, setTags] = useState(
+    post.tags?.filter((t: string) => !t.startsWith('https://') && !t.startsWith('data:')).join(', ') || ''
+  )
   const [contentWarning, setContentWarning] = useState(post.content_warning || '')
   const [hasContentWarning, setHasContentWarning] = useState(!!post.content_warning)
-  const [mediaUrl, setMediaUrl] = useState(post.media_url || '')
-  const [mediaType, setMediaType] = useState(post.media_type || '')
-  const [showMediaUpload, setShowMediaUpload] = useState(false)
+  const initialUrls = getPostMediaUrls(post)
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>(
+    initialUrls.map((url) => ({
+      url,
+      type: post.media_type === 'video' ? 'video' : 'image',
+    }))
+  )
   const [uploadingMedia, setUploadingMedia] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
 
+  const mediaUrls = mediaItems.map((m) => m.url)
+  const hasVideo = mediaItems.some((m) => m.type === 'video')
+  const canAddMore = !hasVideo && mediaItems.length < MAX_POST_IMAGES
+
   const handleFileUpload = async (file: File) => {
     if (!user) return
 
-    // Check file size (10MB limit for posts)
-    const maxSize = 10 * 1024 * 1024 // 10MB
+    const maxSize = 10 * 1024 * 1024
     if (file.size > maxSize) {
-      const fileSizeMB = (file.size / 1024 / 1024).toFixed(1)
-      setError(`File too large: ${fileSizeMB}MB. Maximum size for posts is 10MB. Please choose a smaller file or compress the image.`)
+      setError(`File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB. Maximum size is 10MB.`)
+      return
+    }
+
+    const isVideo = file.type.startsWith('video/')
+    if (isVideo && mediaItems.length > 0) {
+      setError('Remove images before adding a video.')
+      return
+    }
+    if (!isVideo && hasVideo) {
+      setError('Remove the video before adding images.')
+      return
+    }
+    if (!isVideo && mediaItems.length >= MAX_POST_IMAGES) {
+      setError(`Maximum ${MAX_POST_IMAGES} images per post.`)
       return
     }
 
@@ -60,18 +90,17 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
     setError('')
 
     try {
-      // Use new storage system instead of base64
-      const result = await uploadMedia(file, {
-        category: 'posts',
-        filename: `${Date.now()}-${file.name}`
-      }, user.id)
-      setMediaUrl(result.url)
-      setMediaType(file.type.startsWith('image/') ? 'image' : 
-                  file.type.startsWith('video/') ? 'video' : 'document')
-      setShowMediaUpload(false)
-    } catch (err: any) {
-      console.error('File upload error:', err)
-      setError(err.message)
+      const result = await uploadMedia(
+        file,
+        { category: 'posts', filename: `${Date.now()}-${file.name}` },
+        user.id
+      )
+      setMediaItems((prev) => [
+        ...prev,
+        { url: result.url, type: isVideo ? 'video' : 'image' },
+      ])
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
       setUploadingMedia(false)
     }
@@ -85,9 +114,9 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
     setError('')
 
     try {
-      // Preserve mood board image URL tags, merge with edited text tags
-      const textTagsArray = tags.split(',').map((t: string) => t.trim()).filter((t: string) => t.length > 0)
+      const textTagsArray = tags.split(',').map((t) => t.trim()).filter(Boolean)
       const finalTags = [...urlTags, ...textTagsArray]
+      const urls = mediaItems.map((m) => m.url)
 
       const res = await fetch('/api/update-post-secure', {
         method: 'POST',
@@ -98,26 +127,34 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
           content: content.trim(),
           tags: finalTags,
           content_warning: hasContentWarning ? contentWarning.trim() : null,
-          media_url: mediaUrl || null,
-          media_type: mediaType || null,
-        })
+          media_urls: urls.length > 0 ? urls : null,
+          media_url: urls[0] || null,
+          media_type: urls.length > 1 ? 'gallery' : mediaItems[0]?.type || null,
+        }),
       })
 
       const result = await res.json()
       if (!result.success) throw new Error(result.error || 'Failed to update post')
 
       onPostUpdated?.()
-    } catch (err: any) {
-      console.error('Error updating post:', err)
-      setError(err.message || 'Failed to update post. Please try again.')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update post. Please try again.')
     } finally {
       setUploading(false)
     }
   }
 
-  const removeMedia = () => {
-    setMediaUrl('')
-    setMediaType('')
+  const removeMediaAt = (index: number) => {
+    setMediaItems((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const reorderMediaItems = (newUrls: string[]) => {
+    setMediaItems((prev) =>
+      newUrls.map((url) => {
+        const existing = prev.find((m) => m.url === url)
+        return existing ?? { url, type: 'image' as const }
+      })
+    )
   }
 
   return (
@@ -135,14 +172,13 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 mobile-form">
-        {/* Content Warning Toggle */}
         <div className="flex items-center space-x-3">
           <button
             type="button"
             onClick={() => setHasContentWarning(!hasContentWarning)}
             className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
-              hasContentWarning 
-                ? 'bg-yellow-100 text-yellow-800 border border-yellow-300' 
+              hasContentWarning
+                ? 'bg-yellow-100 text-yellow-800 border border-yellow-300'
                 : 'bg-gray-100 text-gray-600 border border-gray-300'
             }`}
           >
@@ -151,7 +187,6 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
           </button>
         </div>
 
-        {/* Content Warning Input */}
         {hasContentWarning && (
           <div>
             <label className="block text-sm font-medium text-space-whale-navy mb-2">
@@ -167,10 +202,9 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
           </div>
         )}
 
-        {/* Post Content */}
         <div>
           <label className="block text-sm font-medium text-space-whale-navy mb-2">
-            What's forming and reforming in you?
+            What&apos;s forming and reforming in you?
           </label>
           <textarea
             value={content}
@@ -181,7 +215,6 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
           />
         </div>
 
-        {/* Tags */}
         <div>
           <label className="block text-sm font-medium text-space-whale-navy mb-2">
             Tags (comma-separated)
@@ -195,92 +228,94 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
           />
         </div>
 
-        {/* Media Upload */}
         <div>
           <label className="block text-sm font-medium text-space-whale-navy mb-2">
             Media (optional)
           </label>
-          
-          {mediaUrl ? (
+
+          {mediaItems.length > 0 ? (
             <div className="space-y-3">
-              {mediaType === 'image' ? (
-                <img
-                  src={mediaUrl}
-                  alt="Uploaded media"
-                  className="max-w-full h-24 sm:h-32 object-cover rounded-lg"
-                />
-              ) : mediaType === 'video' ? (
-                <video
-                  src={mediaUrl}
-                  controls
-                  className="max-w-full h-24 sm:h-32 object-cover rounded-lg"
+              {hasVideo ? (
+                <div className="relative rounded-lg overflow-hidden">
+                  <video
+                    src={mediaUrls[0]}
+                    controls
+                    className="w-full max-h-48 object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setMediaItems([])}
+                    className="mt-2 text-sm text-red-600 hover:text-red-700 font-space-whale-body"
+                  >
+                    Remove video
+                  </button>
+                </div>
+              ) : mediaItems.length > 1 ? (
+                <ReorderableImageGrid
+                  urls={mediaUrls}
+                  onChange={reorderMediaItems}
+                  onRemove={removeMediaAt}
+                  hint="Reorder changes how images appear in the carousel"
                 />
               ) : (
-                <div className="p-3 bg-gray-100 rounded-lg">
-                  <p className="text-sm text-gray-600">Media file attached</p>
-                </div>
+                <MediaCarousel
+                  urls={mediaUrls}
+                  mediaType="image"
+                  variant="preview"
+                  onRemove={removeMediaAt}
+                />
               )}
-              <button
-                type="button"
-                onClick={removeMedia}
-                className="text-sm text-red-600 hover:text-red-700"
-              >
-                Remove media
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setShowMediaUpload(!showMediaUpload)}
-                  className="flex items-center justify-center space-x-2 px-3 py-2 bg-space-whale-lavender/20 text-space-whale-purple rounded-lg hover:bg-space-whale-lavender/30 transition-colors w-full sm:w-auto"
-                >
-                  <Image className="h-4 w-4" />
-                  <span className="text-sm">Add Image</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowMediaUpload(!showMediaUpload)}
-                  className="flex items-center justify-center space-x-2 px-3 py-2 bg-space-whale-lavender/20 text-space-whale-purple rounded-lg hover:bg-space-whale-lavender/30 transition-colors w-full sm:w-auto"
-                >
-                  <Video className="h-4 w-4" />
-                  <span className="text-sm">Add Video</span>
-                </button>
-              </div>
-
-              {showMediaUpload && (
-                <div className="border-2 border-dashed border-space-whale-lavender/30 rounded-lg p-4">
+              {canAddMore && (
+                <label className="inline-flex items-center gap-1.5 px-3 py-2 text-sm border border-space-whale-lavender/30 rounded-lg cursor-pointer hover:bg-space-whale-lavender/10 font-space-whale-accent">
+                  {uploadingMedia ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                  Add more ({mediaItems.length}/{MAX_POST_IMAGES})
                   <input
                     type="file"
-                    accept="image/*,video/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleFileUpload(file)
-                    }}
-                    className="w-full"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
                     disabled={uploadingMedia}
+                    onChange={(e) => {
+                      const files = e.target.files
+                      if (!files) return
+                      Array.from(files).forEach((file) => handleFileUpload(file))
+                      e.target.value = ''
+                    }}
                   />
-                  {uploadingMedia && (
-                    <div className="flex items-center justify-center mt-2">
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      <span className="text-sm text-gray-600">Uploading...</span>
-                    </div>
-                  )}
-                </div>
+                </label>
               )}
             </div>
+          ) : (
+            <label className="border-2 border-dashed border-space-whale-lavender/30 rounded-lg p-4 block text-center cursor-pointer hover:border-space-whale-purple/50">
+              <Upload className="h-6 w-6 text-space-whale-purple mx-auto mb-2" />
+              <span className="text-sm text-space-whale-navy font-space-whale-body">
+                {uploadingMedia ? 'Uploading...' : 'Add photos or video'}
+              </span>
+              <input
+                type="file"
+                accept="image/*,video/*"
+                className="hidden"
+                disabled={uploadingMedia}
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleFileUpload(file)
+                  e.target.value = ''
+                }}
+              />
+            </label>
           )}
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg p-3">
             {error}
           </div>
         )}
 
-        {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
           <button
             type="button"

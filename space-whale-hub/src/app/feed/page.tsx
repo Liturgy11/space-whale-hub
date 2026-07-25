@@ -113,15 +113,13 @@ function CommunityFeedContent() {
 
         {/* Post Form Modal */}
         {showPostForm && (
-          <div className="mb-8">
-            <PostForm 
-              onPostCreated={() => {
-                setShowPostForm(false);
-                setRefreshTrigger(prev => prev + 1); // Trigger feed refresh
-              }}
-              onCancel={() => setShowPostForm(false)}
-            />
-          </div>
+          <PostForm
+            onPostCreated={() => {
+              setShowPostForm(false)
+              setRefreshTrigger((prev) => prev + 1)
+            }}
+            onCancel={() => setShowPostForm(false)}
+          />
         )}
 
       {/* First Post Gentle Note */}

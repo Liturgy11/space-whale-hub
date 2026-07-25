@@ -17,7 +17,7 @@ function getSupabaseAdmin() {
 }
 
 const POST_COLUMNS =
-  'id, content, tags, content_warning_text, media_url, media_type, created_at, user_id'
+  'id, content, tags, content_warning_text, media_url, media_urls, media_type, created_at, user_id'
 
 async function fetchFeedViaRpc(
   supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
@@ -109,6 +109,7 @@ async function fetchFeedLegacy(
     tags: post.tags || [],
     content_warning: post.content_warning_text,
     media_url: post.media_url,
+    media_urls: post.media_urls || (post.media_url ? [post.media_url] : []),
     media_type: post.media_type,
     created_at: post.created_at,
     author: {
