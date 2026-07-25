@@ -166,11 +166,9 @@ function PersonalSpaceContent() {
 
       {/* Mood Board Upload Modal */}
       {showMoodBoardUpload && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="w-full max-w-4xl mobile-modal">
-            <MoodBoardUpload 
-              onUploadComplete={async (urls, type, title) => {
-                setShowMoodBoardUpload(false);
+        <MoodBoardUpload
+          onUploadComplete={async (urls, type, title) => {
+            setShowMoodBoardUpload(false)
                 
                 // Create a journal entry with the mood board images
                 try {
@@ -218,8 +216,6 @@ function PersonalSpaceContent() {
               }}
               onCancel={() => setShowMoodBoardUpload(false)}
             />
-          </div>
-        </div>
       )}
 
       {/* Wallpaper Customizer Modal */}
