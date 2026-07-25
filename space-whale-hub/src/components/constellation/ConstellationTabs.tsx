@@ -1,12 +1,26 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import ArchivePage from '@/components/archive/ArchivePage'
 import MycelialNetwork from './MycelialNetwork'
 import SporeForm from './SporeForm'
 import { X } from 'lucide-react'
+
+function TabIcon({ src, className = 'h-4 w-4' }: { src: string; className?: string }) {
+  return (
+    <Image
+      src={src}
+      alt=""
+      width={16}
+      height={16}
+      aria-hidden
+      className={`object-contain ${className}`}
+    />
+  )
+}
 
 export default function ConstellationTabs() {
   const { user } = useAuth()
@@ -29,23 +43,25 @@ export default function ConstellationTabs() {
         <div className="max-w-5xl mx-auto px-4 flex gap-0">
           <button
             onClick={() => setTab('archive')}
-            className={`px-6 py-3.5 text-sm font-space-whale-accent transition-all border-b-2 ${
+            className={`inline-flex items-center gap-2 px-6 py-3.5 text-sm font-space-whale-accent transition-all border-b-2 ${
               tab === 'archive'
                 ? 'border-space-whale-purple text-space-whale-purple'
                 : 'border-transparent text-space-whale-navy/60 hover:text-space-whale-navy'
             }`}
           >
-            ✦ Archive
+            <TabIcon src="/illustrations/star.png" />
+            Archive
           </button>
           <button
             onClick={() => setTab('network')}
-            className={`px-6 py-3.5 text-sm font-space-whale-accent transition-all border-b-2 ${
+            className={`inline-flex items-center gap-2 px-6 py-3.5 text-sm font-space-whale-accent transition-all border-b-2 ${
               tab === 'network'
                 ? 'border-space-whale-purple text-space-whale-purple'
                 : 'border-transparent text-space-whale-navy/60 hover:text-space-whale-navy'
             }`}
           >
-            🍄 Mycelial Network
+            <TabIcon src="/illustrations/mushroom-3.png" className="h-4 w-4 sm:h-5 sm:w-5" />
+            Mycelial Network
           </button>
         </div>
       </div>
