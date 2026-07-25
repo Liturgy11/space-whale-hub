@@ -1,0 +1,65 @@
+[
+  {
+    "file": "/illustrations/star-baby.png",
+    "name": "star-baby",
+    "label": "Star Baby \u2014 teal guide character",
+    "width": 272,
+    "height": 285
+  },
+  {
+    "file": "/illustrations/star.png",
+    "name": "star",
+    "label": "Hand-drawn yellow star",
+    "width": 126,
+    "height": 130
+  },
+  {
+    "file": "/illustrations/whale.png",
+    "name": "whale",
+    "label": "Space Whale brand whale",
+    "width": 724,
+    "height": 640
+  },
+  {
+    "file": "/illustrations/mushroom-painted.png",
+    "name": "mushroom-painted",
+    "label": "Painted cap mushroom",
+    "width": 98,
+    "height": 167
+  },
+  {
+    "file": "/illustrations/mushroom-1.png",
+    "name": "mushroom-1",
+    "label": "Collage mushroom T-shape",
+    "width": 429,
+    "height": 436
+  },
+  {
+    "file": "/illustrations/pickaxe.png",
+    "name": "pickaxe",
+    "label": "Pink pickaxe",
+    "width": 350,
+    "height": 519
+  },
+  {
+    "file": "/illustrations/mushroom-3.png",
+    "name": "mushroom-3",
+    "label": "Teal collage mushroom",
+    "width": 209,
+    "height": 206
+  },
+  {
+    "file": "/illustrations/mushroom-4.png",
+    "name": "mushroom-4",
+    "label": "Maroon cap mushroom",
+    "width": 189,
+    "height": 521
+  },
+  {
+    "file": "/illustrations/pink-stack.png",
+    "name": "pink-stack",
+    "label": "Pink layered stack",
+    "width": 131,
+    "height": 163
+  }
+]
