@@ -187,14 +187,6 @@ function HomeContent() {
                     'linear-gradient(135deg, #f5edfa 0%, #ffe8f0 55%, #ffede4 100%) padding-box, linear-gradient(135deg, #a78bfa, #f472b6, #fb923c) border-box',
                 }}
               >
-                <Image
-                  src="/illustrations/mushroom-1.png"
-                  alt=""
-                  width={28}
-                  height={28}
-                  aria-hidden
-                  className="h-7 w-7 object-contain"
-                />
                 Explore
                 <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showCreateMenu ? 'rotate-180' : ''}`} />
               </button>
