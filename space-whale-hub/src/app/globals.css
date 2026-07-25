@@ -44,8 +44,8 @@
   --color-accent-pink: var(--accent-pink);
   --color-accent-yellow: var(--accent-yellow);
   --color-accent-green: var(--accent-green);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-inter: var(--font-inter);
   --font-poppins: var(--font-poppins);
   --font-quicksand: var(--font-quicksand);
@@ -494,5 +494,53 @@ body {
 @media (max-width: 768px) {
   body {
     padding-bottom: 80px;
+  }
+}
+
+/* Respect reduced motion — trauma-informed, neuroaffirming */
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  /* Decorative ambient motion */
+  .float-gentle,
+  .animate-float,
+  .twinkle-gentle {
+    animation: none !important;
+  }
+
+  /* Design-system hover lifts */
+  .btn-space-whale:hover,
+  .btn-space-whale-secondary:hover,
+  .btn-lofi:hover,
+  .mood-board-item:hover,
+  .mood-board-image:hover,
+  .mood-board-empty button:hover {
+    transform: none !important;
+  }
+
+  /* Loading skeletons: static instead of pulsing */
+  .animate-pulse {
+    animation: none !important;
+    opacity: 0.75;
+  }
+
+  /* Shorten remaining transitions and decorative animation */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Keep loading spinners — essential feedback, slower and steadier */
+  .animate-spin {
+    animation-name: spin !important;
+    animation-duration: 1.2s !important;
+    animation-iteration-count: infinite !important;
+    animation-timing-function: linear !important;
   }
 }

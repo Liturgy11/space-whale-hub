@@ -1,6 +1,5 @@
-import Link from "next/link";
-import Image from "next/image";
-import { Calendar, Users, Clock, MapPin, DollarSign } from "lucide-react";
+import AppShell from "@/components/layout/AppShell";
+import { Calendar, Clock, MapPin, DollarSign } from "lucide-react";
 
 export default function Workshops() {
   const workshops = [
@@ -47,32 +46,14 @@ export default function Workshops() {
   ];
 
   return (
-    <div className="min-h-screen bg-white relative">
-      <div
-        className="fixed inset-0 bg-cover bg-center pointer-events-none z-0"
-        style={{ backgroundImage: 'url(/vivid-mushrooms.png)', opacity: 0.12 }}
-      />
-      {/* Navigation */}
-      <nav className="relative z-10 bg-white/80 backdrop-blur-sm border-b border-space-whale-lavender/20 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-                <Image
-                  src="/Space Whale_Social Only.jpg"
-                  alt="Space Whale Logo - Click to return home"
-                  width={32}
-                  height={32}
-                  className="rounded-full cursor-pointer"
-                />
-                <span className="text-xl font-space-whale-heading text-space-whale-navy">Deep Space</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AppShell
+      title="Deep Space"
+      className="min-h-screen bg-white relative"
+      backgroundImage="/vivid-mushrooms.png"
+      backgroundOpacity={0.12}
+      navClassName="relative z-10 bg-white/80 backdrop-blur-sm border-b border-space-whale-lavender/20 sticky top-0 z-50"
+      mainClassName="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+    >
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-space-whale-heading text-space-whale-navy mb-4">
@@ -156,7 +137,6 @@ export default function Workshops() {
             </a>
           </p>
         </div>
-      </main>
-    </div>
+    </AppShell>
   );
 }

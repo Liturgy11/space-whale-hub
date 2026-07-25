@@ -1,18 +1,18 @@
 'use client'
 
 import Link from "next/link";
-import Image from "next/image";
 import { useState, useEffect } from "react";
-import { Plus, Filter, Search, X } from "lucide-react";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import UserProfile from "@/components/UserProfile";
+import { Plus, X } from "lucide-react";
+import AppShell from "@/components/layout/AppShell";
 import PostForm from "@/components/feed/PostForm";
 import FeedList from "@/components/feed/FeedList";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import FirstPostModal from "@/components/FirstPostModal";
 
 function CommunityFeedContent() {
-  const { user, refreshUser } = useAuth();
+  const { user, loading: authLoading } = useRequireAuth();
+  const { refreshUser } = useAuth();
   const [showPostForm, setShowPostForm] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showFirstPostNote, setShowFirstPostNote] = useState(false);
@@ -58,37 +58,14 @@ function CommunityFeedContent() {
 
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-sm border-b border-space-whale-lavender/20 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-                <Image
-                  src="/Space Whale_Social Only.jpg"
-                  alt="Space Whale Logo - Click to return home"
-                  width={28}
-                  height={28}
-                  className="rounded-full sm:w-8 sm:h-8 cursor-pointer"
-                />
-                <span className="text-lg sm:text-xl font-space-whale-heading text-space-whale-navy">Community Orbit</span>
-              </Link>
-            </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <UserProfile />
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Mushroom artwork background */}
-      <div
-        className="fixed inset-0 bg-cover bg-center pointer-events-none z-0"
-        style={{ backgroundImage: 'url(/fun-stars.png)', opacity: 0.28 }}
-      />
-
-      <main className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 pb-20 md:pb-8">
+    <AppShell
+      title="Community Orbit"
+      showUserProfile
+      logoSize="sm"
+      backgroundImage="/fun-stars.png"
+      backgroundOpacity={0.28}
+      mainClassName="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 pb-20 md:pb-8"
+    >
         {/* Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-space-whale-heading text-space-whale-navy mb-4">
@@ -159,17 +136,16 @@ function CommunityFeedContent() {
         />
       )}
 
-        {/* Feed List */}
-        <FeedList refreshTrigger={refreshTrigger} />
-      </main>
-    </div>
+        {/* Feed List — renders cached posts immediately; refreshes once auth is ready */}
+        <FeedList
+          userId={user?.id}
+          authLoading={authLoading}
+          refreshTrigger={refreshTrigger}
+        />
+    </AppShell>
   );
 }
 
 export default function CommunityFeed() {
-  return (
-    <ProtectedRoute>
-      <CommunityFeedContent />
-    </ProtectedRoute>
-  );
+  return <CommunityFeedContent />;
 }

@@ -1,11 +1,9 @@
 'use client'
 
-import Link from "next/link";
-import Image from "next/image";
 import { useState } from "react";
-import { Plus, Edit3, Heart, Lock, Unlock, BookOpen, Palette, FileText, Camera, Save, Settings, Sparkles, Key } from "lucide-react";
+import { Key, Settings } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import UserProfile from "@/components/UserProfile";
+import AppShell from "@/components/layout/AppShell";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/components/ui/Toast";
 import JournalEntryForm from "@/components/journal/JournalEntryForm";
@@ -54,38 +52,22 @@ function PersonalSpaceContent() {
                        currentWallpaper.startsWith('https://')
 
   return (
-    <div className={getWallpaperClass()} style={isCustomImage ? { backgroundImage: `url(${currentWallpaper})` } : {}}>
-      {/* Teal landscape — only shows when no custom wallpaper is set */}
-      {!isCustomImage && (
-        <div
-          className="fixed inset-0 bg-cover bg-center pointer-events-none z-0"
-          style={{ backgroundImage: 'url(/teal-landscape.png)', opacity: 0.18 }}
-        />
-      )}
-      {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-sm border-b border-space-whale-lavender/20 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-                <Image
-                  src="/Space Whale_Social Only.jpg"
-                  alt="Space Whale Logo - Click to return home"
-                  width={28}
-                  height={28}
-                  className="rounded-full sm:w-8 sm:h-8 cursor-pointer"
-                />
-                <span className="text-lg sm:text-xl font-space-whale-heading text-space-whale-navy">Inner Space</span>
-              </Link>
-            </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <UserProfile />
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+    <AppShell
+      title="Inner Space"
+      showUserProfile
+      logoSize="sm"
+      className={getWallpaperClass()}
+      style={isCustomImage ? { backgroundImage: `url(${currentWallpaper})` } : undefined}
+      backgroundOverlay={
+        !isCustomImage ? (
+          <div
+            className="fixed inset-0 bg-cover bg-center pointer-events-none z-0"
+            style={{ backgroundImage: 'url(/teal-landscape.png)', opacity: 0.18 }}
+          />
+        ) : undefined
+      }
+      mainClassName="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8"
+    >
         {/* Header */}
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 space-y-4 sm:space-y-0">
@@ -108,9 +90,7 @@ function PersonalSpaceContent() {
         </div>
 
         {showForm && (
-          <div className="mb-8">
-            <JournalEntryForm onSuccess={handleEntryCreated} onCancel={() => setShowForm(false)} />
-          </div>
+          <JournalEntryForm onSuccess={handleEntryCreated} onCancel={() => setShowForm(false)} />
         )}
 
         {/* Simplified Layout */}
@@ -119,7 +99,7 @@ function PersonalSpaceContent() {
           <div className="bg-lofi-card rounded-xl shadow-lg p-4 sm:p-8 rainbow-border-soft mobile-card">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
               <button 
-                onClick={() => setShowForm(!showForm)}
+                onClick={() => setShowForm(true)}
                 className="flex flex-col items-center justify-center p-6 sm:p-8 bg-gradient-to-br from-pink-50 via-purple-50 to-pink-50 rounded-2xl hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group border-2 border-pink-200/50 hover:border-pink-300"
               >
                 <div className="mb-4 p-4 bg-gradient-to-br from-pink-200 to-purple-200 rounded-2xl group-hover:scale-110 transition-transform duration-300">
@@ -168,7 +148,6 @@ function PersonalSpaceContent() {
           </div>
 
         </div>
-      </main>
 
       {/* Media Upload Modal */}
       {showMediaUpload && (
@@ -253,7 +232,7 @@ function PersonalSpaceContent() {
           }}
         />
       )}
-    </div>
+    </AppShell>
   );
 }
 

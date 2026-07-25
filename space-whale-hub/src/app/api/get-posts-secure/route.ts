@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// Force dynamic rendering - don't evaluate at build time
 export const dynamic = 'force-dynamic'
 
 function getSupabaseAdmin() {
@@ -17,154 +16,147 @@ function getSupabaseAdmin() {
   })
 }
 
-export async function GET(request: NextRequest) {
-  const supabaseAdmin = getSupabaseAdmin()
-  try {
-    // Get limit and userId from query params
-    const { searchParams } = new URL(request.url)
-    const limit = parseInt(searchParams.get('limit') || '25', 10) // Reduced default from 50 to 25 for faster initial load
-    const userId = searchParams.get('userId') || null
+const POST_COLUMNS =
+  'id, content, tags, content_warning_text, media_url, media_type, created_at, user_id'
 
-    // Fetch posts with limit
-    const { data: posts, error } = await supabaseAdmin
-      .from('posts')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(limit)
+async function fetchFeedViaRpc(
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
+  userId: string | null,
+  limit: number
+) {
+  const { data, error } = await supabaseAdmin.rpc('get_community_feed', {
+    p_user_id: userId,
+    p_limit: limit,
+  })
 
-    if (error) {
-      console.error('Error fetching posts:', error)
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 })
-    }
-
-    if (!posts || posts.length === 0) {
-      return NextResponse.json({ success: true, data: [] })
-    }
-
-    const postIds = posts.map(p => p.id)
-
-    // Build parallel queries array - wrap in Promise.resolve to ensure proper Promise type
-    const queries = [
-      // Fetch minimal author profiles
-      Promise.resolve(supabaseAdmin
-        .from('profiles')
-        .select('id, display_name, pronouns, avatar_url, country')
-        .in('id', Array.from(new Set(posts.map((p: any) => p.user_id))))),
-      
-      // Fetch all likes for these posts (just post_id, no need for full data)
-      Promise.resolve(supabaseAdmin
-        .from('likes')
-        .select('post_id')
-        .in('post_id', postIds)),
-      
-      // Fetch all comments for these posts (just post_id, no need for full data)
-      Promise.resolve(supabaseAdmin
-        .from('comments')
-        .select('post_id')
-        .in('post_id', postIds))
-    ]
-
-    // If userId provided, also fetch user's likes
-    if (userId) {
-      queries.push(
-        Promise.resolve(supabaseAdmin
-          .from('likes')
-          .select('post_id')
-          .eq('user_id', userId)
-          .in('post_id', postIds))
-      )
-    }
-
-    // Execute all queries in parallel
-    const results = await Promise.all(queries)
-    const profilesResult = results[0]
-    const likesResult = results[1]
-    const commentsResult = results[2]
-    const userLikesResult = userId ? results[3] : null
-
-    // Check for errors in parallel query results
-    if (profilesResult.error) {
-      console.error('Error fetching profiles:', profilesResult.error)
-      // Continue with empty profile map rather than failing entire request
-    }
-    if (likesResult.error) {
-      console.error('Error fetching likes:', likesResult.error)
-      // Continue with empty like count map rather than failing entire request
-    }
-    if (commentsResult.error) {
-      console.error('Error fetching comments:', commentsResult.error)
-      // Continue with empty comment count map rather than failing entire request
-    }
-    if (userLikesResult?.error) {
-      console.error('Error fetching user likes:', userLikesResult.error)
-      // Continue with empty user liked posts set rather than failing entire request
-    }
-
-    // Build profile map
-    const profileMap = new Map<string, any>()
-    if (profilesResult.data) {
-      profilesResult.data.forEach((p: any) => profileMap.set(p.id, p))
-    }
-
-    // Build like count map
-    const likeCountMap = new Map<string, number>()
-    if (likesResult.data) {
-      likesResult.data.forEach((like: any) => {
-        likeCountMap.set(like.post_id, (likeCountMap.get(like.post_id) || 0) + 1)
-      })
-    }
-
-    // Build comment count map
-    const commentCountMap = new Map<string, number>()
-    if (commentsResult.data) {
-      commentsResult.data.forEach((comment: any) => {
-        commentCountMap.set(comment.post_id, (commentCountMap.get(comment.post_id) || 0) + 1)
-      })
-    }
-
-    // Build user liked posts set
-    const userLikedPosts = new Set<string>()
-    if (userLikesResult?.data) {
-      userLikesResult.data.forEach((like: any) => {
-        userLikedPosts.add(like.post_id)
-      })
-    }
-
-    // Enrich posts with counts (no async needed now!)
-    const enriched = posts.map((post) => ({
-      id: post.id,
-      content: post.content,
-      tags: post.tags || [],
-      content_warning: post.content_warning_text,
-      media_url: post.media_url,
-      media_type: post.media_type,
-      created_at: post.created_at,
-      author: {
-        id: post.user_id,
-        display_name: profileMap.get(post.user_id)?.display_name || 'Space Whale',
-        pronouns: profileMap.get(post.user_id)?.pronouns || null,
-        avatar_url: profileMap.get(post.user_id)?.avatar_url || null,
-        country: profileMap.get(post.user_id)?.country || null,
-      },
-      likes_count: likeCountMap.get(post.id) || 0,
-      comments_count: commentCountMap.get(post.id) || 0,
-      is_liked: userLikedPosts.has(post.id)
-    }))
-
-    // Cache the public (no-userId) feed at Vercel's CDN edge for fast repeat loads.
-    // Personalized responses (with userId) are never cached.
-    const cacheHeaders = userId
-      ? { 'Cache-Control': 'private, no-store' }
-      : { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' }
-
-    return NextResponse.json({ success: true, data: enriched }, { headers: cacheHeaders })
-  } catch (e: any) {
-    console.error('API error fetching posts:', e)
-    return NextResponse.json({ success: false, error: e.message }, { status: 500 })
-  }
+  if (error) throw error
+  return Array.isArray(data) ? data : []
 }
 
+async function fetchFeedLegacy(
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
+  userId: string | null,
+  limit: number
+) {
+  const { data: posts, error } = await supabaseAdmin
+    .from('posts')
+    .select(POST_COLUMNS)
+    .order('created_at', { ascending: false })
+    .limit(limit)
 
+  if (error) throw error
+  if (!posts || posts.length === 0) return []
 
+  const postIds = posts.map((p) => p.id)
+  const userIds = Array.from(new Set(posts.map((p) => p.user_id)))
 
+  const queries: Promise<{ data: any[] | null; error: any }>[] = [
+    supabaseAdmin
+      .from('profiles')
+      .select('id, display_name, pronouns, avatar_url, country')
+      .in('id', userIds)
+      .then((r) => r),
+    supabaseAdmin
+      .from('likes')
+      .select('post_id')
+      .in('post_id', postIds)
+      .then((r) => r),
+    supabaseAdmin
+      .from('comments')
+      .select('post_id')
+      .in('post_id', postIds)
+      .then((r) => r),
+  ]
 
+  if (userId) {
+    queries.push(
+      supabaseAdmin
+        .from('likes')
+        .select('post_id')
+        .eq('user_id', userId)
+        .in('post_id', postIds)
+        .then((r) => r)
+    )
+  }
+
+  const results = await Promise.all(queries)
+  const [profilesResult, likesResult, commentsResult, userLikesResult] = results
+
+  const profileMap = new Map<string, any>()
+  profilesResult.data?.forEach((p: any) => profileMap.set(p.id, p))
+
+  const likeCountMap = new Map<string, number>()
+  likesResult.data?.forEach((like: any) => {
+    likeCountMap.set(like.post_id, (likeCountMap.get(like.post_id) || 0) + 1)
+  })
+
+  const commentCountMap = new Map<string, number>()
+  commentsResult.data?.forEach((comment: any) => {
+    commentCountMap.set(
+      comment.post_id,
+      (commentCountMap.get(comment.post_id) || 0) + 1
+    )
+  })
+
+  const userLikedPosts = new Set<string>()
+  userLikesResult?.data?.forEach((like: any) => {
+    userLikedPosts.add(like.post_id)
+  })
+
+  return posts.map((post) => ({
+    id: post.id,
+    content: post.content,
+    tags: post.tags || [],
+    content_warning: post.content_warning_text,
+    media_url: post.media_url,
+    media_type: post.media_type,
+    created_at: post.created_at,
+    author: {
+      id: post.user_id,
+      display_name: profileMap.get(post.user_id)?.display_name || 'Space Whale',
+      pronouns: profileMap.get(post.user_id)?.pronouns || null,
+      avatar_url: profileMap.get(post.user_id)?.avatar_url || null,
+      country: profileMap.get(post.user_id)?.country || null,
+    },
+    likes_count: likeCountMap.get(post.id) || 0,
+    comments_count: commentCountMap.get(post.id) || 0,
+    is_liked: userLikedPosts.has(post.id),
+  }))
+}
+
+export async function GET(request: NextRequest) {
+  const supabaseAdmin = getSupabaseAdmin()
+
+  try {
+    const { searchParams } = new URL(request.url)
+    const limit = Math.min(
+      50,
+      Math.max(1, parseInt(searchParams.get('limit') || '25', 10))
+    )
+    const userId = searchParams.get('userId') || null
+
+    let enriched: any[] = []
+
+    try {
+      enriched = await fetchFeedViaRpc(supabaseAdmin, userId, limit)
+    } catch (rpcError) {
+      console.warn('Feed RPC unavailable, using legacy queries:', rpcError)
+      enriched = await fetchFeedLegacy(supabaseAdmin, userId, limit)
+    }
+
+    const cacheHeaders = userId
+      ? { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=60' }
+      : { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' }
+
+    return NextResponse.json(
+      { success: true, data: enriched },
+      { headers: cacheHeaders }
+    )
+  } catch (e: any) {
+    console.error('API error fetching posts:', e)
+    return NextResponse.json(
+      { success: false, error: e.message },
+      { status: 500 }
+    )
+  }
+}

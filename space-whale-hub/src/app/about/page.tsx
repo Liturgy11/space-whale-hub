@@ -1,36 +1,28 @@
 'use client'
 
 import Link from "next/link";
-import Image from "next/image";
 import { Heart, Star, Eye, CircleDotDashed, Zap, RotateCcw, Orbit, Sprout } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AppShell from "@/components/layout/AppShell";
 
 function AboutContent() {
   return (
-    <div className="min-h-screen bg-white relative">
-      <div
-        className="fixed inset-0 bg-cover bg-center pointer-events-none z-0"
-        style={{ backgroundImage: 'url(/cosmic-rainbow.png)', opacity: 0.15 }}
-      />
-      {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-sm border-b border-space-whale-lavender/20 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-              <Image
-                src="/Space Whale_Social Only.jpg"
-                alt="Space Whale Logo - Click to return home"
-                width={32}
-                height={32}
-                className="rounded-full cursor-pointer"
-              />
-              <span className="text-xl font-space-whale-heading text-space-whale-navy">Space Whale Portal</span>
-            </Link>
-          </div>
+    <AppShell
+      className="min-h-screen bg-white relative"
+      backgroundImage="/cosmic-rainbow.png"
+      backgroundOpacity={0.15}
+      mainClassName="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
+      afterMain={
+        <div className="bg-lofi-card rounded-xl p-6 mx-4 sm:mx-6 lg:mx-8 mb-8 rainbow-border-soft glow-soft">
+          <p className="text-sm font-space-whale-body text-space-whale-navy">
+            <strong>Land Acknowledgement:</strong> Space Whale operates on First Nations land, Darkinjung Country, 
+            (Central Coast, NSW). We acknowledge sovereignty was never ceded and pay our respects to elder&apos;s 
+            past, present and emerging. Space Whale welcomes all people and celebrates diversity. 
+            Space Whale is a registered LGBTIQA+ safe space.
+          </p>
         </div>
-      </nav>
-
-      <main className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      }
+    >
         {/* Hero Section */}
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-space-whale-heading text-space-whale-navy mb-6">
@@ -240,18 +232,7 @@ function AboutContent() {
             </div>
           </div>
         </section>
-      </main>
-
-      {/* Land Acknowledgement */}
-      <div className="bg-lofi-card rounded-xl p-6 mx-4 sm:mx-6 lg:mx-8 mb-8 rainbow-border-soft glow-soft">
-        <p className="text-sm font-space-whale-body text-space-whale-navy">
-          <strong>Land Acknowledgement:</strong> Space Whale operates on First Nations land, Darkinjung Country, 
-          (Central Coast, NSW). We acknowledge sovereignty was never ceded and pay our respects to elder's 
-          past, present and emerging. Space Whale welcomes all people and celebrates diversity. 
-          Space Whale is a registered LGBTIQA+ safe space.
-        </p>
-      </div>
-    </div>
+    </AppShell>
   );
 }
 
