@@ -5,19 +5,11 @@ import { createPortal } from 'react-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
 import { encryptJournalContent } from '@/lib/journal-encryption'
-import { Loader2, Save, X, Camera, Lock, Unlock, ChevronDown, ChevronUp } from 'lucide-react'
+import { Loader2, Save, X, Upload, Image as ImageIcon, X as XIcon, Lock, Unlock } from 'lucide-react'
 
 interface JournalEntryFormProps {
   onSuccess?: (entry: any) => void
   onCancel?: () => void
-}
-
-function friendlyMediaName(url: string, fallback = 'Photo attached') {
-  const raw = decodeURIComponent(url.split('/').pop() || '')
-  const withoutTimestamp = raw.replace(/^\d+-/, '')
-  const cleaned = withoutTimestamp.replace(/[-_]/g, ' ').trim()
-  if (!cleaned || cleaned.length > 40) return fallback
-  return cleaned
 }
 
 export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFormProps) {
@@ -26,14 +18,11 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  const [mood, setMood] = useState('')
   const [mediaUrl, setMediaUrl] = useState('')
   const [mediaType, setMediaType] = useState('')
-  const [mediaLabel, setMediaLabel] = useState('')
   const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [showEncryption, setShowEncryption] = useState(false)
   const [enableEncryption, setEnableEncryption] = useState(false)
   const [encryptionPassphrase, setEncryptionPassphrase] = useState('')
   const [confirmPassphrase, setConfirmPassphrase] = useState('')
@@ -96,13 +85,14 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
     const isImage = file.type.startsWith('image/') || imageExtensions.includes(fileExtension)
 
     if (!isValidMimeType && !isValidExtension) {
-      setError('Please choose an image, video, or audio file.')
+      setError('Please upload an image, video, or audio file')
       return
     }
 
     const maxSize = 10 * 1024 * 1024
     if (file.size > maxSize) {
-      setError(`That file is ${(file.size / 1024 / 1024).toFixed(1)}MB. Maximum size is 10MB.`)
+      const fileSizeMB = (file.size / 1024 / 1024).toFixed(1)
+      setError(`File too large: ${fileSizeMB}MB. Maximum size for journal entries is 10MB.`)
       return
     }
 
@@ -118,11 +108,10 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
       )
 
       setMediaUrl(result.url)
-      setMediaLabel(file.name.replace(/^\d+-/, '') || 'Photo attached')
       const isVideo = file.type.startsWith('video/') || videoExtensions.includes(fileExtension)
       setMediaType(isImage ? 'image' : isVideo ? 'video' : 'document')
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Upload failed. Please try again.')
+      setError(err instanceof Error ? `Upload failed: ${err.message}` : 'Upload failed. Please try again.')
     } finally {
       setUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -132,7 +121,6 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
   const clearMedia = () => {
     setMediaUrl('')
     setMediaType('')
-    setMediaLabel('')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -145,12 +133,12 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
     try {
       if (enableEncryption) {
         if (!encryptionPassphrase || encryptionPassphrase.length < 8) {
-          setError('Encryption passphrase must be at least 8 characters.')
+          setError('Encryption passphrase must be at least 8 characters long')
           setLoading(false)
           return
         }
         if (encryptionPassphrase !== confirmPassphrase) {
-          setError('Passphrases do not match.')
+          setError('Passphrases do not match')
           setLoading(false)
           return
         }
@@ -187,7 +175,6 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
           encryption_key_id: encryptedData?.keyId || null,
           encryption_salt: encryptedData?.salt || null,
           encryption_iv: encryptedData?.iv || null,
-          mood: mood || undefined,
           tags: [],
           media_url: mediaUrl || undefined,
           media_type: mediaType || undefined,
@@ -201,12 +188,10 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
 
       setTitle('')
       setContent('')
-      setMood('')
       clearMedia()
       setEnableEncryption(false)
       setEncryptionPassphrase('')
       setConfirmPassphrase('')
-      setShowEncryption(false)
 
       onSuccess?.(result.entry)
     } catch (err: unknown) {
@@ -218,16 +203,16 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
 
   const formBody = (
     <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5">
+      <div className="flex-1 overflow-y-auto px-4 sm:p-5 sm:pt-0 space-y-4">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
             <p className="text-red-600 text-sm">{error}</p>
           </div>
         )}
 
-        {/* Primary: write first */}
+        {/* Write first */}
         <div>
-          <label className="block text-sm font-medium text-space-whale-navy mb-2 font-space-whale-body">
+          <label className="block text-sm font-medium text-space-whale-navy mb-1.5 font-space-whale-body">
             What&apos;s on your mind?
           </label>
           <textarea
@@ -236,181 +221,163 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
             required
             rows={6}
             autoFocus
-            className="mobile-textarea w-full px-4 py-3 border border-space-whale-lavender/30 rounded-xl bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors"
-            placeholder="Write freely…"
+            className="mobile-textarea w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors resize-none"
+            placeholder="Write freely..."
             maxLength={10000}
           />
-          <div className="flex justify-between items-center mt-2">
-            <p className="text-xs text-space-whale-purple font-space-whale-body">Private to you</p>
-            <span className="text-xs text-space-whale-purple/70">{content.length.toLocaleString()} / 10,000</span>
+          <div className="flex justify-between items-center mt-1.5">
+            <p className="text-xs text-space-whale-purple font-space-whale-body">🔒 Private</p>
+            <span className="text-xs text-space-whale-purple">
+              {content.length}/10,000 characters
+            </span>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-space-whale-navy mb-2 font-space-whale-body">
-            Title <span className="text-space-whale-purple/60 font-normal">(optional)</span>
+          <label className="block text-sm font-medium text-space-whale-navy mb-1.5 font-space-whale-body">
+            Title (Optional)
           </label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mobile-input w-full px-4 py-3 border border-space-whale-lavender/30 rounded-xl bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
-            placeholder="A few words to find this later…"
+            className="mobile-input w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors"
+            placeholder="Give your entry a title..."
             maxLength={200}
           />
         </div>
 
-        {/* Photo attachment */}
+        {/* Photos */}
         <div>
           <label className="block text-sm font-medium text-space-whale-navy mb-2 font-space-whale-body">
-            Photo <span className="text-space-whale-purple/60 font-normal">(optional)</span>
+            Add Photos (Optional)
           </label>
 
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*,audio/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) handleFileUpload(file)
+            }}
+          />
+
           {!mediaUrl ? (
-            <>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,video/*,audio/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) handleFileUpload(file)
-                }}
-              />
+            <div className="border-2 border-dashed border-space-whale-lavender/30 rounded-lg p-4 text-center hover:border-space-whale-purple/50 transition-colors">
+              <Upload className="h-7 w-7 text-space-whale-purple mx-auto mb-1.5" />
+              <p className="text-sm text-space-whale-navy mb-2 font-space-whale-body">
+                Add photos, videos, or audio to your entry
+              </p>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 min-h-[44px] rounded-xl border border-dashed border-space-whale-lavender/40 bg-white/80 text-space-whale-navy hover:border-space-whale-purple/50 hover:bg-space-whale-lavender/10 transition-colors touch-manipulation"
+                className="px-4 py-2 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-colors font-space-whale-accent text-sm min-h-[44px] touch-manipulation"
               >
                 {uploading ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin text-space-whale-purple" />
-                    Uploading…
+                    <Loader2 className="h-4 w-4 mr-2 inline animate-spin" />
+                    Uploading...
                   </>
                 ) : (
                   <>
-                    <Camera className="h-4 w-4 text-space-whale-purple" />
-                    Add a photo, video, or audio clip
+                    <Upload className="h-4 w-4 mr-2 inline" />
+                    Upload Media
                   </>
                 )}
               </button>
-            </>
+            </div>
           ) : (
-            <div className="rounded-xl border border-space-whale-lavender/30 bg-white overflow-hidden">
-              {mediaType === 'image' ? (
-                <div className="relative">
-                  <img
-                    src={mediaUrl}
-                    alt={mediaLabel || 'Attached photo'}
-                    className="w-full max-h-48 object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={clearMedia}
-                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-                    aria-label="Remove photo"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+            <div className="border border-space-whale-lavender/30 rounded-lg overflow-hidden bg-white">
+              <div className="flex items-center justify-between px-3 py-2 bg-space-whale-lavender/5">
+                <div className="flex items-center space-x-2">
+                  <ImageIcon className="h-5 w-5 text-space-whale-purple" />
+                  <p className="font-medium text-space-whale-navy text-sm font-space-whale-body">
+                    {mediaType === 'image' ? 'Image' : mediaType === 'video' ? 'Video' : 'Media'} attached
+                  </p>
                 </div>
-              ) : (
-                <div className="flex items-center justify-between p-4">
-                  <div className="min-w-0">
-                    <p className="font-medium text-space-whale-navy truncate">
-                      {mediaLabel || friendlyMediaName(mediaUrl, 'Media attached')}
-                    </p>
-                    <p className="text-sm text-space-whale-purple/70 capitalize">{mediaType} attached</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={clearMedia}
-                    className="ml-3 p-2 text-space-whale-purple/60 hover:text-red-500 transition-colors"
-                    aria-label="Remove media"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={clearMedia}
+                  className="text-space-whale-purple/60 hover:text-red-600 transition-colors p-1"
+                  aria-label="Remove media"
+                >
+                  <XIcon className="h-5 w-5" />
+                </button>
+              </div>
+              {mediaType === 'image' && (
+                <img
+                  src={mediaUrl}
+                  alt="Attached"
+                  className="w-full max-h-36 object-cover"
+                />
               )}
             </div>
           )}
         </div>
 
-        {/* Encryption — collapsed by default */}
-        <div className="border border-space-whale-lavender/25 rounded-xl overflow-hidden bg-space-whale-lavender/5">
-          <button
-            type="button"
-            onClick={() => setShowEncryption((v) => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 text-left text-sm font-medium text-space-whale-navy hover:bg-space-whale-lavender/10 transition-colors"
-          >
-            <span className="flex items-center gap-2">
-              {enableEncryption ? (
-                <Lock className="h-4 w-4 text-space-whale-purple" />
-              ) : (
-                <Unlock className="h-4 w-4 text-space-whale-purple/60" />
-              )}
-              Extra encryption <span className="font-normal text-space-whale-purple/60">(optional)</span>
-            </span>
-            {showEncryption ? (
-              <ChevronUp className="h-4 w-4 text-space-whale-purple/60" />
+        {/* Encryption */}
+        <div className="border border-space-whale-lavender/30 rounded-lg p-3 sm:p-4 bg-space-whale-lavender/5">
+          <label className="flex items-center text-sm font-medium text-space-whale-navy font-space-whale-body cursor-pointer">
+            <input
+              type="checkbox"
+              checked={enableEncryption}
+              onChange={(e) => {
+                setEnableEncryption(e.target.checked)
+                if (!e.target.checked) {
+                  setEncryptionPassphrase('')
+                  setConfirmPassphrase('')
+                }
+              }}
+              className="mr-2 h-4 w-4 text-space-whale-purple focus:ring-space-whale-purple border-space-whale-lavender/30 rounded"
+            />
+            {enableEncryption ? (
+              <Lock className="h-4 w-4 mr-2 text-space-whale-purple" />
             ) : (
-              <ChevronDown className="h-4 w-4 text-space-whale-purple/60" />
+              <Unlock className="h-4 w-4 mr-2 text-gray-400" />
             )}
-          </button>
+            <span>Encrypt this entry</span>
+          </label>
 
-          {showEncryption && (
-            <div className="px-4 pb-4 space-y-3 border-t border-space-whale-lavender/20">
-              <label className="flex items-start gap-2 text-sm text-space-whale-navy cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={enableEncryption}
-                  onChange={(e) => {
-                    setEnableEncryption(e.target.checked)
-                    if (!e.target.checked) {
-                      setEncryptionPassphrase('')
-                      setConfirmPassphrase('')
-                    }
-                  }}
-                  className="mt-0.5 h-4 w-4 text-space-whale-purple focus:ring-space-whale-purple border-space-whale-lavender/30 rounded"
-                />
-                <span className="font-space-whale-body text-sm leading-relaxed">
-                  Encrypt this entry with a passphrase only you know. We can&apos;t recover it if you forget.
-                </span>
-              </label>
-
-              {enableEncryption && (
-                <div className="space-y-3 pt-1">
-                  <input
-                    type="password"
-                    value={encryptionPassphrase}
-                    onChange={(e) => setEncryptionPassphrase(e.target.value)}
-                    className="mobile-input w-full px-3 py-2.5 text-sm border border-space-whale-lavender/30 rounded-lg bg-white"
-                    placeholder="Passphrase (min 8 characters)"
-                    minLength={8}
-                  />
-                  <input
-                    type="password"
-                    value={confirmPassphrase}
-                    onChange={(e) => setConfirmPassphrase(e.target.value)}
-                    className="mobile-input w-full px-3 py-2.5 text-sm border border-space-whale-lavender/30 rounded-lg bg-white"
-                    placeholder="Confirm passphrase"
-                    minLength={8}
-                  />
-                </div>
-              )}
+          {enableEncryption && (
+            <div className="space-y-3 mt-3">
+              <div className="bg-space-whale-purple/5 border border-space-whale-purple/20 rounded-lg p-3">
+                <p className="text-xs text-space-whale-navy font-space-whale-body mb-1">
+                  <strong className="text-space-whale-purple">What is encryption?</strong>
+                </p>
+                <p className="text-xs text-space-whale-navy/80 font-space-whale-body leading-relaxed">
+                  Encryption scrambles your words before they&apos;re saved. Only you can unlock them with your passphrase.
+                </p>
+              </div>
+              <input
+                type="password"
+                value={encryptionPassphrase}
+                onChange={(e) => setEncryptionPassphrase(e.target.value)}
+                className="mobile-input w-full px-3 py-2 text-sm border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
+                placeholder="Master encryption passphrase (min 8 characters)"
+                minLength={8}
+              />
+              <input
+                type="password"
+                value={confirmPassphrase}
+                onChange={(e) => setConfirmPassphrase(e.target.value)}
+                className="mobile-input w-full px-3 py-2 text-sm border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
+                placeholder="Confirm passphrase"
+                minLength={8}
+              />
             </div>
           )}
         </div>
       </div>
 
-      {/* Sticky actions */}
-      <div className="shrink-0 border-t border-space-whale-lavender/20 bg-white/95 backdrop-blur-sm px-4 sm:px-6 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex gap-3">
+      <div className="shrink-0 border-t border-space-whale-lavender/20 bg-lofi-card/95 backdrop-blur-sm px-4 sm:px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex justify-end gap-3">
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 sm:flex-none px-5 py-3 min-h-[44px] border border-space-whale-lavender/30 text-space-whale-navy rounded-xl hover:bg-space-whale-lavender/10 transition-colors font-space-whale-accent touch-manipulation"
+            className="px-5 py-2.5 min-h-[44px] border border-space-whale-lavender/30 text-space-whale-navy rounded-lg hover:bg-space-whale-lavender/10 transition-colors font-space-whale-accent touch-manipulation"
           >
             Cancel
           </button>
@@ -418,17 +385,17 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
         <button
           type="submit"
           disabled={loading || uploading || !content.trim()}
-          className="flex-1 flex items-center justify-center gap-2 px-5 py-3 min-h-[44px] bg-space-whale-navy text-white rounded-xl font-space-whale-accent hover:bg-space-whale-dark-purple disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
+          className="flex items-center px-5 py-2.5 min-h-[44px] bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg font-space-whale-accent hover:from-space-whale-purple/90 hover:to-accent-pink/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl touch-manipulation"
         >
           {loading ? (
             <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              Saving…
+              <Loader2 className="h-5 w-5 animate-spin mr-2" />
+              Saving...
             </>
           ) : (
             <>
-              <Save className="h-5 w-5" />
-              Save entry
+              <Save className="h-5 w-5 mr-2" />
+              Save Entry
             </>
           )}
         </button>
@@ -437,20 +404,19 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
   )
 
   const panel = (
-    <div className="flex flex-col max-h-[min(92vh,900px)] w-full bg-white shadow-2xl md:rounded-2xl md:max-w-lg overflow-hidden">
-      <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-4 border-b border-space-whale-lavender/20 bg-white">
-        <div>
-          <h2 className="text-lg sm:text-xl font-space-whale-heading text-space-whale-navy">New journal entry</h2>
-          <p className="text-xs text-space-whale-purple/70 font-space-whale-body mt-0.5">Only you can see this</p>
-        </div>
+    <div className="flex flex-col max-h-[min(92vh,900px)] w-full bg-lofi-card shadow-2xl rainbow-border-soft md:rounded-2xl md:max-w-lg overflow-hidden">
+      <div className="shrink-0 flex items-center justify-between px-4 sm:px-5 pt-4 sm:pt-5 pb-0">
+        <h2 className="text-xl sm:text-2xl font-space-whale-heading text-space-whale-navy">
+          New Journal Entry
+        </h2>
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="p-2 rounded-full text-space-whale-purple/70 hover:text-space-whale-navy hover:bg-space-whale-lavender/15 transition-colors touch-manipulation"
+            className="text-space-whale-purple hover:text-space-whale-navy transition-colors touch-manipulation"
             aria-label="Close"
           >
-            <X className="h-5 w-5" />
+            <X className="h-6 w-6" />
           </button>
         )}
       </div>
@@ -463,7 +429,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
       <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4">
         <button
           type="button"
-          className="absolute inset-0 bg-space-whale-navy/40 backdrop-blur-[2px]"
+          className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
           onClick={onCancel}
           aria-label="Close journal form"
         />
@@ -475,9 +441,5 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
     )
   }
 
-  return (
-    <div className="bg-lofi-card rounded-xl shadow-lg rainbow-border-soft overflow-hidden">
-      {panel}
-    </div>
-  )
+  return panel
 }
