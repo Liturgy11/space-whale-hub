@@ -7,6 +7,7 @@ import CommentForm from './CommentForm'
 import CommentsList from './CommentsList'
 import MediaCarousel from '@/components/media/MediaCarousel'
 import MoodBoardGallery from '@/components/media/MoodBoardGallery'
+import { getMoodBoardDisplayUrls } from '@/lib/mood-board'
 import { getPostMediaUrls } from '@/lib/post-media'
 
 interface Post {
@@ -304,7 +305,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
           {post.media_type === 'moodboard' && (
             <div className="mt-3">
               <MoodBoardGallery
-                tags={post.tags}
+                urls={getMoodBoardDisplayUrls(post)}
                 onImageClick={(index, allUrls) =>
                   openImageLightbox(allUrls[index], allUrls, index)
                 }

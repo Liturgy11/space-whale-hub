@@ -9,7 +9,7 @@ import { Calendar, Heart, Edit, Trash2, Lock, Eye, Share2, X, ChevronLeft, Chevr
 import { uploadMultipleMedia } from '@/lib/storage-client'
 import MoodBoardGallery from '@/components/media/MoodBoardGallery'
 import ReorderableImageGrid from '@/components/media/ReorderableImageGrid'
-import { getMoodBoardImageUrls } from '@/lib/mood-board'
+import { getMoodBoardDisplayUrls, getMoodBoardImageUrls } from '@/lib/mood-board'
 
 const JOURNAL_CACHE_KEY = 'swp_journal_cache'
 const JOURNAL_CACHE_TTL = 3 * 60 * 1000 // 3 minutes
@@ -474,16 +474,19 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       setSharingId(entry.id)
       setShareModalEntry(null)
 
+      const imageUrls = getMoodBoardDisplayUrls(entry)
+
       const response = await fetch('/api/create-post-secure', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content: description,
-          tags: entry.tags || [],
+          content: description.trim(),
+          tags: [],
           content_warning: undefined,
-          media_url: entry.media_url || undefined,
+          media_urls: imageUrls.length > 0 ? imageUrls : undefined,
+          media_url: imageUrls[0] || entry.media_url || undefined,
           media_type: entry.media_type || undefined,
           userId: user.id
         })
@@ -498,7 +501,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       toast('✨ Your thoughts are now floating in the Community Orbit! ✨', 'success')
       
     } catch (err: any) {
-      setError(err.message)
+      toast(err.message || 'Failed to share to Community Orbit', 'error')
     } finally {
       setSharingId(null)
     }
@@ -664,7 +667,12 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
               </div>
             )}
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Description <span className="font-normal text-gray-400 dark:text-gray-500">(visible to all space whales)</span>
+              Description{' '}
+              <span className="font-normal text-gray-400 dark:text-gray-500">
+                {shareModalEntry.media_type === 'moodboard'
+                  ? '(optional — your images will be shared)'
+                  : '(visible to all space whales)'}
+              </span>
             </label>
             <textarea
               value={shareDescription}

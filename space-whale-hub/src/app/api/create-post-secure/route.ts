@@ -13,7 +13,29 @@ export async function POST(request: NextRequest) {
       userId 
     } = await request.json()
     
-    if (!content) {
+    const trimmedContent = (content ?? '').trim()
+
+    const tagImageUrls: string[] = Array.isArray(tags)
+      ? tags.filter(
+          (u: unknown) =>
+            typeof u === 'string' &&
+            (u.startsWith('https://') || u.startsWith('data:image/'))
+        )
+      : []
+
+    let urlList: string[] = Array.isArray(media_urls)
+      ? media_urls.filter((u: unknown) => typeof u === 'string' && u.length > 0)
+      : media_url
+        ? [media_url]
+        : []
+
+    if (urlList.length === 0 && tagImageUrls.length > 0) {
+      urlList = tagImageUrls
+    }
+
+    const hasMedia = urlList.length > 0
+
+    if (!trimmedContent && !hasMedia) {
       return NextResponse.json({
         success: false,
         error: 'Content is required'
@@ -49,27 +71,32 @@ export async function POST(request: NextRequest) {
       }
     )
 
-    const urlList: string[] = Array.isArray(media_urls)
-      ? media_urls.filter((u: unknown) => typeof u === 'string' && u.length > 0)
-      : media_url
-        ? [media_url]
-        : []
+    const textTags: string[] = Array.isArray(tags)
+      ? tags.filter(
+          (t: unknown) =>
+            typeof t === 'string' &&
+            !t.startsWith('https://') &&
+            !t.startsWith('data:')
+        )
+      : []
 
     const primaryUrl = urlList[0] || media_url || null
     const resolvedType =
-      urlList.length > 1
-        ? 'gallery'
-        : urlList.length === 1
-          ? media_type || 'image'
-          : media_type || null
+      media_type === 'moodboard'
+        ? 'moodboard'
+        : urlList.length > 1
+          ? 'gallery'
+          : urlList.length === 1
+            ? media_type || 'image'
+            : media_type || null
 
     // Create the post using service role
     const { data, error } = await supabaseAdmin
       .from('posts')
       .insert({
         user_id: userId,
-        content: content.trim(),
-        tags: tags || [],
+        content: trimmedContent,
+        tags: textTags,
         has_content_warning: !!content_warning,
         content_warning_text: content_warning || null,
         media_url: primaryUrl,

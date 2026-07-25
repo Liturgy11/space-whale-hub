@@ -99,7 +99,7 @@ export default function MoodBoardGallery({
 
   if (count === 3) {
     return (
-      <div className={`grid grid-cols-2 grid-rows-2 gap-1.5 h-52 sm:h-64 ${className}`}>
+      <div className={`grid grid-cols-2 grid-rows-2 gap-1.5 w-full min-h-[13rem] sm:min-h-[16rem] ${className}`}>
         <GalleryCell
           url={urls[0]}
           alt="Mood board image 1"
@@ -133,7 +133,7 @@ export default function MoodBoardGallery({
   const extra = count - 4
 
   return (
-    <div className={`grid grid-cols-2 grid-rows-2 gap-1.5 aspect-square max-h-72 sm:max-h-80 ${className}`}>
+    <div className={`grid grid-cols-2 gap-1.5 w-full ${className}`}>
       {visible.map((url, index) => (
         <GalleryCell
           key={`${url}-${index}`}
@@ -143,7 +143,7 @@ export default function MoodBoardGallery({
           allUrls={urls}
           onImageClick={onImageClick}
           overlay={index === 3 && extra > 0 ? `+${extra}` : undefined}
-          className="min-h-0"
+          className="aspect-square w-full min-h-0"
         />
       ))}
     </div>
