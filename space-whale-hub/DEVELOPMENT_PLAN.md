@@ -31,11 +31,12 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
 - **COSMIC TYPOGRAPHY** - Poppins (headings), Inter (body), Quicksand (accents)
 - **INDIE/LOFI AESTHETIC** - Soft, minimal, cosmic but cozy design language
 - **COSMIC NAMING SYSTEM** - Community Orbit, Inner Space, Deep Space, The Archive
-- **TRANS FLAG ICONS** - Cosmic icons with trans colors (Star, Orbit, Sparkles, Heart)
+- **CUSTOM ILLUSTRATION LIBRARY** - Transparent PNG collage assets in `public/illustrations/` (Star Baby, whale, star, mushrooms, pink-stack, etc.) with `manifest.json` and batch processing scripts
+- **SPACE ICON MAPPING** - Consistent icons across Explore menu, home cards, About Four Spaces, and Constellation tabs
 - **FLOATING ANIMATIONS** - Gentle cosmic animations for visual appeal
 - **RAINBOW BORDERS** - Soft rainbow borders and glow effects
 - **CLEAN READABILITY** - White background with navy/purple text for accessibility
-- **CREATE BUTTON UX** - Moved to main page to prevent cutoff, better positioning
+- **EXPLORE BUTTON UX** - Cream/pink gradient pill, text + chevron only; illustrations live in the dropdown
 
 ## Strategic Vision & Key Themes 🌟
 
@@ -317,9 +318,9 @@ All changes are committed and pushed to GitHub.
 - ✅ **Constellation page background** — `mycelial-landscape.png` (your watercolour with dancing mycelium figures) placed as a fixed faded background, giving the page its own story
 - ✅ All backgrounds now using original Space Whale artwork across: Home (`deep-space-orbits.png`), Community Orbit (`fun-stars.png`), Inner Space (`teal-landscape.png`), About (`cosmic-rainbow.png`), Auth (`cosmic-rainbow.png`), Workshops (`vivid-mushrooms.png`), Mycelial Network (`forest-background.png`)
 
-### Explore Button & Navigation Redesign
-- ✅ **Explore button** restyled as a rounded pill with a gradient rainbow border, whale emoji 🐋, and a rotating chevron — much more visually present on the home page
-- ✅ **Dropdown expanded** — emoji icons replace lucide icons; added direct links to **🍄 Mycelial Network** (`/archive?tab=network`) and **✦ Constellation** alongside existing sections
+### Explore Button & Navigation Redesign *(updated 25 Jul 2026 — see session above)*
+- ✅ **Explore button** restyled as a rounded pill with a gradient rainbow border and rotating chevron
+- ✅ **Dropdown expanded** — brand illustration icons; direct links to Mycelial Network and Constellation alongside existing sections
 - ✅ **Frosted glass dropdown** with cleaner card layout
 
 ### Community Orbit Readability Fix
@@ -332,6 +333,41 @@ All changes are committed and pushed to GitHub.
 - ✅ **Remove individual images** — hover ✕ button on each image in the edit grid
 - ✅ **Caption field** — relabelled from "Content" to "Caption" for moodboards; optional (images-only moodboards can save without text)
 - ✅ **API validation fixed** — `update-journal-entry-secure` now accepts moodboard entries with images in `tags` even when `content`, `media_url`, and `content_encrypted` are all empty
+
+---
+
+## Recent Achievements (Session — 25 Jul 2026) 🎉
+
+### Illustration Library & Icon Consistency
+- ✅ **Transparent PNG library** — 9 collage assets processed to true RGBA cutouts in `public/illustrations/` (`star-baby`, `star`, `whale`, `mushroom-1/3/4/painted`, `pink-stack`, `pickaxe`) with `manifest.json` catalog
+- ✅ **Batch processing scripts** — `scripts/batch-transparent-illustrations.py` and helpers for future asset drops
+
+### Home Page — Explore & Feature Cards
+- ✅ **Explore dropdown** — emoji icons replaced with brand illustrations:
+  - Inner Space → `pink-stack.png` (eye-like #7 in the PNG series)
+  - Community Orbit → Star Baby
+  - Deep Space → whale
+  - Mycelial Network → mushroom-3
+  - Constellation → star
+- ✅ **Explore button polish** — harsh white fill swapped for lavender-pink cream gradient; icon removed from button face (text + chevron only — illustrations show in dropdown)
+- ✅ **Home feature cards** — all four spaces use same illustration mapping as Explore menu
+- ✅ **Shared `SpaceIcon` component** — single source for icon config on home page (easy swap when Inner Space art is finalised)
+
+### About Page
+- ✅ **Four Spaces section** — Lucide icons replaced to match home: pink-stack, Star Baby, star, whale
+
+### Constellation (from earlier in session)
+- ✅ **Tab bar icons** — Archive (star), Mycelial Network (mushroom-3)
+- ✅ **About page** — Star Baby on Welcome; mushroom-3 on Mycelial Network banner + CTA
+
+### Illustration Integration — Still To Do (Quick Wins)
+- [ ] Feed Mycelial Network banner — swap inline 🍄 for mushroom-3
+- [ ] SporeForm header — same mushroom swap
+- [ ] Empty states — replace 🐋 emoji with space-specific illustrations (FeedList, JournalList, ArchivePage, Welcome modal)
+- [ ] Mobile bottom nav — try tiny illustration icons at nav size
+- [ ] Update `manifest.json` label for pink-stack → "Inner Space eye" once confirmed
+
+All changes committed and pushed to `main` (deploys via Vercel).
 
 ---
 
