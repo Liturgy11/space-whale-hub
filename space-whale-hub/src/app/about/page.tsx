@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, Star, Eye, CircleDotDashed, Zap, RotateCcw, Orbit } from "lucide-react";
+import { Heart, Star, CircleDotDashed, Zap, RotateCcw, Orbit } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/layout/AppShell";
 
@@ -130,7 +130,10 @@ function AboutContent() {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="bg-lofi-card rounded-xl p-6 shadow-lg rainbow-border-soft glow-soft">
               <div className="flex items-center mb-4">
-                <Eye className="h-8 w-8 text-pink-400 mr-3" />
+                <SectionIllustration
+                  src="/illustrations/pink-stack.png"
+                  className="h-8 w-8 mr-3"
+                />
                 <h3 className="text-xl font-space-whale-subheading text-space-whale-navy">Inner Space</h3>
               </div>
               <p className="text-space-whale-navy font-space-whale-body">

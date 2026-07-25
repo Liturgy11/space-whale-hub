@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
-import { ChevronDown, Eye, type LucideIcon } from "lucide-react";
+import { ChevronDown, type LucideIcon } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/layout/AppShell";
 import SetDisplayName from "@/components/SetDisplayName";
@@ -40,7 +40,7 @@ type ExploreMenuItem = {
 };
 
 const exploreMenuItems: ExploreMenuItem[] = [
-  { href: "/personal", icon: { icon: Eye, iconClassName: "text-pink-400" }, label: "Inner Space", sub: "Journal & reflect" },
+  { href: "/personal", icon: { iconSrc: "/illustrations/pink-stack.png" }, label: "Inner Space", sub: "Journal & reflect" },
   { href: "/feed", icon: { iconSrc: "/illustrations/star-baby.png" }, label: "Community Orbit", sub: "Share with community" },
   { href: "/workshops", icon: { iconSrc: "/illustrations/whale.png" }, label: "Deep Space", sub: "Workshops & resources" },
   { href: "/archive?tab=network", icon: { iconSrc: "/illustrations/mushroom-3.png" }, label: "Mycelial Network", sub: "Find your people" },
@@ -70,7 +70,7 @@ const featureCards = [
     href: "/personal",
     label: "Inner Space",
     description: "Your private journal for reflection and creativity. Write, collect inspiration, and explore prompts.",
-    icon: { icon: Eye, iconClassName: "text-pink-400" },
+    icon: { iconSrc: "/illustrations/pink-stack.png" },
   },
 ] as const;
 
