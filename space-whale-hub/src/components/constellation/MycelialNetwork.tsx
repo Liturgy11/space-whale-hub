@@ -14,8 +14,24 @@ import {
   Position,
   BackgroundVariant,
 } from '@xyflow/react'
+import Image from 'next/image'
 import '@xyflow/react/dist/style.css'
 import { Sparkles, X, MapPin, Heart, Star } from 'lucide-react'
+
+const MUSHROOM_ILLUSTRATION = '/illustrations/mushroom-3.png'
+
+function MycelialMushroom({ className = 'h-16 w-16' }: { className?: string }) {
+  return (
+    <Image
+      src={MUSHROOM_ILLUSTRATION}
+      alt=""
+      width={80}
+      height={80}
+      aria-hidden
+      className={`object-contain drop-shadow-sm ${className}`}
+    />
+  )
+}
 
 interface Spore {
   user_id: string
@@ -202,7 +218,9 @@ export default function MycelialNetwork({ currentUserId, onEditSpore, onCurrentS
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <div className="text-5xl mb-4 animate-float">🍄</div>
+          <div className="mb-4 animate-float flex justify-center">
+            <MycelialMushroom className="h-16 w-16 sm:h-20 sm:w-20" />
+          </div>
           <p className="text-space-whale-purple/70 font-space-whale-body text-sm">Growing the network…</p>
         </div>
       </div>
@@ -213,7 +231,9 @@ export default function MycelialNetwork({ currentUserId, onEditSpore, onCurrentS
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center max-w-md mx-auto px-4">
-          <div className="text-5xl mb-4">🌱</div>
+          <div className="mb-4 animate-float flex justify-center">
+            <MycelialMushroom className="h-16 w-16 sm:h-20 sm:w-20" />
+          </div>
           <h3 className="text-lg font-space-whale-heading text-space-whale-navy mb-2">The forest is waiting</h3>
           <p className="text-sm text-space-whale-purple/70 font-space-whale-body mb-6">
             Be the first to place yourself in the network. When you are ready.

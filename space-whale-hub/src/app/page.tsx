@@ -120,7 +120,14 @@ function HomeContent() {
                 className="group relative inline-flex items-center gap-2 px-8 py-3 rounded-full font-space-whale-accent text-space-whale-navy text-base bg-white/70 backdrop-blur-sm border-2 border-transparent hover:border-space-whale-purple/40 shadow-lg hover:shadow-space-whale-purple/20 transition-all duration-300"
                 style={{ background: 'linear-gradient(white, white) padding-box, linear-gradient(135deg, #a78bfa, #f472b6, #fb923c) border-box' }}
               >
-                <span className="text-xl">🐋</span>
+                <Image
+                  src="/illustrations/star-baby.png"
+                  alt=""
+                  width={28}
+                  height={28}
+                  aria-hidden
+                  className="h-7 w-7 object-contain"
+                />
                 Explore
                 <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showCreateMenu ? 'rotate-180' : ''}`} />
               </button>
