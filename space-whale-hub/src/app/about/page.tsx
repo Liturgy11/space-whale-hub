@@ -1,9 +1,29 @@
 'use client'
 
 import Link from "next/link";
-import { Heart, Star, Eye, CircleDotDashed, Zap, RotateCcw, Orbit, Sprout } from "lucide-react";
+import Image from "next/image";
+import { Heart, Star, Eye, CircleDotDashed, Zap, RotateCcw, Orbit } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/layout/AppShell";
+
+function SectionIllustration({
+  src,
+  className = "h-7 w-7",
+}: {
+  src: string
+  className?: string
+}) {
+  return (
+    <Image
+      src={src}
+      alt=""
+      width={32}
+      height={32}
+      aria-hidden
+      className={`object-contain flex-shrink-0 ${className}`}
+    />
+  )
+}
 
 function AboutContent() {
   return (
@@ -37,26 +57,10 @@ function AboutContent() {
         <section className="mb-16">
           <div className="bg-lofi-card rounded-xl p-8 shadow-lg rainbow-border-soft glow-soft">
             <h2 className="text-2xl font-space-whale-subheading text-space-whale-navy mb-6 flex items-center">
-              <svg 
-                className="h-6 w-6 mr-3 text-space-whale-purple" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-              >
-                {/* Mushroom cap */}
-                <path d="M12 4C8 4 5 7 5 11c0 2 1 3.5 2.5 4.5" />
-                <path d="M12 4c4 0 7 3 7 7 0 2-1 3.5-2.5 4.5" />
-                <ellipse cx="12" cy="11" rx="7" ry="3" />
-                {/* Mushroom stem */}
-                <rect x="10" y="11" width="4" height="8" rx="1" />
-                {/* Small spots on cap */}
-                <circle cx="9" cy="9" r="1" fill="currentColor" />
-                <circle cx="15" cy="9" r="1" fill="currentColor" />
-                <circle cx="12" cy="7" r="0.8" fill="currentColor" />
-              </svg>
+              <SectionIllustration
+                src="/illustrations/star-baby.png"
+                className="h-8 w-8 mr-3"
+              />
               Welcome traveller
             </h2>
             <div className="space-y-4 text-space-whale-navy font-space-whale-body">
@@ -86,9 +90,12 @@ function AboutContent() {
         <section className="mb-16">
           <div className="bg-gradient-to-r from-space-whale-lavender/30 to-accent-pink/20 border border-space-whale-lavender/40 rounded-xl p-8 shadow-lg">
             <div className="flex items-center mb-4">
-              <Sprout className="h-6 w-6 mr-3 text-space-whale-purple flex-shrink-0" />
+              <SectionIllustration
+                src="/illustrations/mushroom-3.png"
+                className="h-8 w-8 mr-3"
+              />
               <h2 className="text-2xl font-space-whale-subheading text-space-whale-navy">
-                New: The Mycelial Network 🍄
+                New: The Mycelial Network
               </h2>
             </div>
             <div className="space-y-3 text-space-whale-navy font-space-whale-body mb-6">
@@ -106,7 +113,10 @@ function AboutContent() {
               href="/archive?tab=network"
               className="btn-space-whale-secondary inline-flex items-center justify-center"
             >
-              <Sprout className="h-4 w-4 mr-2" />
+              <SectionIllustration
+                src="/illustrations/mushroom-3.png"
+                className="h-5 w-5 mr-2"
+              />
               Visit the Mycelial Network
             </Link>
           </div>
