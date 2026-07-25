@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, Star, CircleDotDashed, Zap, RotateCcw, Orbit } from "lucide-react";
+import { Heart, Zap, RotateCcw } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/layout/AppShell";
 
@@ -143,7 +143,10 @@ function AboutContent() {
 
             <div className="bg-lofi-card rounded-xl p-6 shadow-lg rainbow-border-soft glow-soft">
               <div className="flex items-center mb-4">
-                <Orbit className="h-8 w-8 text-yellow-500 mr-3" />
+                <SectionIllustration
+                  src="/illustrations/star-baby.png"
+                  className="h-8 w-8 mr-3"
+                />
                 <h3 className="text-xl font-space-whale-subheading text-space-whale-navy">Community Orbit</h3>
               </div>
               <p className="text-space-whale-navy font-space-whale-body">
@@ -153,7 +156,10 @@ function AboutContent() {
 
             <div className="bg-lofi-card rounded-xl p-6 shadow-lg rainbow-border-soft glow-soft">
               <div className="flex items-center mb-4">
-                <Star className="h-8 w-8 text-purple-800 mr-3" />
+                <SectionIllustration
+                  src="/illustrations/star.png"
+                  className="h-8 w-8 mr-3"
+                />
                 <h3 className="text-xl font-space-whale-subheading text-space-whale-navy">Constellation</h3>
               </div>
               <p className="text-space-whale-navy font-space-whale-body">
@@ -163,7 +169,10 @@ function AboutContent() {
 
             <div className="bg-lofi-card rounded-xl p-6 shadow-lg rainbow-border-soft glow-soft">
               <div className="flex items-center mb-4">
-                <CircleDotDashed className="h-8 w-8 text-cyan-500 mr-3" />
+                <SectionIllustration
+                  src="/illustrations/whale.png"
+                  className="h-8 w-8 mr-3"
+                />
                 <h3 className="text-xl font-space-whale-subheading text-space-whale-navy">Deep Space</h3>
               </div>
               <p className="text-space-whale-navy font-space-whale-body">
