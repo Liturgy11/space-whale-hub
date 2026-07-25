@@ -3,12 +3,29 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
-import { ChevronDown, Star, Orbit, Eye, CircleDotDashed } from "lucide-react";
+import { ChevronDown, Star, Orbit, Eye, CircleDotDashed, type LucideIcon } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/layout/AppShell";
 import SetDisplayName from "@/components/SetDisplayName";
 import WelcomeModal from "@/components/WelcomeModal";
 import { useAuth } from "@/contexts/AuthContext";
+
+type ExploreMenuItem = {
+  href: string;
+  label: string;
+  sub: string;
+} & (
+  | { iconSrc: string }
+  | { icon: LucideIcon; iconClassName?: string }
+);
+
+const exploreMenuItems: ExploreMenuItem[] = [
+  { href: '/personal', icon: Eye, iconClassName: 'text-pink-400', label: 'Inner Space', sub: 'Journal & reflect' },
+  { href: '/feed', iconSrc: '/illustrations/star-baby.png', label: 'Community Orbit', sub: 'Share with community' },
+  { href: '/workshops', iconSrc: '/illustrations/whale.png', label: 'Deep Space', sub: 'Workshops & resources' },
+  { href: '/archive?tab=network', iconSrc: '/illustrations/mushroom-3.png', label: 'Mycelial Network', sub: 'Find your people' },
+  { href: '/archive', iconSrc: '/illustrations/star.png', label: 'Constellation', sub: 'Archive & gallery' },
+];
 
 function HomeContent() {
   const { user } = useAuth();
@@ -117,8 +134,11 @@ function HomeContent() {
             <div className="relative inline-block" ref={createMenuRef}>
               <button
                 onClick={() => setShowCreateMenu(!showCreateMenu)}
-                className="group relative inline-flex items-center gap-2 px-8 py-3 rounded-full font-space-whale-accent text-space-whale-navy text-base bg-white/70 backdrop-blur-sm border-2 border-transparent hover:border-space-whale-purple/40 shadow-lg hover:shadow-space-whale-purple/20 transition-all duration-300"
-                style={{ background: 'linear-gradient(white, white) padding-box, linear-gradient(135deg, #a78bfa, #f472b6, #fb923c) border-box' }}
+                className="group relative inline-flex items-center gap-2 px-8 py-3 rounded-full font-space-whale-accent text-space-whale-navy text-base backdrop-blur-sm border-2 border-transparent hover:border-space-whale-purple/40 shadow-lg hover:shadow-space-whale-purple/20 transition-all duration-300"
+                style={{
+                  background:
+                    'linear-gradient(135deg, #f5edfa 0%, #ffe8f0 55%, #ffede4 100%) padding-box, linear-gradient(135deg, #a78bfa, #f472b6, #fb923c) border-box',
+                }}
               >
                 <Image
                   src="/illustrations/star-baby.png"
@@ -137,19 +157,26 @@ function HomeContent() {
                 <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-3 w-72 rounded-2xl shadow-xl z-50 border border-space-whale-purple/20 overflow-hidden"
                   style={{ background: 'linear-gradient(135deg, rgba(232,221,243,0.97) 0%, rgba(255,230,240,0.97) 60%, rgba(255,220,200,0.97) 100%)', backdropFilter: 'blur(12px)' }}>
                   <div className="p-2">
-                    {[
-                      { href: '/personal', emoji: '👁️', label: 'Inner Space', sub: 'Journal & reflect' },
-                      { href: '/feed', emoji: '🪐', label: 'Community Orbit', sub: 'Share with community' },
-                      { href: '/workshops', emoji: '🔭', label: 'Deep Space', sub: 'Workshops & resources' },
-                      { href: '/archive?tab=network', emoji: '🍄', label: 'Mycelial Network', sub: 'Find your people' },
-                      { href: '/archive', emoji: '✦', label: 'Constellation', sub: 'Archive & gallery' },
-                    ].map(({ href, emoji, label, sub }) => (
-                      <Link key={href} href={href} onClick={() => setShowCreateMenu(false)}
+                    {exploreMenuItems.map((item) => (
+                      <Link key={item.href} href={item.href} onClick={() => setShowCreateMenu(false)}
                         className="flex items-center gap-4 p-3 hover:bg-space-whale-purple/10 rounded-xl transition-colors text-left">
-                        <span className="text-2xl w-8 text-center flex-shrink-0">{emoji}</span>
+                        <span className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                          {'iconSrc' in item ? (
+                            <Image
+                              src={item.iconSrc}
+                              alt=""
+                              width={28}
+                              height={28}
+                              aria-hidden
+                              className="h-7 w-7 object-contain"
+                            />
+                          ) : (
+                            <item.icon className={`h-7 w-7 ${item.iconClassName ?? 'text-space-whale-navy'}`} aria-hidden />
+                          )}
+                        </span>
                         <div className="text-left">
-                          <div className="font-medium text-space-whale-navy">{label}</div>
-                          <div className="text-xs text-space-whale-purple">{sub}</div>
+                          <div className="font-medium text-space-whale-navy">{item.label}</div>
+                          <div className="text-xs text-space-whale-purple">{item.sub}</div>
                         </div>
                       </Link>
                     ))}
