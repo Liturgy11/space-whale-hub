@@ -5,7 +5,8 @@ import ConstellationTabs from "@/components/constellation/ConstellationTabs";
 export default function Archive() {
   return (
     <AppShell
-      title="Constellation"
+      showDesktopNav
+      showUserProfile
       className="min-h-screen bg-gradient-to-br from-space-whale-lavender/20 via-white to-space-whale-purple/10"
       backgroundImage="/mycelial-landscape.png"
       backgroundOpacity={0.18}

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import UserProfile from '@/components/UserProfile'
 
@@ -35,7 +36,15 @@ export default function SiteNav({
   logoSize = 'md',
 }: SiteNavProps) {
   const { user } = useAuth()
+  const pathname = usePathname()
   const isAdmin = user?.email === ADMIN_EMAIL
+
+  function isNavLinkActive(href: string) {
+    if (href === '/archive') {
+      return pathname === '/archive' || pathname.startsWith('/albums')
+    }
+    return pathname === href
+  }
 
   const logoWidth = logoSize === 'sm' ? 28 : 32
   const logoHeight = logoSize === 'sm' ? 28 : 32
@@ -67,7 +76,6 @@ export default function SiteNav({
         <div className="flex justify-between items-center h-16">
           <div
             className={`flex items-center ${logoSize === 'sm' ? 'space-x-2 sm:space-x-4' : 'space-x-4'}`}
-            suppressHydrationWarning={title === 'Constellation'}
           >
             {linkHome ? (
               <Link
@@ -87,7 +95,11 @@ export default function SiteNav({
                 <Link
                   key={href}
                   href={href}
-                  className="text-space-whale-navy hover:text-space-whale-purple transition-colors font-space-whale-accent"
+                  className={`transition-colors font-space-whale-accent ${
+                    isNavLinkActive(href)
+                      ? 'text-space-whale-purple'
+                      : 'text-space-whale-navy hover:text-space-whale-purple'
+                  }`}
                 >
                   {label}
                 </Link>

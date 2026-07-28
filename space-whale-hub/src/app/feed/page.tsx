@@ -62,7 +62,7 @@ function CommunityFeedContent() {
 
   return (
     <AppShell
-      title="Community Orbit"
+      showDesktopNav
       showUserProfile
       logoSize="sm"
       backgroundImage="/fun-stars.png"

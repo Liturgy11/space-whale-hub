@@ -3,7 +3,7 @@ import AppShell from '@/components/layout/AppShell'
 export default function FeedLoading() {
   return (
     <AppShell
-      title="Community Orbit"
+      showDesktopNav
       logoSize="sm"
       backgroundImage="/fun-stars.png"
       backgroundOpacity={0.28}

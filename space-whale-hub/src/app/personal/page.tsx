@@ -55,7 +55,7 @@ function PersonalSpaceContent() {
 
   return (
     <AppShell
-      title="Inner Space"
+      showDesktopNav
       showUserProfile
       logoSize="sm"
       className={getWallpaperClass()}

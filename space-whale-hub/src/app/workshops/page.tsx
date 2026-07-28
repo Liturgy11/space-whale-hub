@@ -48,7 +48,8 @@ export default function Workshops() {
 
   return (
     <AppShell
-      title="Deep Space"
+      showDesktopNav
+      showUserProfile
       className="min-h-screen bg-white relative"
       backgroundImage="/vivid-mushrooms.png"
       backgroundOpacity={0.12}
