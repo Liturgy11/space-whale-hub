@@ -21,7 +21,14 @@ const output = path.resolve(outputArg);
 
 const LID_TEAL = [64, 160, 192]; // mood-board-moon accent-teal
 const NAVY = [6, 10, 73]; // space-whale-navy
-const GOLD = [240, 208, 96];
+const TWINKLE_GOLD = [236, 196, 76]; // star.png yellow — reads gold at icon size, not white
+
+function isTwinkle(r, g, b) {
+  // Star + dot highlights; also catch pale cream/yellow that reads white when small
+  if (r > 160 && g > 100 && b < 180 && r > b + 20 && g > b) return true;
+  if (r > 200 && g > 170 && b > 90 && b < 170) return true;
+  return false;
+}
 
 function pixelKind(r, g, b) {
   const max = Math.max(r, g, b);
@@ -30,7 +37,7 @@ function pixelKind(r, g, b) {
 
   if (max < 28) return 'bg';
 
-  if (r > 175 && g > 125 && b < 165 && r > b + 40) return 'gold';
+  if (isTwinkle(r, g, b)) return 'gold';
 
   if (r > 150 && b > 80 && r > g + 10) return 'pink';
 
@@ -98,9 +105,9 @@ for (let i = 0, p = 0; i < data.length; i += 4, p++) {
   alpha[p] = 255;
 
   if (kind === 'gold') {
-    rgb[p * 3] = GOLD[0];
-    rgb[p * 3 + 1] = GOLD[1];
-    rgb[p * 3 + 2] = GOLD[2];
+    rgb[p * 3] = TWINKLE_GOLD[0];
+    rgb[p * 3 + 1] = TWINKLE_GOLD[1];
+    rgb[p * 3 + 2] = TWINKLE_GOLD[2];
   } else if (kind === 'navy') {
     rgb[p * 3] = NAVY[0];
     rgb[p * 3 + 1] = NAVY[1];
@@ -119,10 +126,10 @@ for (let i = 0, p = 0; i < data.length; i += 4, p++) {
   const r = data[i];
   const g = data[i + 1];
   const b = data[i + 2];
-  if (r > 175 && g > 125 && b < 165 && r > b + 40 && cleanedAlpha[p]) {
-    rgb[p * 3] = GOLD[0];
-    rgb[p * 3 + 1] = GOLD[1];
-    rgb[p * 3 + 2] = GOLD[2];
+  if (isTwinkle(r, g, b) && cleanedAlpha[p]) {
+    rgb[p * 3] = TWINKLE_GOLD[0];
+    rgb[p * 3 + 1] = TWINKLE_GOLD[1];
+    rgb[p * 3 + 2] = TWINKLE_GOLD[2];
   }
 }
 
