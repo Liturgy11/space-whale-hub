@@ -40,7 +40,7 @@ type ExploreMenuItem = {
 };
 
 const exploreMenuItems: ExploreMenuItem[] = [
-  { href: "/personal", icon: { iconSrc: "/illustrations/pink-stack.png" }, label: "Inner Space", sub: "Journal & reflect" },
+  { href: "/personal", icon: { iconSrc: "/illustrations/inner-space-eye.png" }, label: "Inner Space", sub: "Journal & reflect" },
   { href: "/feed", icon: { iconSrc: "/illustrations/star-baby.png" }, label: "Community Orbit", sub: "Share with community" },
   { href: "/workshops", icon: { iconSrc: "/illustrations/whale.png" }, label: "Deep Space", sub: "Workshops & resources" },
   { href: "/archive?tab=network", icon: { iconSrc: "/illustrations/mushroom-3.png" }, label: "Mycelial Network", sub: "Find your people" },
@@ -70,7 +70,7 @@ const featureCards = [
     href: "/personal",
     label: "Inner Space",
     description: "Your private journal for reflection and creativity. Write, collect inspiration, and explore prompts.",
-    icon: { iconSrc: "/illustrations/pink-stack.png" },
+    icon: { iconSrc: "/illustrations/inner-space-eye.png" },
   },
 ] as const;
 

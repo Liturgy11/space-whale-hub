@@ -61,5 +61,12 @@
     "label": "Pink layered stack",
     "width": 131,
     "height": 163
+  },
+  {
+    "file": "/illustrations/inner-space-eye.png",
+    "name": "inner-space-eye",
+    "label": "Inner Space — magenta paper-cutout eye",
+    "width": 104,
+    "height": 52
   }
 ]

@@ -131,7 +131,7 @@ function AboutContent() {
             <div className="bg-lofi-card rounded-xl p-6 shadow-lg rainbow-border-soft glow-soft">
               <div className="flex items-center mb-4">
                 <SectionIllustration
-                  src="/illustrations/pink-stack.png"
+                  src="/illustrations/inner-space-eye.png"
                   className="h-8 w-8 mr-3"
                 />
                 <h3 className="text-xl font-space-whale-subheading text-space-whale-navy">Inner Space</h3>
