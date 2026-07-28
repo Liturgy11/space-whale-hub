@@ -15,7 +15,7 @@ export default function MobileNav() {
       shortName: 'Inner',
       href: '/personal',
       icon: Eye,
-      iconColor: 'text-teal-500',
+      iconColor: 'text-pink-400',
       active: pathname === '/personal',
     },
     {
