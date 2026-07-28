@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Flat magenta eye graphic → brand magenta + gold outline strokes + gold pupil.
+ * Flat magenta eye graphic → brand magenta + black outline + gold pupil.
  *
  * Usage:
  *   node scripts/process-inner-space-eye-v2.mjs <input.png> <output.png>
@@ -21,7 +21,8 @@ const output = path.resolve(outputArg);
 
 const MAGENTA = [217, 70, 180];
 const GOLD = [240, 208, 96];
-const OUTLINE_PX = 1;
+const OUTLINE = [6, 10, 73]; // space-whale-navy — crisp definition on cards
+const OUTLINE_PX = 2;
 
 function pixelKind(r, g, b) {
   const max = Math.max(r, g, b);
@@ -180,9 +181,9 @@ for (let p = 0; p < width * height; p++) {
     rgb[p * 3 + 1] = GOLD[1];
     rgb[p * 3 + 2] = GOLD[2];
   } else if (dark[p]) {
-    rgb[p * 3] = GOLD[0];
-    rgb[p * 3 + 1] = GOLD[1];
-    rgb[p * 3 + 2] = GOLD[2];
+    rgb[p * 3] = OUTLINE[0];
+    rgb[p * 3 + 1] = OUTLINE[1];
+    rgb[p * 3 + 2] = OUTLINE[2];
   }
 }
 
@@ -195,9 +196,9 @@ for (let p = 0; p < width * height; p++) {
   const outlineOnly = outlineAlpha[p] > 0 && fillA < 80;
 
   if (outlineOnly) {
-    out[i] = GOLD[0];
-    out[i + 1] = GOLD[1];
-    out[i + 2] = GOLD[2];
+    out[i] = OUTLINE[0];
+    out[i + 1] = OUTLINE[1];
+    out[i + 2] = OUTLINE[2];
     out[i + 3] = 255;
   } else if (fillA > 0) {
     out[i] = rgb[p * 3];
