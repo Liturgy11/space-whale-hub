@@ -65,8 +65,15 @@
   {
     "file": "/illustrations/inner-space-eye.png",
     "name": "inner-space-eye",
-    "label": "Inner Space — magenta paper-cutout eye",
+    "label": "Inner Space — magenta paper-cutout eye with gold outline",
     "width": 104,
     "height": 52
+  },
+  {
+    "file": "/illustrations/mood-board-moon.png",
+    "name": "mood-board-moon",
+    "label": "Mood board — teal paper-cutout moon with gold outline",
+    "width": 120,
+    "height": 140
   }
 ]

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from "react";
-import { Key, Settings } from "lucide-react";
+import Image from "next/image";
+import { Settings } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/layout/AppShell";
 import { useAuth } from "@/contexts/AuthContext";
@@ -102,8 +103,15 @@ function PersonalSpaceContent() {
                 onClick={() => setShowForm(true)}
                 className="flex flex-col items-center justify-center p-6 sm:p-8 bg-gradient-to-br from-pink-50 via-purple-50 to-pink-50 rounded-2xl hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group border-2 border-pink-200/50 hover:border-pink-300"
               >
-                <div className="mb-4 p-4 bg-gradient-to-br from-pink-200 to-purple-200 rounded-2xl group-hover:scale-110 transition-transform duration-300">
-                  <Key className="h-8 w-8 sm:h-10 sm:w-10 text-pink-600" />
+                <div className="mb-4 h-14 w-14 sm:h-16 sm:w-16 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <Image
+                    src="/illustrations/mushroom-1.png"
+                    alt=""
+                    width={64}
+                    height={64}
+                    aria-hidden
+                    className="h-12 w-12 sm:h-14 sm:w-14 object-contain"
+                  />
                 </div>
                 <div className="text-center">
                   <div className="text-lg sm:text-xl font-semibold text-space-whale-navy mb-1">Journal</div>
@@ -114,19 +122,15 @@ function PersonalSpaceContent() {
                 onClick={() => setShowMoodBoardUpload(true)}
                 className="flex flex-col items-center justify-center p-6 sm:p-8 bg-gradient-to-br from-blue-50 via-teal-50 to-blue-50 rounded-2xl hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group border-2 border-blue-200/50 hover:border-blue-300"
               >
-                <div className="mb-4 p-4 bg-gradient-to-br from-blue-200 to-teal-200 rounded-2xl group-hover:scale-110 transition-transform duration-300">
-                  <svg 
-                    className="h-8 w-8 sm:h-10 sm:w-10 text-cyan-500" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round"
-                  >
-                    {/* Simple crescent moon - single line */}
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                  </svg>
+                <div className="mb-4 h-14 w-14 sm:h-16 sm:w-16 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <Image
+                    src="/illustrations/mood-board-moon.png"
+                    alt=""
+                    width={64}
+                    height={64}
+                    aria-hidden
+                    className="h-12 w-12 sm:h-14 sm:w-14 object-contain"
+                  />
                 </div>
                 <div className="text-center">
                   <div className="text-lg sm:text-xl font-semibold text-space-whale-navy mb-1">Mood Board</div>
