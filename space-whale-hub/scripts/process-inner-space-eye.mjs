@@ -30,7 +30,7 @@ const OUTLINE =
   outlineMode === 'gold'
     ? [240, 208, 96] // accent-yellow — matches Star Baby border
     : [6, 10, 73]; // space-whale-navy — crisp but on-brand
-const PUPIL = [90, 24, 100]; // deep plum, softer than black
+const PUPIL = [240, 208, 96]; // accent-yellow — gold pupil dot
 const THRESHOLD = 35;
 const FEATHER = 50;
 const OUTLINE_PX = 2;
@@ -96,13 +96,27 @@ function dilate(alpha, width, height, radius) {
 }
 
 function addPupil(alpha, rgb, width, height) {
+  let minY = height;
+  let maxY = 0;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (alpha[y * width + x] > 140) {
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+      }
+    }
+  }
+  if (maxY <= minY) return;
+
+  // Target the lower bulb / circular opening of the cutout
+  const lowerStart = minY + (maxY - minY) * 0.42;
   let sumX = 0;
   let sumY = 0;
   let count = 0;
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const idx = y * width + x;
-      if (alpha[idx] > 180) {
+      if (y >= lowerStart && alpha[idx] > 180) {
         sumX += x;
         sumY += y;
         count++;
@@ -112,17 +126,16 @@ function addPupil(alpha, rgb, width, height) {
   if (!count) return;
 
   const cx = sumX / count;
-  const cy = sumY / count + height * 0.06;
-  const rx = Math.max(2, Math.round(width * 0.055));
-  const ry = Math.max(2, Math.round(height * 0.12));
+  const cy = sumY / count;
+  const radius = Math.max(2, Math.round(Math.min(width, height) * 0.07));
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const idx = y * width + x;
       if (alpha[idx] < 120) continue;
-      const dx = (x - cx) / rx;
-      const dy = (y - cy) / ry;
-      if (dx * dx + dy * dy <= 1) {
+      const dx = x - cx;
+      const dy = y - cy;
+      if (dx * dx + dy * dy <= radius * radius) {
         rgb[idx * 3] = PUPIL[0];
         rgb[idx * 3 + 1] = PUPIL[1];
         rgb[idx * 3 + 2] = PUPIL[2];
