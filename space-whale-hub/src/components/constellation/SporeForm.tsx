@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/ui/Toast'
+import { SpaceIllustration } from '@/components/ui/EmptyState'
+import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
 import { X, Sparkles, Save } from 'lucide-react'
 
 const OFFERINGS = [
@@ -190,7 +192,10 @@ export default function SporeForm({ existingSpore, onSaved, onCancel }: SporeFor
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="text-center pb-2">
-        <div className="text-4xl mb-2">🍄</div>
+        <SpaceIllustration
+          src={SPACE_ILLUSTRATIONS.mycelialNetwork}
+          className="h-10 w-10 mx-auto mb-2"
+        />
         <h2 className="text-xl font-space-whale-heading text-space-whale-navy">
           {existingSpore ? 'Update your spore' : 'Place yourself in the forest'}
         </h2>

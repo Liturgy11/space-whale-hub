@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { toast } from '@/components/ui/Toast'
+import EmptyState from '@/components/ui/EmptyState'
+import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
 
 const PostCard = dynamic(() => import('./PostCard'), {
   loading: () => (
@@ -244,17 +246,12 @@ export default function FeedList({
 
   if (posts.length === 0) {
     return (
-      <div className="bg-lofi-card rounded-xl shadow-lg p-8 sm:p-12 text-center rainbow-border-soft">
-        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-space-whale-lavender/30 to-accent-pink/30 rounded-full flex items-center justify-center mx-auto mb-6 animate-float">
-          <span className="text-4xl sm:text-5xl">🐋</span>
-        </div>
-        <h3 className="text-xl sm:text-2xl font-space-whale-heading text-space-whale-navy mb-3">
-          No posts yet
-        </h3>
-        <p className="text-base sm:text-lg text-space-whale-navy/80 font-space-whale-body mb-4 max-w-md mx-auto">
-          Be the first to share something with the community!
-        </p>
-      </div>
+      <EmptyState
+        iconSrc={SPACE_ILLUSTRATIONS.communityOrbit}
+        title="No posts yet"
+        description="Be the first to share something with the community!"
+        className="p-8 sm:p-12"
+      />
     )
   }
 

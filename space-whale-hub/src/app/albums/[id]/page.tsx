@@ -8,6 +8,9 @@ import { getSignedUrls, createSignedUrlMap } from '@/lib/signed-urls'
 import ArchiveItemModal from '@/components/archive/ArchiveItemModal'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/ui/Toast'
+import AlbumCoverImage from '@/components/archive/AlbumCoverImage'
+import EmptyState from '@/components/ui/EmptyState'
+import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
 
 interface ArchiveItem {
   id: string
@@ -116,18 +119,13 @@ export default function AlbumDetailPage() {
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-space-whale-lavender/20 mb-8">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="md:w-1/3">
-                  {album.cover_image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={signedUrlMap[album.cover_image_url] || album.cover_image_url}
-                      alt={album.title}
-                      className="w-full h-48 object-cover rounded-xl"
-                    />
-                  ) : (
-                    <div className="w-full h-48 bg-gradient-to-br from-space-whale-lavender/30 to-space-whale-purple/30 rounded-xl flex items-center justify-center">
-                      <span className="text-4xl">📁</span>
-                    </div>
-                  )}
+                  <AlbumCoverImage
+                    src={album.cover_image_url ? signedUrlMap[album.cover_image_url] || album.cover_image_url : undefined}
+                    alt={album.title}
+                    className="w-full h-48 object-cover rounded-xl"
+                    placeholderClassName="h-48"
+                    placeholderRoundedClassName="rounded-xl"
+                  />
                 </div>
                 <div className="md:flex-1">
                   <h1 className="text-3xl font-space-whale-heading text-space-whale-navy mb-2">{album.title}</h1>
@@ -260,7 +258,12 @@ export default function AlbumDetailPage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-24">No items in this album yet.</div>
+              <EmptyState
+                iconSrc={SPACE_ILLUSTRATIONS.constellation}
+                title="No items in this album yet"
+                description="Items added to this album will appear here."
+                className="py-16"
+              />
             )}
           </>
         )}

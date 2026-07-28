@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 import { Plus, X } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import SpacePageHeader from "@/components/layout/SpacePageHeader";
+import { SpaceIllustration } from "@/components/ui/EmptyState";
+import { SPACE_ILLUSTRATIONS } from "@/lib/space-illustrations";
 import PostForm from "@/components/feed/PostForm";
 import FeedList from "@/components/feed/FeedList";
 import { useAuth } from "@/contexts/AuthContext";
@@ -75,8 +77,12 @@ function CommunityFeedContent() {
           {/* Mycelial Network banner */}
           {showNetworkBanner && (
             <div className="mt-4 sm:mt-6 mb-6 flex items-start justify-between gap-3 bg-gradient-to-r from-space-whale-lavender/30 to-accent-pink/20 border border-space-whale-lavender/40 rounded-xl px-4 py-3">
-              <p className="text-sm font-space-whale-body text-space-whale-navy">
-                🍄 <strong>New:</strong> The{' '}
+              <SpaceIllustration
+                src={SPACE_ILLUSTRATIONS.mycelialNetwork}
+                className="h-6 w-6 flex-shrink-0 mt-0.5"
+              />
+              <p className="flex-1 text-sm font-space-whale-body text-space-whale-navy">
+                <strong>New:</strong> The{' '}
                 <Link href="/archive?tab=network" className="underline underline-offset-2 hover:text-space-whale-purple transition-colors">
                   Mycelial Network
                 </Link>{' '}

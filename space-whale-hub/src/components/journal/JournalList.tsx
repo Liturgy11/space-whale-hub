@@ -10,6 +10,8 @@ import { uploadMultipleMedia } from '@/lib/storage-client'
 import MoodBoardGallery from '@/components/media/MoodBoardGallery'
 import ReorderableImageGrid from '@/components/media/ReorderableImageGrid'
 import { getMoodBoardDisplayUrls, getMoodBoardImageUrls } from '@/lib/mood-board'
+import EmptyState from '@/components/ui/EmptyState'
+import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
 
 const JOURNAL_CACHE_KEY = 'swp_journal_cache'
 const JOURNAL_CACHE_TTL = 3 * 60 * 1000 // 3 minutes
@@ -559,16 +561,15 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
 
   if (entries.length === 0) {
     return (
-      <div className="text-center py-12 sm:py-16 bg-lofi-card rounded-xl shadow-lg rainbow-border-soft">
-        <div className="text-6xl sm:text-7xl mb-4 animate-float">🐋</div>
-        <h3 className="text-xl sm:text-2xl font-space-whale-heading text-space-whale-navy mb-3">No entries yet</h3>
-        <p className="text-base sm:text-lg text-space-whale-navy/80 font-space-whale-body mb-6 max-w-md mx-auto">
-          Start your journey by creating your first journal entry. Your inner space is waiting.
-        </p>
+      <EmptyState
+        iconSrc={SPACE_ILLUSTRATIONS.innerSpace}
+        title="No entries yet"
+        description="Start your journey by creating your first journal entry. Your inner space is waiting."
+      >
         <div className="text-sm text-space-whale-purple/70 font-space-whale-body">
           <p>Your journal is a safe space for reflection and growth</p>
         </div>
-      </div>
+      </EmptyState>
     )
   }
 

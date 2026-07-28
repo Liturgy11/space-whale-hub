@@ -8,6 +8,9 @@ import ArchiveItemModal from './ArchiveItemModal'
 import LinkPreview from './LinkPreview'
 import { getSignedUrls, createSignedUrlMap } from '@/lib/signed-urls'
 import Link from 'next/link'
+import EmptyState from '@/components/ui/EmptyState'
+import AlbumCoverImage from './AlbumCoverImage'
+import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
 
 interface ArchiveItem {
   id: string
@@ -234,29 +237,10 @@ export default function ArchivePage() {
               <Link key={album.id} href={`/albums/${album.id}`} className="block">
                 <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer rainbow-border-soft">
                   <div className="relative">
-                    {album.cover_image_url ? (
-                      <img
-                        src={signedUrlMap[album.cover_image_url] || album.cover_image_url}
-                        alt={album.title}
-                        className="w-full h-60 object-cover rounded-t-xl"
-                        loading="lazy"
-                        decoding="async"
-                        width={400}
-                        height={240}
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none'
-                          e.currentTarget.parentElement!.innerHTML = `
-                            <div class=\"w-full h-60 bg-gradient-to-br from-space-whale-lavender/30 to-space-whale-purple/30 flex items-center justify-center rounded-t-xl\">
-                              <span class=\"text-4xl\">📁</span>
-                            </div>
-                          `
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-60 bg-gradient-to-br from-space-whale-lavender/30 to-space-whale-purple/30 flex items-center justify-center rounded-t-xl">
-                        <span className="text-4xl">📁</span>
-                      </div>
-                    )}
+                    <AlbumCoverImage
+                      src={album.cover_image_url ? signedUrlMap[album.cover_image_url] || album.cover_image_url : undefined}
+                      alt={album.title}
+                    />
                   </div>
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-2">
@@ -284,40 +268,31 @@ export default function ArchivePage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <div className="max-w-md mx-auto">
-              <div className="text-6xl mb-4">🐋</div>
-              {searchQuery ? (
-                <>
-                  <h3 className="text-xl font-space-whale-heading text-space-whale-navy mb-2">
-                    No albums found
-                  </h3>
-                  <p className="text-space-whale-navy/70 font-space-whale-body mb-6">
-                    Try adjusting your search terms to find what you're looking for.
-                  </p>
-                  <button
-                    onClick={() => {
-                      setSearchQuery('')
-                      setFilteredAlbums(albums)
-                    }}
-                    className="px-6 py-2 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-all duration-300 font-space-whale-accent"
-                  >
-                    Clear search
-                  </button>
-                </>
-              ) : (
-                <>
-                  <h3 className="text-xl font-space-whale-heading text-space-whale-navy mb-2">
-                    No albums yet
-                  </h3>
-                  <p className="text-space-whale-navy/70 font-space-whale-body mb-6">
-                    Albums created by admins will appear here for everyone to explore.
-                  </p>
-                  <ArchiveUpload onUploadComplete={handleUploadComplete} />
-                </>
-              )}
-            </div>
-          </div>
+          <EmptyState
+            iconSrc={SPACE_ILLUSTRATIONS.constellation}
+            title={searchQuery ? 'No albums found' : 'No albums yet'}
+            description={
+              searchQuery
+                ? "Try adjusting your search terms to find what you're looking for."
+                : 'Albums created by admins will appear here for everyone to explore.'
+            }
+            bordered={false}
+            className="py-12"
+          >
+            {searchQuery ? (
+              <button
+                onClick={() => {
+                  setSearchQuery('')
+                  setFilteredAlbums(albums)
+                }}
+                className="px-6 py-2 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-all duration-300 font-space-whale-accent"
+              >
+                Clear search
+              </button>
+            ) : (
+              <ArchiveUpload onUploadComplete={handleUploadComplete} />
+            )}
+          </EmptyState>
         )}
       </main>
 

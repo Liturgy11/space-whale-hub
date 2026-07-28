@@ -5,6 +5,8 @@ import { Plus, Edit3, Trash2, Calendar, MapPin, Image as ImageIcon, FolderOpen, 
 import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
 import { toast } from '@/components/ui/Toast'
+import EmptyState, { SpaceIllustration } from '@/components/ui/EmptyState'
+import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
 
 interface Album {
   id: string
@@ -254,7 +256,10 @@ export default function AlbumManager() {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
-          <div className="text-4xl mb-2">🐋</div>
+          <SpaceIllustration
+            src={SPACE_ILLUSTRATIONS.constellation}
+            className="h-12 w-12 mx-auto mb-3 animate-float"
+          />
           <p className="text-space-whale-navy/70 font-space-whale-body">Loading albums...</p>
         </div>
       </div>
@@ -473,21 +478,20 @@ export default function AlbumManager() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">📁</div>
-          <h3 className="text-xl font-space-whale-heading text-space-whale-navy mb-2">
-            No albums yet
-          </h3>
-          <p className="text-space-whale-navy/70 font-space-whale-body mb-6">
-            Create your first album to start organizing content by events and projects.
-          </p>
+        <EmptyState
+          iconSrc={SPACE_ILLUSTRATIONS.constellation}
+          title="No albums yet"
+          description="Create your first album to start organizing content by events and projects."
+          bordered={false}
+          className="py-12"
+        >
           <button
             onClick={() => setIsCreating(true)}
             className="px-6 py-3 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-all duration-300 font-space-whale-accent"
           >
             Create Your First Album
           </button>
-        </div>
+        </EmptyState>
       )}
 
       {/* Batch Upload Modal */}

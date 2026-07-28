@@ -6,6 +6,8 @@ import LinkPreview from './LinkPreview'
 import { useAuth } from '@/contexts/AuthContext'
 import { getSignedUrl } from '@/lib/signed-urls'
 import { toast } from '@/components/ui/Toast'
+import { SpaceIllustration } from '@/components/ui/EmptyState'
+import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
 
 interface ArchiveItem {
   id: string
@@ -636,7 +638,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
               )
             ) : (
               <div className="aspect-video bg-gradient-to-br from-space-whale-lavender/30 to-space-whale-purple/30 flex items-center justify-center rounded-xl shadow-lg">
-                <span className="text-6xl">🐋</span>
+                <SpaceIllustration src={SPACE_ILLUSTRATIONS.constellation} className="h-16 w-16 sm:h-20 sm:w-20" />
               </div>
             )}
           </div>
