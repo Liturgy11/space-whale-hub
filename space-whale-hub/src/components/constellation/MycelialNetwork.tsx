@@ -17,6 +17,8 @@ import {
 import Image from 'next/image'
 import '@xyflow/react/dist/style.css'
 import { Sparkles, X, MapPin, Heart, Star } from 'lucide-react'
+import { SpaceIllustration } from '@/components/ui/EmptyState'
+import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
 
 const MUSHROOM_ILLUSTRATION = '/illustrations/mushroom-3.png'
 
@@ -63,12 +65,19 @@ const EDGE_LABELS = {
   shared_offering: 'shared offering',
 }
 
+function SporeAvatarFallback({ displayName, className = 'h-8 w-8' }: { displayName?: string; className?: string }) {
+  const initials = displayName?.slice(0, 2).toUpperCase()
+
+  if (initials) {
+    return <span className="text-white font-bold text-sm">{initials}</span>
+  }
+
+  return <SpaceIllustration src={SPACE_ILLUSTRATIONS.deepSpace} className={className} />
+}
+
 // Custom spore node
 function SporeNode({ data }: NodeProps) {
   const spore = data.spore as Spore
-  const initials = spore.display_name
-    ? spore.display_name.slice(0, 2).toUpperCase()
-    : '🐋'
 
   return (
     <>
@@ -88,7 +97,7 @@ function SporeNode({ data }: NodeProps) {
           {spore.avatar_url ? (
             <img src={spore.avatar_url} alt={spore.display_name} className="w-full h-full object-cover" />
           ) : (
-            <span className="text-white font-bold text-sm">{initials}</span>
+            <SporeAvatarFallback displayName={spore.display_name} />
           )}
         </div>
         <span className="mt-1.5 text-xs font-medium text-space-whale-navy text-center leading-tight max-w-[72px] truncate">
@@ -310,9 +319,7 @@ export default function MycelialNetwork({ currentUserId, onEditSpore, onCurrentS
                   {selectedSpore.avatar_url ? (
                     <img src={selectedSpore.avatar_url} alt={selectedSpore.display_name} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-white font-bold text-sm">
-                      {selectedSpore.display_name?.slice(0, 2).toUpperCase() || '🐋'}
-                    </span>
+                    <SporeAvatarFallback displayName={selectedSpore.display_name} className="h-7 w-7" />
                   )}
                 </div>
                 <div>

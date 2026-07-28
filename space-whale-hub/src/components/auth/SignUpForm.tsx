@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { SpaceIllustration } from '@/components/ui/EmptyState'
+import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
 
 interface SignUpFormProps {
   onSuccess?: () => void
@@ -325,8 +327,14 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
           </div>
 
           <div className="bg-gradient-to-r from-space-whale-lavender/20 to-accent-pink/20 border border-space-whale-lavender/30 rounded-lg p-4">
-            <p className="text-sm font-space-whale-body text-space-whale-navy">
-              By creating an account, you're agreeing to show up with care, and trust that we're all doing our best together. Welcome home. 🐋
+            <p className="flex items-start gap-2 text-sm font-space-whale-body text-space-whale-navy">
+              <SpaceIllustration
+                src={SPACE_ILLUSTRATIONS.deepSpace}
+                className="h-6 w-6 flex-shrink-0 mt-0.5"
+              />
+              <span>
+                By creating an account, you&apos;re agreeing to show up with care, and trust that we&apos;re all doing our best together. Welcome home.
+              </span>
             </p>
           </div>
 

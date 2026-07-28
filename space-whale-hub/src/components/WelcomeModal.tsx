@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { X, BookOpen, Sparkles } from 'lucide-react'
+import { X, BookOpen } from 'lucide-react'
+import { SpaceIllustration } from '@/components/ui/EmptyState'
+import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
 
 interface WelcomeModalProps {
   onClose: () => void
@@ -25,11 +27,16 @@ export default function WelcomeModal({ onClose }: WelcomeModalProps) {
         className={`w-full max-w-lg bg-white rounded-2xl shadow-xl border border-space-whale-lavender/30 rainbow-border-soft ${closing ? 'scale-95 opacity-95' : 'scale-100'} transition-transform`}
       >
         <div className="p-6 sm:p-8">
-          <div className="flex items-start justify-between mb-4">
-            <h2 id="welcome-title" className="text-xl sm:text-2xl font-space-whale-heading text-space-whale-navy flex items-center">
-              <Sparkles className="h-5 w-5 mr-2 text-space-whale-purple" />
-              Welcome to Space Whale Portal! 🐋
-            </h2>
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div className="flex items-start gap-3 min-w-0">
+              <SpaceIllustration
+                src={SPACE_ILLUSTRATIONS.deepSpace}
+                className="h-10 w-10 flex-shrink-0"
+              />
+              <h2 id="welcome-title" className="text-xl sm:text-2xl font-space-whale-heading text-space-whale-navy">
+                Welcome to Space Whale Portal!
+              </h2>
+            </div>
             <button
               aria-label="Close"
               onClick={handleClose}
