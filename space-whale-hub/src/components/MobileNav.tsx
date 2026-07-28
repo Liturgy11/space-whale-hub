@@ -11,12 +11,12 @@ export default function MobileNav() {
 
   const navItems = [
     {
-      name: 'Archive',
-      shortName: 'Archive',
-      href: '/archive',
-      icon: Star,
-      iconColor: 'text-purple-800',
-      active: pathname === '/archive',
+      name: 'Inner Space',
+      shortName: 'Inner',
+      href: '/personal',
+      icon: Eye,
+      iconColor: 'text-teal-500',
+      active: pathname === '/personal',
     },
     {
       name: 'Community',
@@ -35,12 +35,12 @@ export default function MobileNav() {
       active: pathname === '/workshops',
     },
     {
-      name: 'Inner Space',
-      shortName: 'Inner',
-      href: '/personal',
-      icon: Eye,
-      iconColor: 'text-pink-400',
-      active: pathname === '/personal',
+      name: 'Archive',
+      shortName: 'Archive',
+      href: '/archive',
+      icon: Star,
+      iconColor: 'text-purple-800',
+      active: pathname === '/archive',
     },
     {
       name: 'About',

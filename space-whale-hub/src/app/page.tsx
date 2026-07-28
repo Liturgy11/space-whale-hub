@@ -49,10 +49,10 @@ const exploreMenuItems: ExploreMenuItem[] = [
 
 const featureCards = [
   {
-    href: "/archive",
-    label: "Constellation",
-    description: "Archive of Space Whale events - pride poetry, community workshops, and creative gatherings.",
-    icon: { iconSrc: "/illustrations/star.png" },
+    href: "/personal",
+    label: "Inner Space",
+    description: "Your private journal for reflection and creativity. Write, collect inspiration, and explore prompts.",
+    icon: { iconSrc: "/illustrations/inner-space-eye.png" },
   },
   {
     href: "/feed",
@@ -67,10 +67,10 @@ const featureCards = [
     icon: { iconSrc: "/illustrations/whale.png" },
   },
   {
-    href: "/personal",
-    label: "Inner Space",
-    description: "Your private journal for reflection and creativity. Write, collect inspiration, and explore prompts.",
-    icon: { iconSrc: "/illustrations/inner-space-eye.png" },
+    href: "/archive",
+    label: "Constellation",
+    description: "Archive of Space Whale events - pride poetry, community workshops, and creative gatherings.",
+    icon: { iconSrc: "/illustrations/star.png" },
   },
 ] as const;
 

@@ -8,10 +8,10 @@ import UserProfile from '@/components/UserProfile'
 const ADMIN_EMAIL = 'lizwamc@gmail.com'
 
 const desktopNavLinks = [
-  { href: '/archive', label: 'Constellation' },
+  { href: '/personal', label: 'Inner Space' },
   { href: '/feed', label: 'Community Orbit' },
   { href: '/workshops', label: 'Deep Space' },
-  { href: '/personal', label: 'Inner Space' },
+  { href: '/archive', label: 'Constellation' },
   { href: '/about', label: 'About' },
 ] as const
 

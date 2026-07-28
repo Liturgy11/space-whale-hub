@@ -157,19 +157,6 @@ function AboutContent() {
             <div className="bg-lofi-card rounded-xl p-6 shadow-lg rainbow-border-soft glow-soft">
               <div className="flex items-center mb-4">
                 <SectionIllustration
-                  src="/illustrations/star.png"
-                  className="h-8 w-8 mr-3"
-                />
-                <h3 className="text-xl font-space-whale-subheading text-space-whale-navy">Constellation</h3>
-              </div>
-              <p className="text-space-whale-navy font-space-whale-body">
-                Home of the Mycelial Network — place your spore in the forest and find your people through shared offerings, curiosities, and ways of connecting.
-              </p>
-            </div>
-
-            <div className="bg-lofi-card rounded-xl p-6 shadow-lg rainbow-border-soft glow-soft">
-              <div className="flex items-center mb-4">
-                <SectionIllustration
                   src="/illustrations/whale.png"
                   className="h-8 w-8 mr-3"
                 />
@@ -177,6 +164,19 @@ function AboutContent() {
               </div>
               <p className="text-space-whale-navy font-space-whale-body">
                 Workshops and offerings to support your journey. Currently taking expressions of interest for meditation, qi gong, Space Whale Open Studio, and In Our Nature online course. More to come!
+              </p>
+            </div>
+
+            <div className="bg-lofi-card rounded-xl p-6 shadow-lg rainbow-border-soft glow-soft">
+              <div className="flex items-center mb-4">
+                <SectionIllustration
+                  src="/illustrations/star.png"
+                  className="h-8 w-8 mr-3"
+                />
+                <h3 className="text-xl font-space-whale-subheading text-space-whale-navy">Constellation</h3>
+              </div>
+              <p className="text-space-whale-navy font-space-whale-body">
+                Home of the Mycelial Network — place your spore in the forest and find your people through shared offerings, curiosities, and ways of connecting.
               </p>
             </div>
           </div>

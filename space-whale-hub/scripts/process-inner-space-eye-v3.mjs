@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Sticker-style Inner Space eye → softer pink fill, navy + gold preserved.
+ * Sticker-style Inner Space eye → mood-board moon teal lids, navy + gold preserved.
  *
  * Usage:
  *   node scripts/process-inner-space-eye-v3.mjs <input.png> <output.png>
@@ -19,7 +19,7 @@ if (!inputArg || !outputArg) {
 const input = path.resolve(inputArg);
 const output = path.resolve(outputArg);
 
-const SOFT_PINK = [233, 88, 139]; // Star Baby belly magenta
+const LID_TEAL = [64, 160, 192]; // mood-board-moon accent-teal
 const NAVY = [6, 10, 73]; // space-whale-navy
 const GOLD = [240, 208, 96];
 
@@ -106,9 +106,9 @@ for (let i = 0, p = 0; i < data.length; i += 4, p++) {
     rgb[p * 3 + 1] = NAVY[1];
     rgb[p * 3 + 2] = NAVY[2];
   } else {
-    rgb[p * 3] = SOFT_PINK[0];
-    rgb[p * 3 + 1] = SOFT_PINK[1];
-    rgb[p * 3 + 2] = SOFT_PINK[2];
+    rgb[p * 3] = LID_TEAL[0];
+    rgb[p * 3 + 1] = LID_TEAL[1];
+    rgb[p * 3 + 2] = LID_TEAL[2];
   }
 }
 
