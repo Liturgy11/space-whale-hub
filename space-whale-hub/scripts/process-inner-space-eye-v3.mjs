@@ -19,7 +19,7 @@ if (!inputArg || !outputArg) {
 const input = path.resolve(inputArg);
 const output = path.resolve(outputArg);
 
-const SOFT_PINK = [244, 114, 182]; // pink-400
+const SOFT_PINK = [233, 88, 139]; // Star Baby belly magenta
 const NAVY = [6, 10, 73]; // space-whale-navy
 const GOLD = [240, 208, 96];
 
