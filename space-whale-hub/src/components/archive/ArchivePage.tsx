@@ -201,20 +201,12 @@ export default function ArchivePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-space-whale-lavender/20 via-white to-space-whale-purple/10" suppressHydrationWarning>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-space-whale-heading text-space-whale-navy mb-4">
-                Constellation
-              </h1>
-              <p className="text-lg text-space-whale-navy/70 font-space-whale-body">
-                I'll be uploading albums from past workshops and Pride Poetry gatherings over time. Watch this space...
-              </p>
-            </div>
-            <div className="mt-4 sm:mt-0">
-              <ArchiveUpload onUploadComplete={handleUploadComplete} />
-            </div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <p className="text-lg text-space-whale-navy/70 font-space-whale-body">
+              I&apos;ll be uploading albums from past workshops and Pride Poetry gatherings over time. Watch this space...
+            </p>
+            <ArchiveUpload onUploadComplete={handleUploadComplete} />
           </div>
         </div>
 

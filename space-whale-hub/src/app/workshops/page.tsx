@@ -1,4 +1,5 @@
 import AppShell from "@/components/layout/AppShell";
+import SpacePageHeader from "@/components/layout/SpacePageHeader";
 import { Calendar, Clock, MapPin, DollarSign } from "lucide-react";
 
 export default function Workshops() {
@@ -54,15 +55,12 @@ export default function Workshops() {
       navClassName="relative z-10 bg-white/80 backdrop-blur-sm border-b border-space-whale-lavender/20 sticky top-0 z-50"
       mainClassName="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
     >
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-space-whale-heading text-space-whale-navy mb-4">
-            Deep Space
-          </h1>
-          <p className="text-lg font-space-whale-body text-space-whale-navy mb-6">
-            Workshops, resources, and online groups to support your journey.
-          </p>
-        </div>
+        <SpacePageHeader
+          iconSrc="/illustrations/whale.png"
+          title="Deep Space"
+          description="Workshops, resources, and online groups to support your journey."
+          className="mb-8"
+        />
 
         {/* Workshops */}
         <div className="mb-12">

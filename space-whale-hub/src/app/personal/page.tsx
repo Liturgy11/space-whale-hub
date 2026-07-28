@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Settings } from "lucide-react";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/layout/AppShell";
+import SpacePageHeader from "@/components/layout/SpacePageHeader";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { Settings } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/components/ui/Toast";
 import JournalEntryForm from "@/components/journal/JournalEntryForm";
@@ -69,17 +70,11 @@ function PersonalSpaceContent() {
       }
       mainClassName="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8"
     >
-        {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 space-y-4 sm:space-y-0">
-            <div className="flex-1">
-              <h1 className="text-2xl sm:text-3xl font-space-whale-heading text-space-whale-navy mb-2">
-                Inner Space
-              </h1>
-              <p className="text-base sm:text-lg font-space-whale-body text-space-whale-navy">
-                Your private space to reflect and create.
-              </p>
-            </div>
+        <SpacePageHeader
+          iconSrc="/illustrations/inner-space-eye.png"
+          title="Inner Space"
+          description="Your private space to reflect and create."
+          actions={
             <button
               onClick={() => setShowWallpaperCustomizer(true)}
               className="flex items-center justify-center px-4 py-3 sm:py-2 min-h-[44px] w-full sm:w-auto text-space-whale-purple hover:text-space-whale-navy transition-colors font-space-whale-accent border border-space-whale-lavender/30 rounded-lg hover:bg-space-whale-lavender/10 active:scale-[0.98] touch-manipulation"
@@ -87,8 +82,8 @@ function PersonalSpaceContent() {
               <Settings className="h-4 w-4 sm:h-5 sm:w-5 mr-2 flex-shrink-0" />
               <span>Customise</span>
             </button>
-          </div>
-        </div>
+          }
+        />
 
         {showForm && (
           <JournalEntryForm onSuccess={handleEntryCreated} onCancel={() => setShowForm(false)} />
