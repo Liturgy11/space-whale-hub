@@ -7,7 +7,7 @@ import { uploadMedia } from '@/lib/storage-client'
 import { toast } from '@/components/ui/Toast'
 import EmptyState, { SpaceIllustration } from '@/components/ui/EmptyState'
 import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
-import { secureFetch } from '@/lib/secure-fetch'
+import { secureFetch, parseSecureResponse } from '@/lib/secure-fetch'
 
 interface Album {
   id: string
@@ -34,12 +34,14 @@ export default function AlbumManager() {
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null)
   const [uploadingFiles, setUploadingFiles] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<string | null>(null)
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [showCoverUrlFallback, setShowCoverUrlFallback] = useState(false)
   const [pendingGalleryFiles, setPendingGalleryFiles] = useState<File[]>([])
   const coverInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
+  const titleInputRef = useRef<HTMLInputElement>(null)
   const [newAlbum, setNewAlbum] = useState({
     title: '',
     description: '',
@@ -75,17 +77,24 @@ export default function AlbumManager() {
     return uploadResult.url
   }
 
-  const uploadFilesToAlbum = async (files: File[] | FileList, album: Album): Promise<number> => {
+  const uploadFilesToAlbum = async (
+    files: File[] | FileList,
+    album: Album,
+    onProgress?: (current: number, total: number) => void
+  ): Promise<number> => {
     if (!user) return 0
 
     const fileArray = Array.from(files)
-    await Promise.all(fileArray.map(async (file) => {
+    for (let index = 0; index < fileArray.length; index++) {
+      const file = fileArray[index]
+      onProgress?.(index + 1, fileArray.length)
+
       const uploadResult = await uploadMedia(file, {
         category: 'archive',
-        filename: `${Date.now()}-${file.name}`
+        filename: `${Date.now()}-${index}-${file.name}`
       }, 'archive-uploads')
 
-      const response = await secureFetch('/api/create-constellation-item-secure', {
+      const itemResponse = await secureFetch('/api/create-constellation-item-secure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -99,10 +108,9 @@ export default function AlbumManager() {
           user_id: user.id
         })
       })
-
-      const result = await response.json()
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to create archive item')
+      const itemResult = await parseSecureResponse<{ success: boolean; data: { id: string }; error?: string }>(itemResponse)
+      if (!itemResult.success) {
+        throw new Error(itemResult.error || 'Failed to create archive item')
       }
 
       const albumResponse = await secureFetch('/api/manage-album-items-secure', {
@@ -110,16 +118,15 @@ export default function AlbumManager() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           album_id: album.id,
-          item_id: result.data.id,
+          item_id: itemResult.data.id,
           added_by: user.id
         })
       })
-
-      const albumResult = await albumResponse.json()
+      const albumResult = await parseSecureResponse<{ success: boolean; error?: string }>(albumResponse)
       if (!albumResult.success) {
         throw new Error(albumResult.error || 'Failed to add item to album')
       }
-    }))
+    }
 
     return fileArray.length
   }
@@ -165,15 +172,29 @@ export default function AlbumManager() {
 
   const handleCreateAlbum = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user) return
+
+    if (!user) {
+      toast('Please sign in to create an album.', 'error')
+      return
+    }
+
+    if (!newAlbum.title.trim()) {
+      toast('Album title is required.', 'error')
+      titleInputRef.current?.focus()
+      titleInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
 
     setIsSubmitting(true)
+    setSubmitStatus(null)
     try {
       let coverImageUrl = newAlbum.cover_image_url.trim() || null
       if (coverFile) {
+        setSubmitStatus('Uploading cover…')
         coverImageUrl = await uploadCoverImage(coverFile)
       }
 
+      setSubmitStatus('Creating album…')
       const response = await secureFetch('/api/create-album-secure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -184,7 +205,7 @@ export default function AlbumManager() {
         })
       })
 
-      const result = await response.json()
+      const result = await parseSecureResponse<{ success: boolean; data: Album; error?: string }>(response)
       if (!result.success) {
         throw new Error(result.error || 'Failed to create album')
       }
@@ -192,7 +213,11 @@ export default function AlbumManager() {
       const createdAlbum: Album = { ...result.data, item_count: 0 }
 
       if (pendingGalleryFiles.length > 0) {
-        const count = await uploadFilesToAlbum(pendingGalleryFiles, createdAlbum)
+        const count = await uploadFilesToAlbum(
+          pendingGalleryFiles,
+          createdAlbum,
+          (current, total) => setSubmitStatus(`Uploading photos (${current}/${total})…`)
+        )
         toast(`Album created with ${count} photo${count === 1 ? '' : 's'}!`, 'success')
       } else {
         toast('Album created! Add photos below.', 'success')
@@ -206,9 +231,14 @@ export default function AlbumManager() {
     } catch (error: unknown) {
       console.error('Error creating album:', error)
       const message = error instanceof Error ? error.message : 'Failed to create album. Please try again.'
-      toast(message, 'error')
+      if (message.toLowerCase().includes('authorization') || message.toLowerCase().includes('unauthorized')) {
+        toast('Session expired — please log out and back in, then try again.', 'error')
+      } else {
+        toast(message, 'error')
+      }
     } finally {
       setIsSubmitting(false)
+      setSubmitStatus(null)
     }
   }
 
@@ -228,15 +258,28 @@ export default function AlbumManager() {
 
   const handleUpdateAlbum = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!editingAlbum || !user) return
+    if (!editingAlbum || !user) {
+      toast('Please sign in to update this album.', 'error')
+      return
+    }
+
+    if (!newAlbum.title.trim()) {
+      toast('Album title is required.', 'error')
+      titleInputRef.current?.focus()
+      titleInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
 
     setIsSubmitting(true)
+    setSubmitStatus(null)
     try {
       let coverImageUrl = newAlbum.cover_image_url.trim() || null
       if (coverFile) {
+        setSubmitStatus('Uploading cover…')
         coverImageUrl = await uploadCoverImage(coverFile)
       }
 
+      setSubmitStatus('Saving album…')
       const response = await secureFetch('/api/update-album-secure', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -247,7 +290,7 @@ export default function AlbumManager() {
         })
       })
 
-      const result = await response.json()
+      const result = await parseSecureResponse<{ success: boolean; error?: string }>(response)
       if (!result.success) {
         throw new Error(result.error || 'Failed to update album')
       }
@@ -255,7 +298,11 @@ export default function AlbumManager() {
       const updatedAlbum: Album = { ...editingAlbum, ...newAlbum, cover_image_url: coverImageUrl || undefined }
 
       if (pendingGalleryFiles.length > 0) {
-        const count = await uploadFilesToAlbum(pendingGalleryFiles, updatedAlbum)
+        const count = await uploadFilesToAlbum(
+          pendingGalleryFiles,
+          updatedAlbum,
+          (current, total) => setSubmitStatus(`Uploading photos (${current}/${total})…`)
+        )
         toast(`Album updated with ${count} new photo${count === 1 ? '' : 's'}!`, 'success')
       } else {
         toast('Album updated!', 'success')
@@ -267,9 +314,14 @@ export default function AlbumManager() {
     } catch (error: unknown) {
       console.error('Error updating album:', error)
       const message = error instanceof Error ? error.message : 'Failed to update album. Please try again.'
-      toast(message, 'error')
+      if (message.toLowerCase().includes('authorization') || message.toLowerCase().includes('unauthorized')) {
+        toast('Session expired — please log out and back in, then try again.', 'error')
+      } else {
+        toast(message, 'error')
+      }
     } finally {
       setIsSubmitting(false)
+      setSubmitStatus(null)
     }
   }
 
@@ -374,19 +426,24 @@ export default function AlbumManager() {
           <h3 className="text-lg font-space-whale-heading text-space-whale-navy mb-4">
             {editingAlbum ? 'Edit Album' : 'Create New Album'}
           </h3>
-          <form onSubmit={editingAlbum ? handleUpdateAlbum : handleCreateAlbum} className="space-y-4">
+          <form
+            onSubmit={editingAlbum ? handleUpdateAlbum : handleCreateAlbum}
+            noValidate
+            className="space-y-4"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-space-whale-accent text-space-whale-navy mb-2">
                   Album Title *
                 </label>
                 <input
+                  ref={titleInputRef}
                   type="text"
                   value={newAlbum.title}
                   onChange={(e) => setNewAlbum(prev => ({ ...prev, title: e.target.value }))}
                   placeholder="e.g., Pride Poetry - Coastal Twist Festival"
                   className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body"
-                  required
+                  aria-required="true"
                 />
               </div>
               <div>
@@ -547,6 +604,7 @@ export default function AlbumManager() {
               )}
             </div>
 
+            <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm pt-3 pb-1 -mx-6 px-6 border-t border-space-whale-lavender/20 space-y-3">
             <div className="flex items-center space-x-4">
               <label className="flex items-center">
                 <input
@@ -579,7 +637,9 @@ export default function AlbumManager() {
                 disabled={isSubmitting}
                 className="px-4 py-2 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-all duration-300 font-space-whale-accent disabled:opacity-50"
               >
-                {isSubmitting
+                {submitStatus
+                  ? submitStatus
+                  : isSubmitting
                   ? 'Saving…'
                   : editingAlbum
                     ? pendingGalleryFiles.length > 0
@@ -589,6 +649,7 @@ export default function AlbumManager() {
                       ? `Create & Add ${pendingGalleryFiles.length} Photo${pendingGalleryFiles.length === 1 ? '' : 's'}`
                       : 'Create Album'}
               </button>
+            </div>
             </div>
           </form>
         </div>
