@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Plus, Edit3, Trash2, Calendar, MapPin, Image as ImageIcon, FolderOpen, Upload, X } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { Plus, Edit3, Trash2, Calendar, MapPin, FolderOpen, Upload, X, Image as ImageIcon } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
 import { toast } from '@/components/ui/Toast'
@@ -32,6 +32,13 @@ export default function AlbumManager() {
   const [showBatchUpload, setShowBatchUpload] = useState(false)
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null)
   const [uploadingFiles, setUploadingFiles] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [coverPreview, setCoverPreview] = useState<string | null>(null)
+  const [showCoverUrlFallback, setShowCoverUrlFallback] = useState(false)
+  const [pendingGalleryFiles, setPendingGalleryFiles] = useState<File[]>([])
+  const coverInputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
   const [newAlbum, setNewAlbum] = useState({
     title: '',
     description: '',
@@ -41,6 +48,101 @@ export default function AlbumManager() {
     is_featured: false,
     sort_order: 0
   })
+
+  const resetForm = useCallback(() => {
+    if (coverPreview) URL.revokeObjectURL(coverPreview)
+    setCoverFile(null)
+    setCoverPreview(null)
+    setShowCoverUrlFallback(false)
+    setPendingGalleryFiles([])
+    setNewAlbum({
+      title: '',
+      description: '',
+      cover_image_url: '',
+      event_date: '',
+      event_location: '',
+      is_featured: false,
+      sort_order: 0
+    })
+  }, [coverPreview])
+
+  const uploadCoverImage = async (file: File): Promise<string> => {
+    const uploadResult = await uploadMedia(file, {
+      category: 'archive',
+      filename: `cover-${Date.now()}-${file.name}`
+    }, 'archive-uploads')
+    return uploadResult.url
+  }
+
+  const uploadFilesToAlbum = async (files: File[] | FileList, album: Album): Promise<number> => {
+    if (!user) return 0
+
+    const fileArray = Array.from(files)
+    await Promise.all(fileArray.map(async (file) => {
+      const uploadResult = await uploadMedia(file, {
+        category: 'archive',
+        filename: `${Date.now()}-${file.name}`
+      }, 'archive-uploads')
+
+      const response = await fetch('/api/create-constellation-item-secure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: file.name.replace(/\.[^/.]+$/, ''),
+          description: `Uploaded to ${album.title}`,
+          content_type: file.type.startsWith('image/') ? 'artwork'
+            : file.type.startsWith('video/') ? 'video' : 'artwork',
+          media_url: uploadResult.url,
+          artist_name: '',
+          tags: [album.title.toLowerCase().replace(/\s+/g, '-')],
+          user_id: user.id
+        })
+      })
+
+      const result = await response.json()
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create archive item')
+      }
+
+      const albumResponse = await fetch('/api/manage-album-items-secure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          album_id: album.id,
+          item_id: result.data.id,
+          added_by: user.id
+        })
+      })
+
+      const albumResult = await albumResponse.json()
+      if (!albumResult.success) {
+        throw new Error(albumResult.error || 'Failed to add item to album')
+      }
+    }))
+
+    return fileArray.length
+  }
+
+  const handleCoverFileSelect = (file: File | null) => {
+    if (coverPreview) URL.revokeObjectURL(coverPreview)
+    if (!file) {
+      setCoverFile(null)
+      setCoverPreview(null)
+      return
+    }
+    setCoverFile(file)
+    setCoverPreview(URL.createObjectURL(file))
+    setNewAlbum(prev => ({ ...prev, cover_image_url: '' }))
+  }
+
+  const handleGalleryFilesSelect = (files: FileList | null) => {
+    if (!files?.length) return
+    setPendingGalleryFiles(prev => [...prev, ...Array.from(files)])
+  }
+
+  const removePendingGalleryFile = (index: number) => {
+    setPendingGalleryFiles(prev => prev.filter((_, i) => i !== index))
+  }
 
   const loadAlbums = async () => {
     try {
@@ -64,43 +166,53 @@ export default function AlbumManager() {
     e.preventDefault()
     if (!user) return
 
+    setIsSubmitting(true)
     try {
+      let coverImageUrl = newAlbum.cover_image_url.trim() || null
+      if (coverFile) {
+        coverImageUrl = await uploadCoverImage(coverFile)
+      }
+
       const response = await fetch('/api/create-album-secure', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...newAlbum,
+          cover_image_url: coverImageUrl,
           created_by: user.id
         })
       })
 
       const result = await response.json()
-
       if (!result.success) {
         throw new Error(result.error || 'Failed to create album')
       }
 
-      // Reset form and reload albums
-      setNewAlbum({
-        title: '',
-        description: '',
-        cover_image_url: '',
-        event_date: '',
-        event_location: '',
-        is_featured: false,
-        sort_order: 0
-      })
+      const createdAlbum: Album = { ...result.data, item_count: 0 }
+
+      if (pendingGalleryFiles.length > 0) {
+        const count = await uploadFilesToAlbum(pendingGalleryFiles, createdAlbum)
+        toast(`Album created with ${count} photo${count === 1 ? '' : 's'}!`, 'success')
+      } else {
+        toast('Album created! Add photos below.', 'success')
+        setSelectedAlbum(createdAlbum)
+        setShowBatchUpload(true)
+      }
+
+      resetForm()
       setIsCreating(false)
       loadAlbums()
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating album:', error)
-      toast(error.message || 'Failed to create album. Please try again.', 'error')
+      const message = error instanceof Error ? error.message : 'Failed to create album. Please try again.'
+      toast(message, 'error')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleEditAlbum = (album: Album) => {
+    resetForm()
     setEditingAlbum(album)
     setNewAlbum({
       title: album.title,
@@ -117,38 +229,46 @@ export default function AlbumManager() {
     e.preventDefault()
     if (!editingAlbum || !user) return
 
+    setIsSubmitting(true)
     try {
+      let coverImageUrl = newAlbum.cover_image_url.trim() || null
+      if (coverFile) {
+        coverImageUrl = await uploadCoverImage(coverFile)
+      }
+
       const response = await fetch('/api/update-album-secure', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: editingAlbum.id,
-          ...newAlbum
+          ...newAlbum,
+          cover_image_url: coverImageUrl
         })
       })
 
       const result = await response.json()
-
       if (!result.success) {
         throw new Error(result.error || 'Failed to update album')
       }
 
+      const updatedAlbum: Album = { ...editingAlbum, ...newAlbum, cover_image_url: coverImageUrl || undefined }
+
+      if (pendingGalleryFiles.length > 0) {
+        const count = await uploadFilesToAlbum(pendingGalleryFiles, updatedAlbum)
+        toast(`Album updated with ${count} new photo${count === 1 ? '' : 's'}!`, 'success')
+      } else {
+        toast('Album updated!', 'success')
+      }
+
       setEditingAlbum(null)
-      setNewAlbum({
-        title: '',
-        description: '',
-        cover_image_url: '',
-        event_date: '',
-        event_location: '',
-        is_featured: false,
-        sort_order: 0
-      })
+      resetForm()
       loadAlbums()
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating album:', error)
-      toast(error.message || 'Failed to update album. Please try again.', 'error')
+      const message = error instanceof Error ? error.message : 'Failed to update album. Please try again.'
+      toast(message, 'error')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -184,65 +304,15 @@ export default function AlbumManager() {
 
     setUploadingFiles(true)
     try {
-      const uploadPromises = Array.from(files).map(async (file) => {
-        // Upload file
-        const uploadResult = await uploadMedia(file, {
-          category: 'archive',
-          filename: `${Date.now()}-${file.name}`
-        }, 'archive-uploads')
-
-        // Create archive item
-        const response = await fetch('/api/create-constellation-item-secure', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            title: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
-            description: `Uploaded to ${selectedAlbum.title}`,
-            content_type: file.type.startsWith('image/') ? 'artwork' : 
-                          file.type.startsWith('video/') ? 'video' : 'artwork',
-            media_url: uploadResult.url,
-            artist_name: '',
-            tags: [selectedAlbum.title.toLowerCase().replace(/\s+/g, '-')],
-            user_id: user.id
-          })
-        })
-
-        const result = await response.json()
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to create archive item')
-        }
-
-        // Add to album
-        const albumResponse = await fetch('/api/manage-album-items-secure', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            album_id: selectedAlbum.id,
-            item_id: result.data.id,
-            added_by: user.id
-          })
-        })
-
-        const albumResult = await albumResponse.json()
-        if (!albumResult.success) {
-          throw new Error(albumResult.error || 'Failed to add item to album')
-        }
-
-        return result.data
-      })
-
-      await Promise.all(uploadPromises)
+      const count = await uploadFilesToAlbum(files, selectedAlbum)
       setShowBatchUpload(false)
       setSelectedAlbum(null)
       loadAlbums()
-      toast(`Successfully uploaded ${files.length} files to ${selectedAlbum.title}!`, 'success')
-    } catch (error: any) {
+      toast(`Successfully uploaded ${count} file${count === 1 ? '' : 's'} to ${selectedAlbum.title}!`, 'success')
+    } catch (error: unknown) {
       console.error('Error batch uploading:', error)
-      toast(error.message || 'Failed to upload files. Please try again.', 'error')
+      const message = error instanceof Error ? error.message : 'Failed to upload files. Please try again.'
+      toast(message, 'error')
     } finally {
       setUploadingFiles(false)
     }
@@ -251,6 +321,12 @@ export default function AlbumManager() {
   useEffect(() => {
     loadAlbums()
   }, [])
+
+  useEffect(() => {
+    return () => {
+      if (coverPreview) URL.revokeObjectURL(coverPreview)
+    }
+  }, [coverPreview])
 
   if (loading) {
     return (
@@ -279,7 +355,11 @@ export default function AlbumManager() {
           </p>
         </div>
         <button
-          onClick={() => setIsCreating(true)}
+          onClick={() => {
+            setEditingAlbum(null)
+            resetForm()
+            setIsCreating(true)
+          }}
           className="flex items-center px-4 py-2 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-all duration-300 font-space-whale-accent"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -334,31 +414,136 @@ export default function AlbumManager() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-space-whale-accent text-space-whale-navy mb-2">
-                  Event Location
-                </label>
-                <input
-                  type="text"
-                  value={newAlbum.event_location}
-                  onChange={(e) => setNewAlbum(prev => ({ ...prev, event_location: e.target.value }))}
-                  placeholder="e.g., Pearl Beach Arboretum"
-                  className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-space-whale-accent text-space-whale-navy mb-2">
-                  Cover Image URL
-                </label>
+            <div>
+              <label className="block text-sm font-space-whale-accent text-space-whale-navy mb-2">
+                Event Location
+              </label>
+              <input
+                type="text"
+                value={newAlbum.event_location}
+                onChange={(e) => setNewAlbum(prev => ({ ...prev, event_location: e.target.value }))}
+                placeholder="e.g., Pearl Beach Arboretum"
+                className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body"
+              />
+            </div>
+
+            {/* Cover Image */}
+            <div>
+              <label className="block text-sm font-space-whale-accent text-space-whale-navy mb-2">
+                Cover Image
+              </label>
+              {(coverPreview || newAlbum.cover_image_url) ? (
+                <div className="relative inline-block mb-3">
+                  <img
+                    src={coverPreview || newAlbum.cover_image_url}
+                    alt="Cover preview"
+                    className="h-32 w-auto max-w-full rounded-lg object-cover border border-space-whale-lavender/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleCoverFileSelect(null)
+                      setNewAlbum(prev => ({ ...prev, cover_image_url: '' }))
+                    }}
+                    className="absolute -top-2 -right-2 p-1 bg-white rounded-full shadow border border-space-whale-lavender/30 text-space-whale-navy hover:text-red-600"
+                    aria-label="Remove cover image"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  className="border-2 border-dashed border-space-whale-lavender/30 rounded-lg p-6 text-center hover:border-space-whale-purple/50 transition-colors cursor-pointer mb-3"
+                  onClick={() => coverInputRef.current?.click()}
+                >
+                  <ImageIcon className="h-8 w-8 text-space-whale-purple/60 mx-auto mb-2" />
+                  <p className="text-sm font-space-whale-body text-space-whale-navy">
+                    Click to upload a cover image
+                  </p>
+                  <p className="text-xs text-space-whale-navy/60 font-space-whale-body mt-1">
+                    JPG, PNG, or WebP
+                  </p>
+                </div>
+              )}
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleCoverFileSelect(e.target.files?.[0] || null)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowCoverUrlFallback(prev => !prev)}
+                className="text-xs text-space-whale-purple hover:text-space-whale-navy font-space-whale-body"
+              >
+                {showCoverUrlFallback ? 'Hide URL option' : 'Or paste an image URL'}
+              </button>
+              {showCoverUrlFallback && (
                 <input
                   type="url"
                   value={newAlbum.cover_image_url}
-                  onChange={(e) => setNewAlbum(prev => ({ ...prev, cover_image_url: e.target.value }))}
+                  onChange={(e) => {
+                    handleCoverFileSelect(null)
+                    setNewAlbum(prev => ({ ...prev, cover_image_url: e.target.value }))
+                  }}
                   placeholder="https://example.com/cover-image.jpg"
-                  className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body"
+                  className="w-full mt-2 px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body"
                 />
+              )}
+            </div>
+
+            {/* Album Photos */}
+            <div>
+              <label className="block text-sm font-space-whale-accent text-space-whale-navy mb-1">
+                Album Photos
+              </label>
+              <p className="text-xs text-space-whale-navy/60 font-space-whale-body mb-3">
+                Add images, videos, or audio to this collection. You can always add more later.
+              </p>
+              <div
+                className="border-2 border-dashed border-space-whale-lavender/30 rounded-lg p-6 text-center hover:border-space-whale-purple/50 transition-colors cursor-pointer"
+                onClick={() => galleryInputRef.current?.click()}
+              >
+                <Upload className="h-8 w-8 text-space-whale-purple/60 mx-auto mb-2" />
+                <p className="text-sm font-space-whale-body text-space-whale-navy">
+                  Click to select files
+                </p>
+                <p className="text-xs text-space-whale-navy/60 font-space-whale-body mt-1">
+                  Select multiple files at once
+                </p>
               </div>
+              <input
+                ref={galleryInputRef}
+                type="file"
+                multiple
+                accept="image/*,video/*,audio/*"
+                className="hidden"
+                onChange={(e) => {
+                  handleGalleryFilesSelect(e.target.files)
+                  e.target.value = ''
+                }}
+              />
+              {pendingGalleryFiles.length > 0 && (
+                <ul className="mt-3 space-y-2">
+                  {pendingGalleryFiles.map((file, index) => (
+                    <li
+                      key={`${file.name}-${index}`}
+                      className="flex items-center justify-between px-3 py-2 bg-space-whale-lavender/10 rounded-lg text-sm font-space-whale-body text-space-whale-navy"
+                    >
+                      <span className="truncate mr-2">{file.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => removePendingGalleryFile(index)}
+                        className="text-space-whale-navy/50 hover:text-red-600 shrink-0"
+                        aria-label={`Remove ${file.name}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             <div className="flex items-center space-x-4">
@@ -381,25 +566,27 @@ export default function AlbumManager() {
                 onClick={() => {
                   setIsCreating(false)
                   setEditingAlbum(null)
-                  setNewAlbum({
-                    title: '',
-                    description: '',
-                    cover_image_url: '',
-                    event_date: '',
-                    event_location: '',
-                    is_featured: false,
-                    sort_order: 0
-                  })
+                  resetForm()
                 }}
-                className="px-4 py-2 border border-space-whale-lavender/30 text-space-whale-navy rounded-lg hover:bg-space-whale-lavender/10 transition-colors font-space-whale-body"
+                disabled={isSubmitting}
+                className="px-4 py-2 border border-space-whale-lavender/30 text-space-whale-navy rounded-lg hover:bg-space-whale-lavender/10 transition-colors font-space-whale-body disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-all duration-300 font-space-whale-accent"
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-all duration-300 font-space-whale-accent disabled:opacity-50"
               >
-                {editingAlbum ? 'Update Album' : 'Create Album'}
+                {isSubmitting
+                  ? 'Saving…'
+                  : editingAlbum
+                    ? pendingGalleryFiles.length > 0
+                      ? `Update & Add ${pendingGalleryFiles.length} Photo${pendingGalleryFiles.length === 1 ? '' : 's'}`
+                      : 'Update Album'
+                    : pendingGalleryFiles.length > 0
+                      ? `Create & Add ${pendingGalleryFiles.length} Photo${pendingGalleryFiles.length === 1 ? '' : 's'}`
+                      : 'Create Album'}
               </button>
             </div>
           </form>
@@ -464,7 +651,7 @@ export default function AlbumManager() {
                   className="flex-1 px-3 py-2 text-blue-600 border border-blue-600/30 rounded-lg hover:bg-blue-600/10 transition-colors text-sm font-space-whale-body"
                 >
                   <Upload className="h-4 w-4 inline mr-1" />
-                  Upload
+                  Add Photos
                 </button>
                 <button 
                   onClick={() => handleDeleteAlbum(album)}
@@ -486,7 +673,11 @@ export default function AlbumManager() {
           className="py-12"
         >
           <button
-            onClick={() => setIsCreating(true)}
+            onClick={() => {
+              setEditingAlbum(null)
+              resetForm()
+              setIsCreating(true)
+            }}
             className="px-6 py-3 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-all duration-300 font-space-whale-accent"
           >
             Create Your First Album
@@ -501,7 +692,7 @@ export default function AlbumManager() {
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-space-whale-heading text-space-whale-navy">
-                  Batch Upload to "{selectedAlbum.title}"
+                  Add Photos to &ldquo;{selectedAlbum.title}&rdquo;
                 </h2>
                 <button
                   onClick={() => {
