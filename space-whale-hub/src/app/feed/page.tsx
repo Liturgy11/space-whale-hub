@@ -9,43 +9,65 @@ import { SpaceIllustration } from "@/components/ui/EmptyState";
 import { SPACE_ILLUSTRATIONS } from "@/lib/space-illustrations";
 import PostForm from "@/components/feed/PostForm";
 import FeedList from "@/components/feed/FeedList";
-import { useAuth } from "@/contexts/AuthContext";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import FirstPostModal from "@/components/FirstPostModal";
+import { secureFetch } from "@/lib/secure-fetch";
 
 function CommunityFeedContent() {
   const { user, loading: authLoading } = useRequireAuth();
-  const { refreshUser } = useAuth();
   const [showPostForm, setShowPostForm] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showFirstPostNote, setShowFirstPostNote] = useState(false);
   const [acknowledgedThisSession, setAcknowledgedThisSession] = useState(false);
+  const [firstPostAckAt, setFirstPostAckAt] = useState<string | null>(null);
   const [showNetworkBanner, setShowNetworkBanner] = useState(() => {
     if (typeof window === 'undefined') return false;
     return !localStorage.getItem('network_banner_dismissed');
   });
   useEffect(() => {
-    // No-op, but ensures we respond to user changes if needed
+    if (!user) {
+      setFirstPostAckAt(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await secureFetch('/api/get-profile-secure');
+        const result = await res.json();
+        if (!cancelled && result.success) {
+          setFirstPostAckAt(result.data?.first_post_ack_at ?? null);
+        }
+      } catch {
+        // ignore — session flag still prevents re-show
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   function hasAcknowledged(): boolean {
     if (!user) return true;
     if (acknowledgedThisSession) return true;
-    return Boolean(user.user_metadata?.first_post_ack_at);
+    return Boolean(firstPostAckAt);
   }
 
   async function acknowledgeFirstPost() {
-    setAcknowledgedThisSession(true); // always prevents re-show this session
+    setAcknowledgedThisSession(true);
     if (!user) return;
     try {
-      const { supabase } = await import("@/lib/supabase");
-      await supabase.auth.updateUser({
-        data: {
-          ...user.user_metadata,
+      await secureFetch('/api/update-profile-secure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
           first_post_ack_at: new Date().toISOString(),
-        },
+        }),
       });
-      await refreshUser();
+      setFirstPostAckAt(new Date().toISOString());
     } catch (_e) {
       // silently fail — session flag above ensures modal won't reappear
     }

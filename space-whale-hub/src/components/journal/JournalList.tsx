@@ -12,6 +12,7 @@ import ReorderableImageGrid from '@/components/media/ReorderableImageGrid'
 import { getMoodBoardDisplayUrls, getMoodBoardImageUrls } from '@/lib/mood-board'
 import EmptyState from '@/components/ui/EmptyState'
 import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
+import { secureFetch } from '@/lib/secure-fetch'
 
 const JOURNAL_CACHE_KEY = 'swp_journal_cache'
 const JOURNAL_CACHE_TTL = 3 * 60 * 1000 // 3 minutes
@@ -143,7 +144,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
 
     try {
       setDeletingId(entryId)
-      const res = await fetch('/api/delete-journal-entry-secure', {
+      const res = await secureFetch('/api/delete-journal-entry-secure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ entryId, userId: user?.id }),
@@ -419,7 +420,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       }
       
       // Use the secure API route for updating
-      const response = await fetch('/api/update-journal-entry-secure', {
+      const response = await secureFetch('/api/update-journal-entry-secure', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -478,7 +479,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
 
       const imageUrls = getMoodBoardDisplayUrls(entry)
 
-      const response = await fetch('/api/create-post-secure', {
+      const response = await secureFetch('/api/create-post-secure', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

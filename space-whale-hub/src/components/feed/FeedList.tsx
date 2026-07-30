@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { toast } from '@/components/ui/Toast'
 import EmptyState from '@/components/ui/EmptyState'
 import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
+import { secureFetch } from '@/lib/secure-fetch'
 
 const PostCard = dynamic(() => import('./PostCard'), {
   loading: () => (
@@ -89,7 +90,7 @@ export default function FeedList({
           ? `/api/get-posts-secure?userId=${encodeURIComponent(activeUserId)}`
           : '/api/get-posts-secure'
 
-        const res = await fetch(url, { cache: force ? 'no-store' : 'default' })
+        const res = await secureFetch(url, { cache: force ? 'no-store' : 'default' })
         if (!res.ok) throw new Error('Failed to fetch posts')
         const json = await res.json()
         if (!json.success) throw new Error(json.error || 'Failed to fetch posts')
@@ -130,7 +131,7 @@ export default function FeedList({
     if (!userId) return
 
     try {
-      const response = await fetch('/api/toggle-like-secure', {
+      const response = await secureFetch('/api/toggle-like-secure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, postId }),
@@ -178,7 +179,7 @@ export default function FeedList({
     }
 
     try {
-      const response = await fetch('/api/delete-post-secure', {
+      const response = await secureFetch('/api/delete-post-secure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ postId, userId }),

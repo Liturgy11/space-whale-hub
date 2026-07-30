@@ -7,6 +7,7 @@ import { uploadMedia } from '@/lib/storage-client'
 import { toast } from '@/components/ui/Toast'
 import EmptyState, { SpaceIllustration } from '@/components/ui/EmptyState'
 import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
+import { secureFetch } from '@/lib/secure-fetch'
 
 interface Album {
   id: string
@@ -84,7 +85,7 @@ export default function AlbumManager() {
         filename: `${Date.now()}-${file.name}`
       }, 'archive-uploads')
 
-      const response = await fetch('/api/create-constellation-item-secure', {
+      const response = await secureFetch('/api/create-constellation-item-secure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -104,7 +105,7 @@ export default function AlbumManager() {
         throw new Error(result.error || 'Failed to create archive item')
       }
 
-      const albumResponse = await fetch('/api/manage-album-items-secure', {
+      const albumResponse = await secureFetch('/api/manage-album-items-secure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -147,7 +148,7 @@ export default function AlbumManager() {
   const loadAlbums = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/get-albums-secure')
+      const response = await secureFetch('/api/get-albums-secure')
       const result = await response.json()
 
       if (!result.success) {
@@ -173,7 +174,7 @@ export default function AlbumManager() {
         coverImageUrl = await uploadCoverImage(coverFile)
       }
 
-      const response = await fetch('/api/create-album-secure', {
+      const response = await secureFetch('/api/create-album-secure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -236,7 +237,7 @@ export default function AlbumManager() {
         coverImageUrl = await uploadCoverImage(coverFile)
       }
 
-      const response = await fetch('/api/update-album-secure', {
+      const response = await secureFetch('/api/update-album-secure', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -278,7 +279,7 @@ export default function AlbumManager() {
     }
 
     try {
-      const response = await fetch('/api/update-album-secure', {
+      const response = await secureFetch('/api/update-album-secure', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

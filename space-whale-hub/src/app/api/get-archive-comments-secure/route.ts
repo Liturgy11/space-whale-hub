@@ -1,24 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
-// Force dynamic rendering - don't evaluate at build time
 export const dynamic = 'force-dynamic'
-
-function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase environment variables')
-  }
-
-  return createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  })
-}
 
 export async function GET(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin()
@@ -43,7 +26,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 })
     }
 
-    // Get display names for all comments
     const commentsWithNames = await Promise.all(
       (data || []).map(async (comment) => {
         const { data: profile } = await supabaseAdmin
@@ -51,7 +33,7 @@ export async function GET(request: NextRequest) {
           .select('display_name')
           .eq('id', comment.user_id)
           .single()
-        
+
         return {
           ...comment,
           display_name: profile?.display_name || 'Anonymous'

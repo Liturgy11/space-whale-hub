@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
 import { encryptJournalContent } from '@/lib/journal-encryption'
 import { Loader2, Save, X, Upload, Image as ImageIcon, X as XIcon, Lock, Unlock } from 'lucide-react'
+import { secureFetch } from '@/lib/secure-fetch'
 
 interface JournalEntryFormProps {
   onSuccess?: (entry: any) => void
@@ -164,7 +165,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
         }
       }
 
-      const response = await fetch('/api/create-journal-entry-secure', {
+      const response = await secureFetch('/api/create-journal-entry-secure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

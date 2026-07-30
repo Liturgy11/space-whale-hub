@@ -1,42 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { assertMatchingUserId, verifyAuthUser } from '@/lib/auth-server'
 
-// Force dynamic rendering - don't evaluate at build time
 export const dynamic = 'force-dynamic'
-
-function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase environment variables')
-  }
-
-  return createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  })
-}
 
 export async function POST(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin()
   try {
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
+
     const { itemId, userId } = await request.json()
 
-    if (!itemId || !userId) {
-      return NextResponse.json({ success: false, error: 'Item ID and User ID are required' }, { status: 400 })
+    const mismatch = assertMatchingUserId(auth.userId, userId)
+    if (mismatch) return mismatch
+
+    if (!itemId) {
+      return NextResponse.json({ success: false, error: 'Item ID is required' }, { status: 400 })
     }
 
-    console.log('Toggling like for archive item:', { itemId, userId })
+    console.log('Toggling like for archive item:', { itemId, userId: auth.userId })
 
-    // Check if like already exists
     const { data: existingLike, error: checkError } = await supabaseAdmin
       .from('archive_likes')
       .select('id')
       .eq('item_id', itemId)
-      .eq('user_id', userId)
+      .eq('user_id', auth.userId)
       .single()
 
     if (checkError && checkError.code !== 'PGRST116') {
@@ -45,7 +34,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (existingLike) {
-      // Unlike - delete the like
       const { error: deleteError } = await supabaseAdmin
         .from('archive_likes')
         .delete()
@@ -58,23 +46,22 @@ export async function POST(request: NextRequest) {
 
       console.log('Like removed successfully')
       return NextResponse.json({ success: true, liked: false })
-    } else {
-      // Like - create new like
-      const { error: insertError } = await supabaseAdmin
-        .from('archive_likes')
-        .insert({
-          item_id: itemId,
-          user_id: userId
-        })
-
-      if (insertError) {
-        console.error('Error creating like:', insertError)
-        return NextResponse.json({ success: false, error: insertError.message }, { status: 500 })
-      }
-
-      console.log('Like added successfully')
-      return NextResponse.json({ success: true, liked: true })
     }
+
+    const { error: insertError } = await supabaseAdmin
+      .from('archive_likes')
+      .insert({
+        item_id: itemId,
+        user_id: auth.userId
+      })
+
+    if (insertError) {
+      console.error('Error creating like:', insertError)
+      return NextResponse.json({ success: false, error: insertError.message }, { status: 500 })
+    }
+
+    console.log('Like added successfully')
+    return NextResponse.json({ success: true, liked: true })
 
   } catch (error: any) {
     console.error('API error toggling archive like:', error)

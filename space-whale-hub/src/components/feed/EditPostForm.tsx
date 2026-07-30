@@ -7,6 +7,7 @@ import { getPostMediaUrls, MAX_POST_IMAGES } from '@/lib/post-media'
 import MediaCarousel from '@/components/media/MediaCarousel'
 import ReorderableImageGrid from '@/components/media/ReorderableImageGrid'
 import { Save, X, AlertTriangle, Loader2, Plus, Upload } from 'lucide-react'
+import { secureFetch } from '@/lib/secure-fetch'
 
 interface Post {
   id: string
@@ -118,7 +119,7 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
       const finalTags = [...urlTags, ...textTagsArray]
       const urls = mediaItems.map((m) => m.url)
 
-      const res = await fetch('/api/update-post-secure', {
+      const res = await secureFetch('/api/update-post-secure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,35 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { assertMatchingUserId, verifyAuthUser } from '@/lib/auth-server'
 
 export async function POST(request: NextRequest) {
   try {
-    const { 
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
+
+    const {
       entryId,
-      title, 
+      title,
       content,
       content_encrypted,
       is_encrypted,
       encryption_key_id,
       encryption_salt,
       encryption_iv,
-      mood, 
-      tags, 
-      media_url, 
+      mood,
+      tags,
+      media_url,
       media_type,
       is_private,
-      userId 
+      userId
     } = await request.json()
-    
-    // content can be empty for encrypted or media-only entries (mood boards store images in tags)
+
+    const mismatch = assertMatchingUserId(auth.userId, userId)
+    if (mismatch) return mismatch
+
     const hasTags = Array.isArray(tags) && tags.length > 0
-    if (!entryId || (!content && !content_encrypted && !media_url && !hasTags) || !userId) {
+    if (!entryId || (!content && !content_encrypted && !media_url && !hasTags)) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required fields: entryId, userId, and either content or media'
+        error: 'Missing required fields: entryId and either content or media'
       }, { status: 400 })
     }
 
-    // If encrypted, validate encryption fields
     if (is_encrypted && (!content_encrypted || !encryption_salt || !encryption_iv)) {
       return NextResponse.json({
         success: false,
@@ -39,29 +44,8 @@ export async function POST(request: NextRequest) {
 
     const finalContent = is_encrypted ? null : (content?.trim() || null)
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabaseAdmin = getSupabaseAdmin()
 
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json({
-        success: false,
-        error: 'Server configuration error: Missing Supabase environment variables'
-      }, { status: 500 })
-    }
-
-    // Create a Supabase client with service role (bypasses RLS)
-    const supabaseAdmin = createClient(
-      supabaseUrl,
-      supabaseServiceKey,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
-
-    // Update the journal entry using service role
     const { data, error } = await supabaseAdmin
       .from('journal_entries')
       .update({
@@ -80,10 +64,10 @@ export async function POST(request: NextRequest) {
         updated_at: new Date().toISOString()
       })
       .eq('id', entryId)
-      .eq('user_id', userId) // Ensure user can only update their own entries
+      .eq('user_id', auth.userId)
       .select('*')
       .single()
-    
+
     if (error) {
       console.error('Database error:', error)
       return NextResponse.json({
@@ -92,23 +76,20 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
-    // Log access (update action)
-    // Note: Audit trail is automatically created by trigger, but we log explicit access
     try {
-      const ipAddress = request.headers.get('x-forwarded-for') || 
-                       request.headers.get('x-real-ip') || 
+      const ipAddress = request.headers.get('x-forwarded-for') ||
+                       request.headers.get('x-real-ip') ||
                        null
       const userAgent = request.headers.get('user-agent') || null
 
       await supabaseAdmin.rpc('log_journal_access', {
         p_entry_id: entryId,
-        p_user_id: userId,
+        p_user_id: auth.userId,
         p_action: 'update',
         p_ip_address: ipAddress,
         p_user_agent: userAgent
       })
     } catch (logError) {
-      // Don't fail the request if logging fails, but log the error
       console.error('Failed to log journal access:', logError)
     }
 

@@ -11,6 +11,7 @@ import { toast } from '@/components/ui/Toast'
 import AlbumCoverImage from '@/components/archive/AlbumCoverImage'
 import EmptyState from '@/components/ui/EmptyState'
 import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
+import { secureFetch } from '@/lib/secure-fetch'
 
 interface ArchiveItem {
   id: string
@@ -59,8 +60,8 @@ export default function AlbumDetailPage() {
 
         // Fetch album list and pick this album (no dedicated single endpoint yet)
         const [albumsRes, itemsRes] = await Promise.all([
-          fetch('/api/get-albums-secure'),
-          fetch(`/api/get-album-items-secure?albumId=${albumId}`)
+          secureFetch('/api/get-albums-secure'),
+          secureFetch(`/api/get-album-items-secure?albumId=${albumId}`)
         ])
 
         const albumsJson = await albumsRes.json()
@@ -175,7 +176,7 @@ export default function AlbumDetailPage() {
                       // Persist order
                       try {
                         const orders = newItems.map((it, i) => ({ item_id: it.id, sort_order: i }))
-                        await fetch('/api/manage-album-items-secure', {
+                        await secureFetch('/api/manage-album-items-secure', {
                           method: 'PUT',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ album_id: albumId, orders })
@@ -230,7 +231,7 @@ export default function AlbumDetailPage() {
                           onClick={async (e) => {
                             e.stopPropagation()
                             try {
-                              const res = await fetch('/api/update-album-secure', {
+                              const res = await secureFetch('/api/update-album-secure', {
                                 method: 'PUT',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ id: albumId, title: album?.title, description: album?.description, cover_image_url: item.media_url, event_date: album?.event_date, event_location: album?.event_location, is_featured: false, sort_order: 0 })

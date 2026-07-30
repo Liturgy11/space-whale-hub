@@ -8,6 +8,7 @@ import { MAX_POST_IMAGES } from '@/lib/post-media'
 import MediaCarousel from '@/components/media/MediaCarousel'
 import { Upload, Send, X, AlertCircle, Loader2, Plus } from 'lucide-react'
 import { toast } from '@/components/ui/Toast'
+import { secureFetch } from '@/lib/secure-fetch'
 
 interface PostFormProps {
   onPostCreated?: () => void
@@ -215,7 +216,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
         // Profile creation is best-effort
       }
 
-      const response = await fetch('/api/create-post-secure', {
+      const response = await secureFetch('/api/create-post-secure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -8,6 +8,7 @@ import { getSignedUrl } from '@/lib/signed-urls'
 import { toast } from '@/components/ui/Toast'
 import { SpaceIllustration } from '@/components/ui/EmptyState'
 import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
+import { secureFetch } from '@/lib/secure-fetch'
 
 interface ArchiveItem {
   id: string
@@ -242,7 +243,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
     if (confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
       setIsDeleting(true)
       try {
-      const response = await fetch('/api/delete-constellation-item-secure', {
+      const response = await secureFetch('/api/delete-constellation-item-secure', {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -276,7 +277,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
     
     setIsLiking(true)
     try {
-      const response = await fetch('/api/toggle-archive-like-secure', {
+      const response = await secureFetch('/api/toggle-archive-like-secure', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -305,7 +306,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
 
   const loadComments = async () => {
     try {
-      const response = await fetch(`/api/get-archive-comments-secure?itemId=${currentItem.id}`)
+      const response = await secureFetch(`/api/get-archive-comments-secure?itemId=${currentItem.id}`)
       const result = await response.json()
       
       if (result.success) {
@@ -327,7 +328,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
 
     setIsSubmittingComment(true)
     try {
-      const response = await fetch('/api/create-archive-comment-secure', {
+      const response = await secureFetch('/api/create-archive-comment-secure', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -381,7 +382,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
 
     setIsSaving(true)
     try {
-      const response = await fetch('/api/update-archive-item-secure', {
+      const response = await secureFetch('/api/update-archive-item-secure', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

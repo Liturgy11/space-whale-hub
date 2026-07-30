@@ -1,28 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { assertMatchingUserId, verifyAuthUser } from '@/lib/auth-server'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
+
     const { entryId, userId } = await request.json()
 
-    if (!entryId || !userId) {
-      return NextResponse.json({ success: false, error: 'Missing entryId or userId' }, { status: 400 })
+    const mismatch = assertMatchingUserId(auth.userId, userId)
+    if (mismatch) return mismatch
+
+    if (!entryId) {
+      return NextResponse.json({ success: false, error: 'Missing entryId' }, { status: 400 })
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabaseAdmin = getSupabaseAdmin()
 
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json({ success: false, error: 'Server configuration error' }, { status: 500 })
-    }
-
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    })
-
-    // Only allow deleting own entries (verify ownership before deleting)
     const { data: entry, error: fetchError } = await supabaseAdmin
       .from('journal_entries')
       .select('id, user_id')
@@ -33,7 +30,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Entry not found' }, { status: 404 })
     }
 
-    if (entry.user_id !== userId) {
+    if (entry.user_id !== auth.userId) {
       return NextResponse.json({ success: false, error: 'Unauthorised' }, { status: 403 })
     }
 

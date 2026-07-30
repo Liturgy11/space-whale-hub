@@ -1,37 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { verifyAuthUser } from '@/lib/auth-server'
 
-// Force dynamic rendering - don't evaluate at build time
 export const dynamic = 'force-dynamic'
 
-function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+async function verifyAlbumOwnership(
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
+  albumId: string,
+  userId: string
+) {
+  const { data: album, error } = await supabaseAdmin
+    .from('albums')
+    .select('id, created_by')
+    .eq('id', albumId)
+    .single()
 
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase environment variables')
+  if (error || !album) {
+    return NextResponse.json({ success: false, error: 'Album not found' }, { status: 404 })
   }
 
-  return createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  })
+  if (album.created_by !== userId) {
+    return NextResponse.json({ success: false, error: 'Unauthorised' }, { status: 403 })
+  }
+
+  return null
 }
 
 export async function PUT(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin()
   try {
-    const { id, title, description, cover_image_url, event_date, event_location, is_featured, sort_order } = await request.json()
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
+
+    const { id, title, description, cover_image_url, event_date, event_location, is_featured, sort_order } =
+      await request.json()
 
     if (!id || !title) {
       return NextResponse.json({ success: false, error: 'Album ID and title are required' }, { status: 400 })
     }
 
+    const ownershipError = await verifyAlbumOwnership(supabaseAdmin, id, auth.userId)
+    if (ownershipError) return ownershipError
+
     console.log('Updating album:', { id, title, description, event_date, event_location })
 
-    // Update album using service role (bypasses RLS)
     const { data, error } = await supabaseAdmin
       .from('albums')
       .update({
@@ -45,6 +57,7 @@ export async function PUT(request: NextRequest) {
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
+      .eq('created_by', auth.userId)
       .select()
       .single()
 
@@ -65,19 +78,25 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin()
   try {
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
+
     const { id } = await request.json()
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'Album ID is required' }, { status: 400 })
     }
 
+    const ownershipError = await verifyAlbumOwnership(supabaseAdmin, id, auth.userId)
+    if (ownershipError) return ownershipError
+
     console.log('Deleting album:', id)
 
-    // Delete album using service role (bypasses RLS)
     const { error } = await supabaseAdmin
       .from('albums')
       .delete()
       .eq('id', id)
+      .eq('created_by', auth.userId)
 
     if (error) {
       console.error('Error deleting album:', error)
@@ -92,6 +111,3 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }
-
-
-

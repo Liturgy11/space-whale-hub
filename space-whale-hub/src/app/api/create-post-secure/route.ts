@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { assertMatchingUserId, verifyAuthUser } from '@/lib/auth-server'
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
+
     const { 
       content, 
       tags, 
@@ -12,6 +16,9 @@ export async function POST(request: NextRequest) {
       media_type,
       userId 
     } = await request.json()
+
+    const mismatch = assertMatchingUserId(auth.userId, userId)
+    if (mismatch) return mismatch
     
     const trimmedContent = (content ?? '').trim()
 
@@ -42,34 +49,14 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    if (!userId) {
+    if (!userId && !auth.userId) {
       return NextResponse.json({
         success: false,
         error: 'User ID is required'
       }, { status: 400 })
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json({
-        success: false,
-        error: 'Server configuration error: Missing Supabase environment variables'
-      }, { status: 500 })
-    }
-
-    // Create a Supabase client with service role (bypasses RLS)
-    const supabaseAdmin = createClient(
-      supabaseUrl,
-      supabaseServiceKey,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
+    const supabaseAdmin = getSupabaseAdmin()
 
     const textTags: string[] = Array.isArray(tags)
       ? tags.filter(
@@ -94,7 +81,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabaseAdmin
       .from('posts')
       .insert({
-        user_id: userId,
+        user_id: auth.userId,
         content: trimmedContent,
         tags: textTags,
         has_content_warning: !!content_warning,

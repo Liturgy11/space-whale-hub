@@ -1,54 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { assertMatchingUserId, verifyAuthUser } from '@/lib/auth-server'
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
+
     const { userId, postId } = await request.json()
-    
-    if (!userId || !postId) {
+
+    const mismatch = assertMatchingUserId(auth.userId, userId)
+    if (mismatch) return mismatch
+
+    if (!postId) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required fields: userId and postId'
+        error: 'Missing required field: postId'
       }, { status: 400 })
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabaseAdmin = getSupabaseAdmin()
 
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json({
-        success: false,
-        error: 'Server configuration error: Missing Supabase environment variables'
-      }, { status: 500 })
-    }
-
-    // Create a Supabase client with service role (bypasses RLS)
-    const supabaseAdmin = createClient(
-      supabaseUrl,
-      supabaseServiceKey,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
-
-    // Check if already liked
     const { data: existingLike, error: checkError } = await supabaseAdmin
       .from('likes')
       .select('id')
-      .eq('user_id', userId)
+      .eq('user_id', auth.userId)
       .eq('post_id', postId)
       .single()
 
     if (existingLike) {
-      // Unlike - delete the like
       const { error: deleteError } = await supabaseAdmin
         .from('likes')
         .delete()
         .eq('id', existingLike.id)
-      
+
       if (deleteError) {
         console.error('Delete like error:', deleteError)
         return NextResponse.json({
@@ -56,36 +41,35 @@ export async function POST(request: NextRequest) {
           error: deleteError.message
         }, { status: 500 })
       }
-      
+
       return NextResponse.json({
         success: true,
         liked: false
       })
-    } else {
-      // Like - create new like
-      const { data, error: insertError } = await supabaseAdmin
-        .from('likes')
-        .insert({
-          user_id: userId,
-          post_id: postId
-        })
-        .select()
-        .single()
-      
-      if (insertError) {
-        console.error('Insert like error:', insertError)
-        return NextResponse.json({
-          success: false,
-          error: insertError.message
-        }, { status: 500 })
-      }
-      
-      return NextResponse.json({
-        success: true,
-        liked: true,
-        like: data
-      })
     }
+
+    const { data, error: insertError } = await supabaseAdmin
+      .from('likes')
+      .insert({
+        user_id: auth.userId,
+        post_id: postId
+      })
+      .select()
+      .single()
+
+    if (insertError) {
+      console.error('Insert like error:', insertError)
+      return NextResponse.json({
+        success: false,
+        error: insertError.message
+      }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      liked: true,
+      like: data
+    })
   } catch (err: any) {
     console.error('API error:', err)
     return NextResponse.json({

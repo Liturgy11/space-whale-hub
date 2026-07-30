@@ -1,43 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { assertMatchingUserId, verifyAuthUser } from '@/lib/auth-server'
 
-// Force dynamic rendering - don't evaluate at build time
 export const dynamic = 'force-dynamic'
 
-function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+async function verifyAlbumOwnership(
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
+  albumId: string,
+  userId: string
+) {
+  const { data: album, error } = await supabaseAdmin
+    .from('albums')
+    .select('id, created_by')
+    .eq('id', albumId)
+    .single()
 
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase environment variables')
+  if (error || !album) {
+    return NextResponse.json({ success: false, error: 'Album not found' }, { status: 404 })
   }
 
-  return createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  })
+  if (album.created_by !== userId) {
+    return NextResponse.json({ success: false, error: 'Unauthorised' }, { status: 403 })
+  }
+
+  return null
 }
 
 export async function POST(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin()
   try {
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
+
     const { album_id, item_id, added_by, sort_order } = await request.json()
 
-    if (!album_id || !item_id || !added_by) {
-      return NextResponse.json({ success: false, error: 'album_id, item_id, and added_by are required' }, { status: 400 })
+    const mismatch = assertMatchingUserId(auth.userId, added_by)
+    if (mismatch) return mismatch
+
+    if (!album_id || !item_id) {
+      return NextResponse.json({ success: false, error: 'album_id and item_id are required' }, { status: 400 })
     }
 
-    console.log('Adding item to album:', { album_id, item_id, added_by })
+    const ownershipError = await verifyAlbumOwnership(supabaseAdmin, album_id, auth.userId)
+    if (ownershipError) return ownershipError
 
-    // Add item to album using service role (bypasses RLS)
+    console.log('Adding item to album:', { album_id, item_id, added_by: auth.userId })
+
     const { data, error } = await supabaseAdmin
       .from('album_items')
       .insert({
         album_id: album_id,
         item_id: item_id,
-        added_by: added_by,
+        added_by: auth.userId,
         sort_order: sort_order || 0,
         created_at: new Date().toISOString()
       })
@@ -61,15 +75,20 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin()
   try {
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
+
     const { album_id, item_id } = await request.json()
 
     if (!album_id || !item_id) {
       return NextResponse.json({ success: false, error: 'album_id and item_id are required' }, { status: 400 })
     }
 
+    const ownershipError = await verifyAlbumOwnership(supabaseAdmin, album_id, auth.userId)
+    if (ownershipError) return ownershipError
+
     console.log('Removing item from album:', { album_id, item_id })
 
-    // Remove item from album using service role (bypasses RLS)
     const { error } = await supabaseAdmin
       .from('album_items')
       .delete()
@@ -90,17 +109,21 @@ export async function DELETE(request: NextRequest) {
   }
 }
 
-// Update sort order of items within an album
 export async function PUT(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin()
   try {
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
+
     const { album_id, orders } = await request.json()
 
     if (!album_id || !Array.isArray(orders)) {
       return NextResponse.json({ success: false, error: 'album_id and orders[] are required' }, { status: 400 })
     }
 
-    // orders: [{ item_id: string, sort_order: number }]
+    const ownershipError = await verifyAlbumOwnership(supabaseAdmin, album_id, auth.userId)
+    if (ownershipError) return ownershipError
+
     for (const entry of orders) {
       if (!entry.item_id || typeof entry.sort_order !== 'number') continue
       const { error } = await supabaseAdmin

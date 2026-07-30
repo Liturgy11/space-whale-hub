@@ -1,54 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { assertMatchingUserId, verifyAuthUser } from '@/lib/auth-server'
 
 export async function POST(request: NextRequest) {
   try {
-    const { 
-      postId, 
-      content, 
-      userId 
-    } = await request.json()
-    
-    if (!postId || !content || !userId) {
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
+
+    const { postId, content, userId } = await request.json()
+
+    const mismatch = assertMatchingUserId(auth.userId, userId)
+    if (mismatch) return mismatch
+
+    if (!postId || !content) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required fields: postId, content, and userId'
+        error: 'Missing required fields: postId and content'
       }, { status: 400 })
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabaseAdmin = getSupabaseAdmin()
 
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json({
-        success: false,
-        error: 'Server configuration error: Missing Supabase environment variables'
-      }, { status: 500 })
-    }
-
-    // Create a Supabase client with service role (bypasses RLS)
-    const supabaseAdmin = createClient(
-      supabaseUrl,
-      supabaseServiceKey,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
-
-    // Create the comment using service role
     const { data, error } = await supabaseAdmin
       .from('comments')
       .insert({
-        user_id: userId,
+        user_id: auth.userId,
         post_id: postId,
         content: content.trim()
       })
       .select('*')
       .single()
-    
+
     if (error) {
       console.error('Database error:', error)
       return NextResponse.json({

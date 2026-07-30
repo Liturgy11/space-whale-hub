@@ -9,6 +9,7 @@ import AppShell from "@/components/layout/AppShell";
 import SetDisplayName from "@/components/SetDisplayName";
 import WelcomeModal from "@/components/WelcomeModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { secureFetch } from "@/lib/secure-fetch";
 
 type SpaceIconConfig =
   | { iconSrc: string }
@@ -94,27 +95,43 @@ function HomeContent() {
 
     const key = `welcome_seen_${user.id}`;
     const localSeen = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
-    const metadataSeen = user.user_metadata?.welcome_seen_at;
+    if (localSeen) return;
 
-    if (!metadataSeen && !localSeen) {
-      setShowWelcome(true);
-    }
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await secureFetch('/api/get-profile-secure');
+        const result = await res.json();
+        if (cancelled) return;
+
+        const profileSeen = result.success && result.data?.welcome_seen_at;
+        if (!profileSeen) {
+          setShowWelcome(true);
+        }
+      } catch {
+        if (!cancelled) setShowWelcome(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   async function handleWelcomeClose() {
     try {
-      // Optimistically mark in localStorage
       if (user && typeof window !== 'undefined') {
         localStorage.setItem(`welcome_seen_${user.id}`, new Date().toISOString());
       }
-      // Try to persist to Supabase
       if (user) {
-        const { supabase } = await import("@/lib/supabase");
-        await supabase.auth.updateUser({
-          data: {
-            ...user.user_metadata,
+        await secureFetch('/api/update-profile-secure', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
             welcome_seen_at: new Date().toISOString(),
-          },
+          }),
         });
       }
     } catch (_e) {

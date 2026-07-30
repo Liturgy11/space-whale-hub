@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
-import { supabase } from '@/lib/supabase'
+import { secureFetch } from '@/lib/secure-fetch'
 import { User, Camera, X, Sparkles } from 'lucide-react'
 
 interface AvatarUploadProps {
@@ -48,16 +48,18 @@ export default function AvatarUpload({ onClose }: AvatarUploadProps) {
       }, user.id)
       const publicUrl = result.url
 
-      // Update user metadata with new avatar URL
-      const { error: updateError } = await supabase.auth.updateUser({
-        data: { 
-          ...user.user_metadata,
-          avatar_url: publicUrl 
-        }
+      const profileRes = await secureFetch('/api/update-profile-secure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user!.id,
+          avatar_url: publicUrl,
+        }),
       })
+      const profileResult = await profileRes.json()
 
-      if (updateError) {
-        console.error('Update error:', updateError)
+      if (!profileResult.success) {
+        console.error('Update error:', profileResult.error)
         setSuccess('❌ Avatar uploaded but profile update failed.')
       } else {
         setAvatarUrl(publicUrl)

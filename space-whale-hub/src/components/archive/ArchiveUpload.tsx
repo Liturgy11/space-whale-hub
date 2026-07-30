@@ -6,6 +6,7 @@ import { Upload, X, Image, Video, FileText, Music, Tag } from 'lucide-react'
 import { uploadMedia } from '@/lib/storage-client'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/ui/Toast'
+import { secureFetch } from '@/lib/secure-fetch'
 
 interface ArchiveUploadProps {
   onUploadComplete?: () => void
@@ -73,7 +74,7 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
       }
       
       // Create constellation item using secure API route
-      const response = await fetch('/api/create-constellation-item-secure', {
+      const response = await secureFetch('/api/create-constellation-item-secure', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -98,7 +99,7 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
       // If admin selected an album, link the new item to that album
       if (user?.email === 'lizwamc@gmail.com' && selectedAlbumId) {
         try {
-          await fetch('/api/manage-album-items-secure', {
+          await secureFetch('/api/manage-album-items-secure', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -183,7 +184,7 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
     const loadAlbums = async () => {
       if (!isAdmin) return
       try {
-        const res = await fetch('/api/get-albums-secure')
+        const res = await secureFetch('/api/get-albums-secure')
         const json = await res.json()
         if (json.success) {
           setAlbums((json.data || []).map((a: any) => ({ id: a.id, title: a.title })))

@@ -8,6 +8,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { Settings } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/components/ui/Toast";
+import { secureFetch } from "@/lib/secure-fetch";
 import JournalEntryForm from "@/components/journal/JournalEntryForm";
 import JournalList from "@/components/journal/JournalList";
 import MediaUpload from "@/components/media/MediaUpload";
@@ -177,7 +178,7 @@ function PersonalSpaceContent() {
                   }
                   
                   // Use the secure API route instead of direct database function
-                  const response = await fetch('/api/create-journal-entry-secure', {
+                  const response = await secureFetch('/api/create-journal-entry-secure', {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',

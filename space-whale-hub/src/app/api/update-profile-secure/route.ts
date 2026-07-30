@@ -1,60 +1,78 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { trimUserMetadata, buildTrimMetadataPayload } from '@/lib/user-metadata'
+import {
+  assertMatchingUserId,
+  verifyAuthUser,
+} from '@/lib/auth-server'
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, display_name, pronouns, country, avatar_url } = await request.json()
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
 
-    if (!userId) {
-      return NextResponse.json({ success: false, error: 'Missing userId' }, { status: 400 })
+    const body = await request.json()
+    const {
+      userId,
+      display_name,
+      pronouns,
+      country,
+      avatar_url,
+      welcome_seen_at,
+      first_post_ack_at,
+    } = body
+
+    const mismatch = assertMatchingUserId(auth.userId, userId)
+    if (mismatch) return mismatch
+
+    const supabaseAdmin = getSupabaseAdmin()
+
+    const profilePatch: Record<string, string | null> = {
+      updated_at: new Date().toISOString(),
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (display_name !== undefined) profilePatch.display_name = display_name || null
+    if (pronouns !== undefined) profilePatch.pronouns = pronouns || null
+    if (country !== undefined) profilePatch.country = country || null
+    if (avatar_url !== undefined) profilePatch.avatar_url = avatar_url || null
+    if (welcome_seen_at !== undefined) profilePatch.welcome_seen_at = welcome_seen_at || null
+    if (first_post_ack_at !== undefined) profilePatch.first_post_ack_at = first_post_ack_at || null
 
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json({ success: false, error: 'Server configuration error' }, { status: 500 })
-    }
-
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    })
-
-    // Update the profiles table (used by feed, comments, etc.)
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .upsert({
-        id: userId,
-        display_name: display_name || null,
-        pronouns: pronouns || null,
-        country: country || null,
-        avatar_url: avatar_url || null,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'id' })
+      .upsert({ id: auth.userId, ...profilePatch }, { onConflict: 'id' })
 
     if (profileError) {
       console.error('Profile upsert error:', profileError)
       return NextResponse.json({ success: false, error: profileError.message }, { status: 500 })
     }
 
-    // Also update auth user_metadata so the client-side user object stays in sync
-    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-      user_metadata: {
-        display_name: display_name || null,
-        pronouns: pronouns || null,
-        country: country || null,
-        avatar_url: avatar_url || null,
-      }
+    // Keep auth metadata small — only whitelisted string fields
+    const trimmedMetadata = trimUserMetadata({
+      display_name: display_name ?? auth.user.user_metadata?.display_name,
+      pronouns: pronouns ?? auth.user.user_metadata?.pronouns,
+      country: country ?? auth.user.user_metadata?.country,
+      avatar_url: avatar_url ?? auth.user.user_metadata?.avatar_url,
+      email_opt_in: auth.user.user_metadata?.email_opt_in,
+    })
+
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(auth.userId, {
+      user_metadata: buildTrimMetadataPayload({
+        ...auth.user.user_metadata,
+        ...trimmedMetadata,
+      }),
     })
 
     if (authError) {
-      // Non-fatal — profiles table is the source of truth for display
       console.error('Auth metadata update error (non-fatal):', authError)
     }
 
     return NextResponse.json({ success: true })
-  } catch (err: any) {
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Update failed'
     console.error('API error:', err)
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 })
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
   }
 }

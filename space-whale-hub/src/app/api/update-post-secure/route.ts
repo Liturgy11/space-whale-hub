@@ -1,26 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { assertMatchingUserId, verifyAuthUser } from '@/lib/auth-server'
 
 export async function POST(request: NextRequest) {
   try {
-    const { postId, userId, content, tags, content_warning, media_url, media_urls, media_type } = await request.json()
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
 
-    if (!postId || !userId || !content?.trim()) {
+    const { postId, userId, content, tags, content_warning, media_url, media_urls, media_type } =
+      await request.json()
+
+    const mismatch = assertMatchingUserId(auth.userId, userId)
+    if (mismatch) return mismatch
+
+    if (!postId || !content?.trim()) {
       return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 })
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabaseAdmin = getSupabaseAdmin()
 
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json({ success: false, error: 'Server configuration error' }, { status: 500 })
-    }
-
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    })
-
-    // Verify ownership before updating
     const { data: post, error: fetchError } = await supabaseAdmin
       .from('posts')
       .select('id, user_id')
@@ -31,7 +29,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Post not found' }, { status: 404 })
     }
 
-    if (post.user_id !== userId) {
+    if (post.user_id !== auth.userId) {
       return NextResponse.json({ success: false, error: 'Unauthorised: You can only edit your own posts' }, { status: 403 })
     }
 
@@ -61,7 +59,7 @@ export async function POST(request: NextRequest) {
         updated_at: new Date().toISOString(),
       })
       .eq('id', postId)
-      .eq('user_id', userId)
+      .eq('user_id', auth.userId)
       .select('*')
       .single()
 

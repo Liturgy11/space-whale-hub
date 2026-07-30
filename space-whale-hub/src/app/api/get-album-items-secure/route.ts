@@ -1,23 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-// Force dynamic rendering - don't evaluate at build time
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+
 export const dynamic = 'force-dynamic'
-
-import { createClient } from '@supabase/supabase-js'
-function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase environment variables')
-  }
-
-  return createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  })
-}
 
 export async function GET(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin()
@@ -31,7 +15,6 @@ export async function GET(request: NextRequest) {
 
     console.log('Fetching items for album:', albumId)
 
-    // Fetch album details
     const { data: album, error: albumError } = await supabaseAdmin
       .from('albums')
       .select('*')
@@ -43,7 +26,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Album not found' }, { status: 404 })
     }
 
-    // Fetch items in the album
     const { data: albumItems, error: itemsError } = await supabaseAdmin
       .from('album_items')
       .select(`
@@ -74,7 +56,6 @@ export async function GET(request: NextRequest) {
       }, { status: 500 })
     }
 
-    // Transform the data
     const items = albumItems?.map(albumItem => ({
       ...albumItem.archive_items,
       album_item_id: albumItem.id,
@@ -102,4 +83,3 @@ export async function GET(request: NextRequest) {
     }, { status: 500 })
   }
 }
-

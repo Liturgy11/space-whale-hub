@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { updateComment, deleteComment } from '@/lib/database'
 import { MessageCircle, Loader2, Edit, Trash2, Save, X } from 'lucide-react'
+import { secureFetch } from '@/lib/secure-fetch'
 
 interface Comment {
   id: string
@@ -40,7 +41,7 @@ export default function CommentsList({ postId, refreshTrigger }: CommentsListPro
       setLoading(true)
       
       // Use the secure API route instead of direct database function
-      const response = await fetch('/api/get-comments-secure', {
+      const response = await secureFetch('/api/get-comments-secure', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

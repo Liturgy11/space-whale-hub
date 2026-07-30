@@ -1,37 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { verifyAuthUser } from '@/lib/auth-server'
 
-// Force dynamic rendering - don't evaluate at build time
 export const dynamic = 'force-dynamic'
-
-function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase environment variables')
-  }
-
-  return createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  })
-}
 
 export async function PUT(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin()
   try {
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
+
     const { id, title, description, artist_name, tags } = await request.json()
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'Item ID is required' }, { status: 400 })
     }
 
+    const { data: item, error: fetchError } = await supabaseAdmin
+      .from('archive_items')
+      .select('id, user_id')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !item) {
+      return NextResponse.json({ success: false, error: 'Item not found' }, { status: 404 })
+    }
+
+    if (item.user_id !== auth.userId) {
+      return NextResponse.json({ success: false, error: 'Unauthorised' }, { status: 403 })
+    }
+
     console.log('Updating archive item:', { id, title, description, artist_name, tags })
 
-    // Update the archive item using service role (bypasses RLS)
     const { data, error } = await supabaseAdmin
       .from('archive_items')
       .update({
@@ -42,6 +42,7 @@ export async function PUT(request: NextRequest) {
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
+      .eq('user_id', auth.userId)
       .select()
       .single()
 

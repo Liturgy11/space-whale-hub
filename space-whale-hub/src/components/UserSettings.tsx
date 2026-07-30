@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
 import { User, Camera, X, Sparkles, Edit3, Save, Loader2 } from 'lucide-react'
 import { toast } from '@/components/ui/Toast'
+import { secureFetch } from '@/lib/secure-fetch'
 
 interface UserSettingsProps {
   onClose?: () => void
@@ -48,7 +49,7 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
       const bustUrl = `${publicUrl}?v=${Date.now()}`
 
       // Sync avatar to profiles table + auth metadata via secure route
-      const avatarRes = await fetch('/api/update-profile-secure', {
+      const avatarRes = await secureFetch('/api/update-profile-secure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -91,7 +92,7 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
 
     try {
       // Update profiles table + auth metadata via secure server-side route
-      const res = await fetch('/api/update-profile-secure', {
+      const res = await secureFetch('/api/update-profile-secure', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

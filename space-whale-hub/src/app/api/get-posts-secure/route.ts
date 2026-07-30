@@ -1,20 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { assertMatchingUserId, verifyAuthUserOptional } from '@/lib/auth-server'
 
 export const dynamic = 'force-dynamic'
-
-function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase environment variables')
-  }
-
-  return createClient(supabaseUrl, supabaseServiceKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  })
-}
 
 const POST_COLUMNS =
   'id, content, tags, content_warning_text, media_url, media_urls, media_type, created_at, user_id'
@@ -50,7 +38,7 @@ async function fetchFeedLegacy(
   const postIds = posts.map((p) => p.id)
   const userIds = Array.from(new Set(posts.map((p) => p.user_id)))
 
-  const queries: Promise<{ data: any[] | null; error: any }>[] = [
+  const queries = [
     supabaseAdmin
       .from('profiles')
       .select('id, display_name, pronouns, avatar_url, country')
@@ -129,12 +117,21 @@ export async function GET(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin()
 
   try {
+    const { userId: authUserId } = await verifyAuthUserOptional(request)
+
     const { searchParams } = new URL(request.url)
     const limit = Math.min(
       50,
       Math.max(1, parseInt(searchParams.get('limit') || '25', 10))
     )
-    const userId = searchParams.get('userId') || null
+    const queryUserId = searchParams.get('userId')
+
+    if (queryUserId && authUserId) {
+      const mismatch = assertMatchingUserId(authUserId, queryUserId)
+      if (mismatch) return mismatch
+    }
+
+    const userId = authUserId ?? queryUserId ?? null
 
     let enriched: any[] = []
 

@@ -11,6 +11,7 @@ import Link from 'next/link'
 import EmptyState from '@/components/ui/EmptyState'
 import AlbumCoverImage from './AlbumCoverImage'
 import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
+import { secureFetch } from '@/lib/secure-fetch'
 
 interface ArchiveItem {
   id: string
@@ -57,7 +58,7 @@ export default function ArchivePage() {
       setLoading(true)
       
       // Fetch albums for public Constellation view
-      const response = await fetch('/api/get-albums-secure', {
+      const response = await secureFetch('/api/get-albums-secure', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
