@@ -254,8 +254,8 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
   }
 
   const formBody = (
-    <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
-      <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-4">
+    <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-5 py-4 space-y-4">
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-3">
             <p className="text-red-600 text-sm font-space-whale-body">{error}</p>
@@ -451,7 +451,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
   )
 
   const panel = (
-    <div className="flex flex-col max-h-[min(92vh,900px)] w-full bg-lofi-card shadow-2xl rainbow-border-soft md:rounded-2xl md:max-w-lg overflow-hidden">
+    <div className="flex flex-col min-h-0 h-full max-h-[85dvh] sm:max-h-[min(92vh,900px)] w-full bg-lofi-card shadow-2xl rainbow-border-soft md:rounded-2xl md:max-w-lg overflow-hidden">
       <div className="shrink-0 flex items-center justify-between px-4 sm:px-5 pt-4 sm:pt-5 pb-0">
         <div>
           <h2 className="text-xl sm:text-2xl font-space-whale-heading text-space-whale-navy">
@@ -478,14 +478,14 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
 
   if (onCancel && mounted) {
     return createPortal(
-      <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center px-4 pt-[12dvh] pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:p-4 sm:pt-4">
+      <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center px-0 sm:px-4 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] sm:pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2 sm:pt-4">
         <button
           type="button"
           className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
           onClick={onCancel}
           aria-label="Close share form"
         />
-        <div className="relative w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl overflow-hidden max-h-[min(88dvh,900px)]">
+        <div className="relative w-full sm:max-w-lg flex flex-col min-h-0 max-h-[85dvh] sm:max-h-[min(88dvh,900px)] rounded-t-2xl sm:rounded-2xl overflow-hidden">
           {panel}
         </div>
       </div>,
