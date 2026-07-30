@@ -83,7 +83,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
 
   const currentItem: ArchiveItem | null = items && items.length > 0 ? items[currentIndex] : item
   const isAutoUploadDescription = (description?: string) =>
-    !!description?.trim().startsWith('Uploaded to ')
+    typeof description === 'string' && description.trim().startsWith('Uploaded to ')
   const showGalleryChrome = galleryMode && !isEditing
   const mediaMaxHeight = galleryMode ? 'max-h-[85vh]' : 'max-h-[70vh] sm:max-h-[75vh]'
   const showItemDescription =
@@ -101,6 +101,15 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
   const lastTouchCenter = useRef<{ x: number; y: number } | null>(null)
   const imageRef = useRef<HTMLImageElement | null>(null)
   const lastTapTime = useRef<number>(0)
+  const backgroundTouchStart = useRef<number | null>(null)
+  const backgroundTouchEnd = useRef<number | null>(null)
+
+  // Keep carousel index in sync when opening the modal
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentIndex(startIndex)
+    }
+  }, [isOpen, startIndex])
 
   // Generate signed URL when item changes
   useEffect(() => {
@@ -462,10 +471,6 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
     hasOnDelete: !!onDelete
   })
 
-  // Handle swipe-to-close on background
-  const backgroundTouchStart = useRef<number | null>(null)
-  const backgroundTouchEnd = useRef<number | null>(null)
-
   const handleBackgroundTouchStart = (e: React.TouchEvent) => {
     if (e.target === e.currentTarget) {
       backgroundTouchStart.current = e.touches[0].clientY
@@ -539,7 +544,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                     <div className="flex items-center space-x-4 text-sm text-space-whale-navy/70 font-space-whale-body">
                       <span className="flex items-center">
                         <Calendar className="h-4 w-4 mr-1" />
-                        {formatDate(item.created_at)}
+                        {formatDate(currentItem.created_at)}
                       </span>
                       {currentItem.artist_name && (
                         <span className="flex items-center">
@@ -750,8 +755,8 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                   if (navigator.share) {
                     try {
                       await navigator.share({
-                        title: item.title,
-                        text: item.description || `Check out this ${item.content_type} in the Space Whale Archive`,
+                        title: currentItem.title,
+                        text: currentItem.description || `Check out this ${currentItem.content_type} in the Space Whale Archive`,
                         url: window.location.href
                       })
                     } catch (error) {
@@ -760,7 +765,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                     } else {
                       // Fallback: copy to clipboard
                       try {
-                        await navigator.clipboard.writeText(`${item.title} - ${window.location.href}`)
+                        await navigator.clipboard.writeText(`${currentItem.title} - ${window.location.href}`)
                         toast('Link copied to clipboard!', 'success', 2000)
                       } catch (error) {
                         console.error('Failed to copy to clipboard')
