@@ -30,6 +30,8 @@ interface ArchiveItemModalProps {
   onUpdate?: (updatedItem: ArchiveItem) => void
   items?: ArchiveItem[]
   startIndex?: number
+  /** Photo-album view: hide filenames, auto-upload captions, and extra metadata */
+  galleryMode?: boolean
 }
 
 interface Comment {
@@ -42,7 +44,7 @@ interface Comment {
   }
 }
 
-export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUpdate, items, startIndex = 0 }: ArchiveItemModalProps) {
+export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUpdate, items, startIndex = 0, galleryMode = false }: ArchiveItemModalProps) {
   const { user } = useAuth()
   const [currentIndex, setCurrentIndex] = useState(startIndex)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -80,6 +82,14 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
   }, [showMenu])
 
   const currentItem: ArchiveItem | null = items && items.length > 0 ? items[currentIndex] : item
+  const isAutoUploadDescription = (description?: string) =>
+    !!description?.trim().startsWith('Uploaded to ')
+  const showGalleryChrome = galleryMode && !isEditing
+  const mediaMaxHeight = galleryMode ? 'max-h-[85vh]' : 'max-h-[70vh] sm:max-h-[75vh]'
+  const showItemDescription =
+    !showGalleryChrome &&
+    !!currentItem?.description &&
+    !isAutoUploadDescription(currentItem.description)
   const touchStartX = useRef<number | null>(null)
   const touchEndX = useRef<number | null>(null)
   
@@ -499,7 +509,8 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
 
         <div className="p-6 pb-20">
           {/* Header */}
-          <div className="flex items-center justify-between mb-4">
+          <div className={`flex items-center justify-between ${showGalleryChrome ? 'mb-2 min-h-0' : 'mb-4'}`}>
+            {!showGalleryChrome ? (
             <div className="flex items-center space-x-3">
               <span className="text-2xl">{getContentTypeIcon(currentItem.content_type)}</span>
               <div className="flex-1">
@@ -541,6 +552,9 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                 )}
               </div>
             </div>
+            ) : (
+              <div />
+            )}
             
             {/* Owner Actions Menu */}
             {isOwner && onUpdate && (
@@ -585,7 +599,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
           </div>
 
           {/* Media Content - Much Larger */}
-          <div className="mb-8">
+          <div className={showGalleryChrome ? 'mb-4' : 'mb-8'}>
             {currentItem.media_url ? (
               isExternalLink ? (
                 <LinkPreview 
@@ -605,16 +619,16 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                   {currentItem.content_type === 'video' ? (
                     <video 
                       src={signedMediaUrl || currentItem.media_url} 
-                      className="w-full max-h-[70vh] sm:max-h-[75vh] object-contain"
+                      className={`w-full ${mediaMaxHeight} object-contain`}
                       controls
                     />
                   ) : (
-                    <div className="relative w-full max-h-[70vh] sm:max-h-[75vh] overflow-hidden flex items-center justify-center">
+                    <div className={`relative w-full ${mediaMaxHeight} overflow-hidden flex items-center justify-center`}>
                       <img 
                         ref={imageRef}
                         src={signedMediaUrl || currentItem.media_url} 
-                        alt={currentItem.title}
-                        className="max-w-full max-h-[70vh] sm:max-h-[75vh] object-contain transition-transform duration-200"
+                        alt=""
+                        className={`max-w-full ${mediaMaxHeight} object-contain transition-transform duration-200`}
                         loading="lazy"
                         decoding="async"
                         style={{
@@ -658,7 +672,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                 rows={3}
               />
             </div>
-          ) : currentItem.description ? (
+          ) : showItemDescription ? (
             <div className="mb-4">
               <h3 className="text-lg font-space-whale-heading text-space-whale-navy mb-2">
                 About this creation
@@ -687,7 +701,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                 Separate tags with commas (e.g., "art, nature, creative")
               </p>
             </div>
-          ) : currentItem.tags && currentItem.tags.length > 0 ? (
+          ) : !showGalleryChrome && currentItem.tags && currentItem.tags.length > 0 ? (
             <div className="mb-4">
               <h3 className="text-lg font-space-whale-heading text-space-whale-navy mb-2">
                 <Tag className="h-5 w-5 inline mr-1 text-space-whale-purple" />

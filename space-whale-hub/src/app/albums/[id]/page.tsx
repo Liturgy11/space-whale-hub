@@ -146,10 +146,10 @@ export default function AlbumDetailPage() {
               </div>
             </div>
 
-            {/* Items Grid */}
+            {/* Items Grid — photo-first: no filenames, images fill the card */}
             {items.length > 0 ? (
               <div
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
                 {...(isAdmin ? {
                   onDragOver: (e: React.DragEvent) => e.preventDefault()
                 } : {})}
@@ -185,7 +185,7 @@ export default function AlbumDetailPage() {
                         console.error('Failed to save order', err)
                       }
                     }}
-                    className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden rainbow-border-soft cursor-pointer hover:shadow-xl transition relative"
+                    className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden rainbow-border-soft cursor-pointer hover:shadow-xl transition relative group"
                     onClick={() => { setSelectedItem(item); setSelectedIndex(index); setIsModalOpen(true) }}
                   >
                     <div className="relative">
@@ -193,19 +193,19 @@ export default function AlbumDetailPage() {
                         // eslint-disable-next-line jsx-a11y/media-has-caption
                         <video
                           src={signedUrlMap[item.media_url] || item.media_url}
-                          className="w-full aspect-video object-cover"
+                          className="w-full aspect-[4/5] object-cover"
                           controls
                         />
                       ) : (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={signedUrlMap[item.media_url] || item.media_url}
-                          alt={item.title}
-                          className="w-full h-60 object-contain bg-space-whale-lavender/10"
+                          alt=""
+                          className="w-full aspect-[4/5] object-cover"
                           loading="lazy"
                           decoding="async"
                           width={400}
-                          height={240}
+                          height={500}
                         />
                       )}
 
@@ -249,12 +249,6 @@ export default function AlbumDetailPage() {
                         </button>
                       )}
                     </div>
-                    <div className="p-4">
-                      <h3 className="font-space-whale-heading text-space-whale-navy mb-1">{item.title}</h3>
-                      {item.description && (
-                        <p className="text-sm text-space-whale-navy/70 font-space-whale-body line-clamp-2">{item.description}</p>
-                      )}
-                    </div>
                   </div>
                 ))}
               </div>
@@ -283,6 +277,7 @@ export default function AlbumDetailPage() {
         onClose={() => { setIsModalOpen(false); setSelectedItem(null) }}
         items={items}
         startIndex={selectedIndex}
+        galleryMode
       />
     </div>
   )

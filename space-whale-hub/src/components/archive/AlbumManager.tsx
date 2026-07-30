@@ -105,7 +105,7 @@ export default function AlbumManager() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: file.name.replace(/\.[^/.]+$/, ''),
-          description: `Uploaded to ${album.title}`,
+          description: '',
           content_type: file.type.startsWith('image/') ? 'artwork'
             : file.type.startsWith('video/') ? 'video' : 'artwork',
           media_url: uploadResult.url,
