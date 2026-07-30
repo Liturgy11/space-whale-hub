@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { setAuthAccessToken } from '@/lib/auth-session'
 
 interface AuthContextType {
   user: User | null
@@ -126,6 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setSession(session)
         setUser(session?.user ?? null)
+        setAuthAccessToken(session?.access_token ?? null)
         
         // Note: Profile creation handled in getPosts function due to RLS constraints
       }
@@ -150,6 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       setSession(session)
       setUser(session?.user ?? null)
+      setAuthAccessToken(session?.access_token ?? null)
       
       // Note: Profile creation handled in getPosts function due to RLS constraints
       
@@ -213,6 +216,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut()
+    setAuthAccessToken(null)
     // Clear local state
     setSession(null)
     setUser(null)
@@ -254,8 +258,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const clearInvalidSession = async () => {
-    // Clear any invalid session data from localStorage
     localStorage.removeItem('sb-qrmdgbzmdtvqcuzfkwar-auth-token')
+    setAuthAccessToken(null)
     await supabase.auth.signOut()
     setSession(null)
     setUser(null)

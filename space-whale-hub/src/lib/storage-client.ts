@@ -1,5 +1,7 @@
 export type MediaCategory = 'avatars' | 'posts' | 'journal' | 'archive'
 
+import { resolveAccessToken } from '@/lib/auth-session'
+
 export interface UploadResult {
   url: string
   path: string
@@ -108,13 +110,11 @@ export async function uploadMedia(
   }
 
   try {
-    // Get the current session to include auth token
-    const { supabase } = await import('@/lib/supabase')
-    const { data: { session } } = await supabase.auth.getSession()
+    const accessToken = await resolveAccessToken()
     
     const headers: HeadersInit = {}
-    if (session?.access_token) {
-      headers['Authorization'] = `Bearer ${session.access_token}`
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`
     }
 
     const response = await fetch('/api/upload-storage', {

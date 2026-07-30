@@ -231,8 +231,8 @@ export default function AlbumManager() {
     } catch (error: unknown) {
       console.error('Error creating album:', error)
       const message = error instanceof Error ? error.message : 'Failed to create album. Please try again.'
-      if (message.toLowerCase().includes('authorization') || message.toLowerCase().includes('unauthorized')) {
-        toast('Session expired — please log out and back in, then try again.', 'error')
+      if (message.toLowerCase().includes('authorization') || message.toLowerCase().includes('unauthorized') || message.toLowerCase().includes('invalid or expired token') || message.toLowerCase().includes('missing or invalid authorization')) {
+        toast('Could not verify your session. Try refreshing the page, or sign out and back in.', 'error')
       } else {
         toast(message, 'error')
       }
@@ -314,8 +314,8 @@ export default function AlbumManager() {
     } catch (error: unknown) {
       console.error('Error updating album:', error)
       const message = error instanceof Error ? error.message : 'Failed to update album. Please try again.'
-      if (message.toLowerCase().includes('authorization') || message.toLowerCase().includes('unauthorized')) {
-        toast('Session expired — please log out and back in, then try again.', 'error')
+      if (message.toLowerCase().includes('authorization') || message.toLowerCase().includes('unauthorized') || message.toLowerCase().includes('invalid or expired token') || message.toLowerCase().includes('missing or invalid authorization')) {
+        toast('Could not verify your session. Try refreshing the page, or sign out and back in.', 'error')
       } else {
         toast(message, 'error')
       }

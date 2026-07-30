@@ -2,16 +2,17 @@
  * Authenticated fetch for secure API routes.
  * Attaches the Supabase access token from the current session.
  */
+import { resolveAccessToken } from '@/lib/auth-session'
+
 export async function secureFetch(
   input: RequestInfo | URL,
   init: RequestInit = {}
 ): Promise<Response> {
-  const { supabase } = await import('@/lib/supabase')
-  const { data: { session } } = await supabase.auth.getSession()
+  const accessToken = await resolveAccessToken()
 
   const headers = new Headers(init.headers)
-  if (session?.access_token) {
-    headers.set('Authorization', `Bearer ${session.access_token}`)
+  if (accessToken) {
+    headers.set('Authorization', `Bearer ${accessToken}`)
   }
 
   return fetch(input, { ...init, headers })
