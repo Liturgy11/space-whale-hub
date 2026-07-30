@@ -71,10 +71,11 @@ export default function AlbumManager() {
   }, [coverPreview])
 
   const uploadCoverImage = async (file: File): Promise<string> => {
+    if (!user) throw new Error('Not signed in')
     const uploadResult = await uploadMedia(file, {
       category: 'archive',
       filename: `cover-${Date.now()}-${file.name}`
-    }, 'archive-uploads')
+    }, user.id)
     return uploadResult.url
   }
 
@@ -97,7 +98,7 @@ export default function AlbumManager() {
       const uploadResult = await uploadMedia(file, {
         category: 'archive',
         filename: `${Date.now()}-${index}-${file.name}`
-      }, 'archive-uploads')
+      }, user.id)
 
       const itemResponse = await secureFetch('/api/create-constellation-item-secure', {
         method: 'POST',

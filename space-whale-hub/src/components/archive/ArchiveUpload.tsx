@@ -37,7 +37,7 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
       const result = await uploadMedia(file, {
         category: 'archive',
         filename: `${Date.now()}-${file.name}`
-      }, 'archive-uploads') // Using 'archive-uploads' as userId for archive uploads
+      }, user!.id)
       return result.url
     } catch (error) {
       console.error('Error uploading file:', error)
