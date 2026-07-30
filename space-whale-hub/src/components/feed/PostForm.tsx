@@ -271,7 +271,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
             onChange={(e) => setContent(e.target.value)}
             placeholder="Write freely..."
             autoFocus
-            className="mobile-textarea w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent resize-none font-space-whale-body"
+            className="mobile-textarea w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg form-surface text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent resize-none font-space-whale-body"
             rows={5}
             maxLength={2000}
           />
@@ -291,7 +291,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
             value={tags}
             onChange={(e) => setTags(e.target.value)}
             placeholder="e.g. poetry, nature, process"
-            className="mobile-input w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body"
+            className="mobile-input w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg form-surface text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent font-space-whale-body"
           />
         </div>
 

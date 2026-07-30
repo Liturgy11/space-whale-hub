@@ -275,7 +275,7 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Autumn vibes, Morning ritual"
-            className="mobile-input w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors"
+            className="mobile-input w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg form-surface text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors"
             maxLength={100}
           />
         </div>

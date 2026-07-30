@@ -221,7 +221,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
             required
             rows={6}
             autoFocus
-            className="mobile-textarea w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors resize-none"
+            className="mobile-textarea w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg form-surface text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors resize-none"
             placeholder="Write freely..."
             maxLength={10000}
           />
@@ -241,7 +241,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mobile-input w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors"
+            className="mobile-input w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg form-surface text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors"
             placeholder="Give your entry a title..."
             maxLength={200}
           />
@@ -290,7 +290,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
               </button>
             </div>
           ) : (
-            <div className="border border-space-whale-lavender/30 rounded-lg overflow-hidden bg-white">
+            <div className="border border-space-whale-lavender/30 rounded-lg overflow-hidden form-surface">
               <div className="flex items-center justify-between px-3 py-2 bg-space-whale-lavender/5">
                 <div className="flex items-center space-x-2">
                   <ImageIcon className="h-5 w-5 text-space-whale-purple" />
@@ -355,7 +355,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
                 type="password"
                 value={encryptionPassphrase}
                 onChange={(e) => setEncryptionPassphrase(e.target.value)}
-                className="mobile-input w-full px-3 py-2 text-sm border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
+                className="mobile-input w-full px-3 py-2 text-sm border border-space-whale-lavender/30 rounded-lg form-surface text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
                 placeholder="Master encryption passphrase (min 8 characters)"
                 minLength={8}
               />
@@ -363,7 +363,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
                 type="password"
                 value={confirmPassphrase}
                 onChange={(e) => setConfirmPassphrase(e.target.value)}
-                className="mobile-input w-full px-3 py-2 text-sm border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
+                className="mobile-input w-full px-3 py-2 text-sm border border-space-whale-lavender/30 rounded-lg form-surface text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
                 placeholder="Confirm passphrase"
                 minLength={8}
               />

@@ -262,6 +262,11 @@ body {
   border: 1px solid rgba(184, 158, 196, 0.2);
 }
 
+/* Soft form fields — lavender cream instead of stark white on lofi surfaces */
+.form-surface {
+  background: rgba(252, 247, 253, 0.96);
+}
+
 /* Soft button styles for indie aesthetic */
 .btn-lofi {
   @apply px-4 py-2 rounded-lg transition-all duration-300;
