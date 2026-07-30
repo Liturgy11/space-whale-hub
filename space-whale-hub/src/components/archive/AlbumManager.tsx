@@ -8,6 +8,7 @@ import { toast } from '@/components/ui/Toast'
 import EmptyState, { SpaceIllustration } from '@/components/ui/EmptyState'
 import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
 import { secureFetch, parseSecureResponse } from '@/lib/secure-fetch'
+import { resolveAccessToken } from '@/lib/auth-session'
 
 interface Album {
   id: string
@@ -25,7 +26,7 @@ interface Album {
 }
 
 export default function AlbumManager() {
-  const { user } = useAuth()
+  const { user, session } = useAuth()
   const [albums, setAlbums] = useState<Album[]>([])
   const [loading, setLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
@@ -80,9 +81,13 @@ export default function AlbumManager() {
   const uploadFilesToAlbum = async (
     files: File[] | FileList,
     album: Album,
-    onProgress?: (current: number, total: number) => void
+    onProgress?: (current: number, total: number) => void,
+    accessToken?: string | null
   ): Promise<number> => {
     if (!user) return 0
+
+    const token = accessToken ?? session?.access_token ?? await resolveAccessToken()
+    if (!token) throw new Error('Missing access token')
 
     const fileArray = Array.from(files)
     for (let index = 0; index < fileArray.length; index++) {
@@ -107,7 +112,7 @@ export default function AlbumManager() {
           tags: [album.title.toLowerCase().replace(/\s+/g, '-')],
           user_id: user.id
         })
-      })
+      }, token)
       const itemResult = await parseSecureResponse<{ success: boolean; data: { id: string }; error?: string }>(itemResponse)
       if (!itemResult.success) {
         throw new Error(itemResult.error || 'Failed to create archive item')
@@ -121,7 +126,7 @@ export default function AlbumManager() {
           item_id: itemResult.data.id,
           added_by: user.id
         })
-      })
+      }, token)
       const albumResult = await parseSecureResponse<{ success: boolean; error?: string }>(albumResponse)
       if (!albumResult.success) {
         throw new Error(albumResult.error || 'Failed to add item to album')
@@ -188,6 +193,12 @@ export default function AlbumManager() {
     setIsSubmitting(true)
     setSubmitStatus(null)
     try {
+      const accessToken = session?.access_token ?? await resolveAccessToken()
+      if (!accessToken) {
+        toast('Could not verify your session. Please refresh the page or sign in again.', 'error')
+        return
+      }
+
       let coverImageUrl = newAlbum.cover_image_url.trim() || null
       if (coverFile) {
         setSubmitStatus('Uploading cover…')
@@ -203,7 +214,7 @@ export default function AlbumManager() {
           cover_image_url: coverImageUrl,
           created_by: user.id
         })
-      })
+      }, accessToken)
 
       const result = await parseSecureResponse<{ success: boolean; data: Album; error?: string }>(response)
       if (!result.success) {
@@ -216,7 +227,8 @@ export default function AlbumManager() {
         const count = await uploadFilesToAlbum(
           pendingGalleryFiles,
           createdAlbum,
-          (current, total) => setSubmitStatus(`Uploading photos (${current}/${total})…`)
+          (current, total) => setSubmitStatus(`Uploading photos (${current}/${total})…`),
+          accessToken
         )
         toast(`Album created with ${count} photo${count === 1 ? '' : 's'}!`, 'success')
       } else {
@@ -273,6 +285,12 @@ export default function AlbumManager() {
     setIsSubmitting(true)
     setSubmitStatus(null)
     try {
+      const accessToken = session?.access_token ?? await resolveAccessToken()
+      if (!accessToken) {
+        toast('Could not verify your session. Please refresh the page or sign in again.', 'error')
+        return
+      }
+
       let coverImageUrl = newAlbum.cover_image_url.trim() || null
       if (coverFile) {
         setSubmitStatus('Uploading cover…')
@@ -288,7 +306,7 @@ export default function AlbumManager() {
           ...newAlbum,
           cover_image_url: coverImageUrl
         })
-      })
+      }, accessToken)
 
       const result = await parseSecureResponse<{ success: boolean; error?: string }>(response)
       if (!result.success) {
@@ -301,7 +319,8 @@ export default function AlbumManager() {
         const count = await uploadFilesToAlbum(
           pendingGalleryFiles,
           updatedAlbum,
-          (current, total) => setSubmitStatus(`Uploading photos (${current}/${total})…`)
+          (current, total) => setSubmitStatus(`Uploading photos (${current}/${total})…`),
+          accessToken
         )
         toast(`Album updated with ${count} new photo${count === 1 ? '' : 's'}!`, 'success')
       } else {
@@ -357,7 +376,12 @@ export default function AlbumManager() {
 
     setUploadingFiles(true)
     try {
-      const count = await uploadFilesToAlbum(files, selectedAlbum)
+      const accessToken = session?.access_token ?? await resolveAccessToken()
+      if (!accessToken) {
+        toast('Could not verify your session. Please refresh the page or sign in again.', 'error')
+        return
+      }
+      const count = await uploadFilesToAlbum(files, selectedAlbum, undefined, accessToken)
       setShowBatchUpload(false)
       setSelectedAlbum(null)
       loadAlbums()

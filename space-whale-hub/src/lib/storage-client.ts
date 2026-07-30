@@ -1,6 +1,6 @@
-export type MediaCategory = 'avatars' | 'posts' | 'journal' | 'archive'
-
 import { resolveAccessToken } from '@/lib/auth-session'
+
+export type MediaCategory = 'avatars' | 'posts' | 'journal' | 'archive'
 
 export interface UploadResult {
   url: string

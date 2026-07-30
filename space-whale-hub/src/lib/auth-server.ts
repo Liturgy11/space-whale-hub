@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { User } from '@supabase/supabase-js'
+import { createClient, User } from '@supabase/supabase-js'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'lizwamc@gmail.com'
@@ -30,13 +30,32 @@ export async function verifyAuthUser(request: NextRequest): Promise<AuthResult> 
 
   try {
     const supabaseAdmin = getSupabaseAdmin()
-    const { data, error } = await supabaseAdmin.auth.getUser(accessToken)
+    let user: User | null = null
 
-    if (error || !data.user) {
+    const { data, error } = await supabaseAdmin.auth.getUser(accessToken)
+    if (!error && data.user) {
+      user = data.user
+    } else {
+      // Fallback: verify via anon client (same path Supabase client uses)
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      if (supabaseUrl && supabaseAnonKey) {
+        const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+          global: { headers: { Authorization: `Bearer ${accessToken}` } },
+        })
+        const { data: userData, error: userError } = await supabase.auth.getUser()
+        if (!userError && userData.user) {
+          user = userData.user
+        }
+      }
+    }
+
+    if (!user) {
       return { ok: false, response: unauthorized(error?.message || 'Invalid or expired token') }
     }
 
-    return { ok: true, userId: data.user.id, user: data.user, accessToken }
+    return { ok: true, userId: user.id, user, accessToken }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Authentication failed'
     return { ok: false, response: unauthorized(message) }

@@ -6,14 +6,20 @@ import { resolveAccessToken } from '@/lib/auth-session'
 
 export async function secureFetch(
   input: RequestInfo | URL,
-  init: RequestInit = {}
+  init: RequestInit = {},
+  accessTokenOverride?: string | null
 ): Promise<Response> {
-  const accessToken = await resolveAccessToken()
+  const accessToken = accessTokenOverride ?? await resolveAccessToken()
+
+  if (!accessToken) {
+    return new Response(
+      JSON.stringify({ success: false, error: 'Missing access token' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
 
   const headers = new Headers(init.headers)
-  if (accessToken) {
-    headers.set('Authorization', `Bearer ${accessToken}`)
-  }
+  headers.set('Authorization', `Bearer ${accessToken}`)
 
   return fetch(input, { ...init, headers })
 }
