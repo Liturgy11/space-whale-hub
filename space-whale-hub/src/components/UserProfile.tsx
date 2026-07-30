@@ -5,9 +5,11 @@ import { createPortal } from 'react-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { User, ChevronDown } from 'lucide-react'
 import UserSettings from './UserSettings'
+import { useProfile } from '@/hooks/useProfile'
 
 export default function UserProfile() {
   const { user, signOut } = useAuth()
+  const { profile } = useProfile()
   const [showUserSettings, setShowUserSettings] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -25,9 +27,9 @@ export default function UserProfile() {
         className="flex items-center space-x-2 p-2 rounded-lg hover:bg-space-whale-lavender/20 transition-colors group"
       >
         <div className="w-8 h-8 rounded-full overflow-hidden shadow-lg group-hover:shadow-space-whale-purple/30 transition-all duration-300">
-          {user.user_metadata?.avatar_url ? (
+          {(profile?.avatar_url || user.user_metadata?.avatar_url) ? (
             <img
-              src={user.user_metadata.avatar_url}
+              src={profile?.avatar_url || user.user_metadata?.avatar_url}
               alt="Profile"
               className="w-full h-full object-cover"
             />
@@ -38,7 +40,7 @@ export default function UserProfile() {
           )}
         </div>
         <span className="hidden md:block text-sm font-space-whale-accent text-space-whale-navy">
-          {user.user_metadata?.display_name || 'Space Whale'}
+          {profile?.display_name || user.user_metadata?.display_name || 'Space Whale'}
         </span>
         <ChevronDown className="h-4 w-4 text-space-whale-navy" />
       </button>

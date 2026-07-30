@@ -6,13 +6,15 @@ import { uploadMedia } from '@/lib/storage-client'
 import { User, Camera, X, Sparkles, Edit3, Save, Loader2 } from 'lucide-react'
 import { toast } from '@/components/ui/Toast'
 import { secureFetch } from '@/lib/secure-fetch'
+import { useProfile } from '@/hooks/useProfile'
 
 interface UserSettingsProps {
   onClose?: () => void
 }
 
 export default function UserSettings({ onClose }: UserSettingsProps) {
-  const { user, updateProfile, refreshUser } = useAuth()
+  const { user, refreshUser } = useAuth()
+  const { profile, reloadProfile } = useProfile()
   const [avatarUrl, setAvatarUrl] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [pronouns, setPronouns] = useState('')
@@ -23,15 +25,19 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
   const [error, setError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Initialize user data
+  // Initialize from profiles table (source of truth)
   useEffect(() => {
-    if (user) {
-      setAvatarUrl(user.user_metadata?.avatar_url || '')
+    if (profile) {
+      setAvatarUrl(profile.avatar_url || '')
+      setDisplayName(profile.display_name || '')
+      setPronouns(profile.pronouns || '')
+      setCountry(profile.country || '')
+    } else if (user) {
       setDisplayName(user.user_metadata?.display_name || '')
       setPronouns(user.user_metadata?.pronouns || '')
       setCountry(user.user_metadata?.country || '')
     }
-  }, [user])
+  }, [profile, user])
 
   const handleAvatarUpload = async (file: File) => {
     setUploading(true)
@@ -71,6 +77,7 @@ export default function UserSettings({ onClose }: UserSettingsProps) {
         setSuccess('✨ Avatar updated successfully! ✨')
         toast('Avatar updated successfully!', 'success')
         await refreshUser()
+        await reloadProfile()
         if (onClose) {
           setTimeout(() => onClose(), 800)
         }
