@@ -35,6 +35,16 @@ export function isYouTubeUrl(url: string): boolean {
   return !!extractYouTubeId(url)
 }
 
+export function isYouTubeShort(url: string): boolean {
+  try {
+    const u = new URL(url.trim())
+    return u.pathname.includes('/shorts/')
+  } catch {
+    return false
+  }
+}
+
+
 export function getYouTubeEmbedUrl(urlOrId: string, opts?: { autoplay?: boolean }): string | null {
   const id = extractYouTubeId(urlOrId) || (/^[\w-]{11}$/.test(urlOrId) ? urlOrId : null)
   if (!id) return null

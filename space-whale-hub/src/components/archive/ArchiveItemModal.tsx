@@ -464,15 +464,6 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
   const isExternalLink = currentItem.media_url?.startsWith('http') && !currentItem.media_url.includes('supabase')
   const isYouTube = !!currentItem.media_url && isYouTubeUrl(currentItem.media_url)
   const isOwner = user && currentItem.user_id && user.id === currentItem.user_id
-  
-  // Debug logging
-  console.log('ArchiveItemModal Debug:', {
-    user: user?.id,
-    itemUserId: currentItem.user_id,
-    isOwner,
-    hasOnUpdate: !!onUpdate,
-    hasOnDelete: !!onDelete
-  })
 
   const handleBackgroundTouchStart = (e: React.TouchEvent) => {
     if (e.target === e.currentTarget) {
@@ -496,28 +487,39 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
 
   return (
     <div
-      className="fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 pb-20"
+      className={
+        showGalleryChrome
+          ? 'fixed inset-0 z-50 flex items-center justify-center bg-black/92 p-0 pb-16 sm:pb-20'
+          : 'fixed inset-0 bg-gradient-to-br from-space-whale-lavender/90 to-space-whale-purple/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 pb-20'
+      }
       onClick={onClose}
       onTouchStart={handleBackgroundTouchStart}
       onTouchEnd={handleBackgroundTouchEnd}
     >
       <div
-        className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-y-auto rainbow-border-soft relative"
+        className={
+          showGalleryChrome
+            ? 'relative w-full h-full max-w-none sm:max-w-3xl sm:h-auto sm:max-h-[96vh] bg-black sm:rounded-2xl sm:overflow-hidden flex flex-col'
+            : 'bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-y-auto rainbow-border-soft relative'
+        }
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close button - positioned absolutely outside scrollable area */}
         <button
           type="button"
           aria-label="Close"
           onClick={(e) => { e.stopPropagation(); onClose(); }}
-          className="absolute top-4 right-4 z-50 text-space-whale-purple hover:text-space-whale-navy hover:bg-white/80 transition-colors p-2 rounded-lg"
+          className={
+            showGalleryChrome
+              ? 'absolute top-3 right-3 z-50 text-white/90 hover:text-white bg-black/50 hover:bg-black/70 transition-colors p-1.5 rounded-full'
+              : 'absolute top-4 right-4 z-50 text-space-whale-purple hover:text-space-whale-navy hover:bg-white/80 transition-colors p-2 rounded-lg'
+          }
         >
-          <X className="h-6 w-6" />
+          <X className={showGalleryChrome ? 'h-4 w-4' : 'h-5 w-5'} />
         </button>
 
-        <div className="p-6 pb-20">
-          {/* Header */}
-          <div className={`flex items-center justify-between ${showGalleryChrome ? 'mb-2 min-h-0' : 'mb-4'}`}>
+        <div className={showGalleryChrome ? 'flex flex-col flex-1 min-h-0 overflow-y-auto' : 'p-6 pb-20'}>
+          {/* Header — hidden in gallery mode except owner menu */}
+          <div className={`flex items-center justify-between ${showGalleryChrome ? 'absolute top-3 left-3 z-40' : 'mb-4'}`}>
             {!showGalleryChrome ? (
             <div className="flex items-center space-x-3">
               <span className="text-2xl">{getContentTypeIcon(currentItem.content_type)}</span>
@@ -566,17 +568,21 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
             
             {/* Owner Actions Menu */}
             {isOwner && onUpdate && (
-              <div className="relative mr-2" ref={menuRef}>
+              <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setShowMenu(!showMenu)}
-                  className="p-2 text-space-whale-navy/70 hover:text-space-whale-purple transition-colors rounded-lg hover:bg-space-whale-lavender/10"
+                  className={
+                    showGalleryChrome
+                      ? 'p-2 text-white/85 hover:text-white bg-black/35 hover:bg-black/50 transition-colors rounded-full'
+                      : 'p-2 text-space-whale-navy/70 hover:text-space-whale-purple transition-colors rounded-lg hover:bg-space-whale-lavender/10 mr-2'
+                  }
                   title="More actions"
                 >
                   <MoreHorizontal className="h-5 w-5" />
                 </button>
                 
                 {showMenu && (
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-space-whale-lavender/20 py-2 z-10">
+                  <div className="absolute left-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-space-whale-lavender/20 py-2 z-10">
                     <button
                       onClick={() => {
                         setShowMenu(false)
@@ -606,15 +612,22 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
             
           </div>
 
-          {/* Media Content - Much Larger */}
-          <div className={showGalleryChrome ? 'mb-4' : 'mb-8'}>
+          {/* Media Content */}
+          <div
+            className={
+              showGalleryChrome
+                ? 'relative flex-1 min-h-[50vh] flex items-center justify-center px-0 pt-8 pb-1'
+                : 'mb-8'
+            }
+          >
             {currentItem.media_url ? (
               isYouTube ? (
                 <YouTubeEmbed
                   url={currentItem.media_url}
                   title={currentItem.title || 'Video'}
                   autoplay
-                  className="shadow-lg"
+                  variant={showGalleryChrome ? 'gallery' : 'default'}
+                  className={showGalleryChrome ? '' : 'shadow-lg'}
                 />
               ) : isExternalLink ? (
                 <LinkPreview 
@@ -625,7 +638,11 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                 />
               ) : (
                 <div 
-                  className="rounded-xl overflow-hidden shadow-lg relative"
+                  className={
+                    showGalleryChrome
+                      ? 'relative w-full h-full max-h-[min(78dvh,calc(100dvh-9rem))] flex items-center justify-center'
+                      : 'rounded-xl overflow-hidden shadow-lg relative'
+                  }
                   onTouchStart={handleTouchStart}
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
@@ -634,16 +651,29 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                   {currentItem.content_type === 'video' ? (
                     <video 
                       src={signedMediaUrl || currentItem.media_url} 
-                      className={`w-full ${mediaMaxHeight} object-contain`}
+                      className={
+                        showGalleryChrome
+                          ? 'max-w-full max-h-[min(78dvh,calc(100dvh-9rem))] w-auto h-auto object-contain'
+                          : `w-full ${mediaMaxHeight} object-contain`
+                      }
                       controls
+                      playsInline
                     />
                   ) : (
-                    <div className={`relative w-full ${mediaMaxHeight} overflow-hidden flex items-center justify-center`}>
+                    <div className={
+                      showGalleryChrome
+                        ? 'relative w-full h-full max-h-[min(78dvh,calc(100dvh-9rem))] overflow-hidden flex items-center justify-center'
+                        : `relative w-full ${mediaMaxHeight} overflow-hidden flex items-center justify-center`
+                    }>
                       <img 
                         ref={imageRef}
                         src={signedMediaUrl || currentItem.media_url} 
                         alt=""
-                        className={`max-w-full ${mediaMaxHeight} object-contain transition-transform duration-200`}
+                        className={
+                          showGalleryChrome
+                            ? 'max-w-full max-h-[min(78dvh,calc(100dvh-9rem))] object-contain transition-transform duration-200'
+                            : `max-w-full ${mediaMaxHeight} object-contain transition-transform duration-200`
+                        }
                         loading="lazy"
                         decoding="async"
                         style={{
@@ -671,11 +701,33 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                 <SpaceIllustration src={SPACE_ILLUSTRATIONS.constellation} className="h-16 w-16 sm:h-20 sm:w-20" />
               </div>
             )}
+
+            {/* Gallery carousel arrows */}
+            {showGalleryChrome && items && items.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  aria-label="Previous"
+                  onClick={() => setCurrentIndex((i) => (i - 1 + items.length) % items.length)}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-30 h-8 w-8 flex items-center justify-center rounded-full bg-black/40 text-white/90 hover:bg-black/60 text-lg leading-none transition-colors"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  aria-label="Next"
+                  onClick={() => setCurrentIndex((i) => (i + 1) % items.length)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-30 h-8 w-8 flex items-center justify-center rounded-full bg-black/40 text-white/90 hover:bg-black/60 text-lg leading-none transition-colors"
+                >
+                  ›
+                </button>
+              </>
+            )}
           </div>
 
           {/* Description */}
           {isEditing ? (
-            <div className="mb-4">
+            <div className="mb-4 px-4">
               <h3 className="text-lg font-space-whale-heading text-space-whale-navy mb-2">
                 About this creation
               </h3>
@@ -736,29 +788,50 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
           ) : null}
 
           {/* Actions */}
-          <div className="flex items-center justify-between pt-6 border-t border-space-whale-lavender/30">
-            <div className="flex items-center space-x-6">
+          <div
+            className={
+              showGalleryChrome
+                ? 'relative flex items-center justify-center px-3 py-2 border-t border-white/10 bg-black shrink-0'
+                : 'flex items-center justify-between pt-6 border-t border-space-whale-lavender/30'
+            }
+          >
+            <div className={showGalleryChrome ? 'flex items-center gap-0.5' : 'flex items-center space-x-6'}>
               <button 
                 onClick={handleLike}
                 disabled={isLiking}
-                className={`p-3 transition-colors disabled:opacity-50 rounded-lg hover:bg-space-whale-lavender/10 ${
-                  isLiked 
-                    ? 'text-red-500 hover:text-red-600' 
-                    : 'text-space-whale-navy/70 hover:text-red-500'
-                }`}
+                className={
+                  showGalleryChrome
+                    ? `inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:opacity-50 ${
+                        isLiked ? 'text-red-400' : 'text-white/75 hover:text-white hover:bg-white/10'
+                      }`
+                    : `p-3 transition-colors disabled:opacity-50 rounded-lg hover:bg-space-whale-lavender/10 ${
+                        isLiked 
+                          ? 'text-red-500 hover:text-red-600' 
+                          : 'text-space-whale-navy/70 hover:text-red-500'
+                      }`
+                }
                 title={isLiked ? 'Unlike' : 'Like'}
               >
-                <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
+                <Heart className={`${showGalleryChrome ? 'h-[15px] w-[15px]' : 'h-5 w-5'} ${isLiked ? 'fill-current' : ''}`} strokeWidth={showGalleryChrome ? 1.75 : 2} />
               </button>
               <button 
                 onClick={() => {
                   setShowComments(!showComments)
                   if (!showComments) loadComments()
                 }}
-                className="p-3 text-space-whale-navy/70 hover:text-space-whale-purple transition-colors rounded-lg hover:bg-space-whale-lavender/10"
+                className={
+                  showGalleryChrome
+                    ? 'relative inline-flex h-8 w-8 items-center justify-center rounded-full text-white/75 hover:text-white hover:bg-white/10 transition-colors'
+                    : 'p-3 text-space-whale-navy/70 hover:text-space-whale-purple transition-colors rounded-lg hover:bg-space-whale-lavender/10'
+                }
                 title={`Comments (${comments.length})`}
               >
-                <MessageCircle className="h-5 w-5" />
+                <MessageCircle className={showGalleryChrome ? 'h-[15px] w-[15px]' : 'h-5 w-5'} strokeWidth={showGalleryChrome ? 1.75 : 2} />
+                {showGalleryChrome && comments.length > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[0.9rem] h-3.5 px-1 rounded-full bg-white/90 text-[9px] leading-[14px] text-black text-center font-medium">
+                    {comments.length}
+                  </span>
+                )}
               </button>
               <button 
                 onClick={async () => {
@@ -772,23 +845,32 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
                     } catch (error) {
                       console.log('Share cancelled or failed')
                     }
-                    } else {
-                      // Fallback: copy to clipboard
-                      try {
-                        await navigator.clipboard.writeText(`${currentItem.title} - ${window.location.href}`)
-                        toast('Link copied to clipboard!', 'success', 2000)
-                      } catch (error) {
-                        console.error('Failed to copy to clipboard')
-                        toast('Failed to copy link', 'error')
-                      }
+                  } else {
+                    try {
+                      await navigator.clipboard.writeText(`${currentItem.title} - ${window.location.href}`)
+                      toast('Link copied to clipboard!', 'success', 2000)
+                    } catch (error) {
+                      console.error('Failed to copy to clipboard')
+                      toast('Failed to copy link', 'error')
                     }
+                  }
                 }}
-                className="p-3 text-space-whale-navy/70 hover:text-space-whale-purple transition-colors rounded-lg hover:bg-space-whale-lavender/10"
+                className={
+                  showGalleryChrome
+                    ? 'inline-flex h-8 w-8 items-center justify-center rounded-full text-white/75 hover:text-white hover:bg-white/10 transition-colors'
+                    : 'p-3 text-space-whale-navy/70 hover:text-space-whale-purple transition-colors rounded-lg hover:bg-space-whale-lavender/10'
+                }
                 title="Share"
               >
-                <Share2 className="h-5 w-5" />
+                <Share2 className={showGalleryChrome ? 'h-[15px] w-[15px]' : 'h-5 w-5'} strokeWidth={showGalleryChrome ? 1.75 : 2} />
               </button>
             </div>
+
+            {showGalleryChrome && items && items.length > 1 && (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] tracking-wide text-white/45 font-space-whale-body tabular-nums">
+                {currentIndex + 1} / {items.length}
+              </span>
+            )}
             
             {/* Edit Actions - Only show when editing */}
             {isEditing && onUpdate && (
@@ -824,8 +906,8 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
             )}
           </div>
 
-          {/* Carousel controls when multiple items */}
-          {items && items.length > 1 && (
+          {/* Carousel controls when multiple items — non-gallery only */}
+          {!showGalleryChrome && items && items.length > 1 && (
             <div className="absolute inset-0 pointer-events-none">
               <button
                 aria-label="Previous"
@@ -849,8 +931,20 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
 
           {/* Comments Section */}
           {showComments && (
-            <div className="mt-6 pt-6 border-t border-space-whale-lavender/30">
-              <h3 className="text-lg font-space-whale-heading text-space-whale-navy mb-4">
+            <div
+              className={
+                showGalleryChrome
+                  ? 'px-3 py-4 border-t border-white/10 bg-black'
+                  : 'mt-6 pt-6 border-t border-space-whale-lavender/30'
+              }
+            >
+              <h3
+                className={
+                  showGalleryChrome
+                    ? 'text-sm font-space-whale-heading text-white/80 mb-3'
+                    : 'text-lg font-space-whale-heading text-space-whale-navy mb-4'
+                }
+              >
                 Comments ({comments.length})
               </h3>
               

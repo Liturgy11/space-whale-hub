@@ -1,6 +1,6 @@
 'use client'
 
-import { getYouTubeEmbedUrl, getYouTubeThumbnailUrl, extractYouTubeId } from '@/lib/youtube'
+import { getYouTubeEmbedUrl, getYouTubeThumbnailUrl, extractYouTubeId, isYouTubeShort } from '@/lib/youtube'
 
 interface YouTubeEmbedProps {
   url: string
@@ -10,6 +10,11 @@ interface YouTubeEmbedProps {
   autoplay?: boolean
   /** Show thumbnail + play affordance instead of iframe until clicked (grid-friendly). */
   lazy?: boolean
+  /**
+   * gallery = tall portrait-friendly frame (phone readings)
+   * default = classic 16:9
+   */
+  variant?: 'default' | 'gallery'
 }
 
 export default function YouTubeEmbed({
@@ -18,10 +23,12 @@ export default function YouTubeEmbed({
   className = '',
   autoplay = false,
   lazy = false,
+  variant = 'default',
 }: YouTubeEmbedProps) {
   const embedUrl = getYouTubeEmbedUrl(url, { autoplay: autoplay && !lazy })
   const thumb = getYouTubeThumbnailUrl(url)
   const id = extractYouTubeId(url)
+  const portrait = variant === 'gallery' || isYouTubeShort(url)
 
   if (!embedUrl || !id) {
     return (
@@ -32,7 +39,6 @@ export default function YouTubeEmbed({
   }
 
   if (lazy) {
-    // Parent handles click-to-open lightbox; this is just a visual tile
     return (
       <div className={`relative w-full h-full min-h-full overflow-hidden bg-black ${className}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -47,8 +53,12 @@ export default function YouTubeEmbed({
     )
   }
 
+  const frameClass = portrait
+    ? 'relative mx-auto h-[min(78dvh,calc(100dvh-9rem))] max-h-[min(82vh,52rem)] w-auto max-w-full aspect-[9/16] overflow-hidden rounded-lg bg-black'
+    : 'relative w-full aspect-video max-h-[min(82vh,52rem)] overflow-hidden rounded-lg bg-black'
+
   return (
-    <div className={`relative w-full aspect-video overflow-hidden rounded-xl bg-black ${className}`}>
+    <div className={`${frameClass} ${className}`}>
       <iframe
         src={embedUrl}
         title={title}
