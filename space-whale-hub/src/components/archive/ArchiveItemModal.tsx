@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, ExternalLink, Calendar, User, Tag, Heart, Share2, Trash2, MessageCircle, Edit3, Save, XCircle, Loader2, Send, MoreHorizontal } from 'lucide-react'
 import LinkPreview from './LinkPreview'
+import YouTubeEmbed from '@/components/media/YouTubeEmbed'
+import { isYouTubeUrl } from '@/lib/youtube'
 import { useAuth } from '@/contexts/AuthContext'
 import { getSignedUrl } from '@/lib/signed-urls'
 import { toast } from '@/components/ui/Toast'
@@ -460,6 +462,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
   }
 
   const isExternalLink = currentItem.media_url?.startsWith('http') && !currentItem.media_url.includes('supabase')
+  const isYouTube = !!currentItem.media_url && isYouTubeUrl(currentItem.media_url)
   const isOwner = user && currentItem.user_id && user.id === currentItem.user_id
   
   // Debug logging
@@ -606,7 +609,14 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
           {/* Media Content - Much Larger */}
           <div className={showGalleryChrome ? 'mb-4' : 'mb-8'}>
             {currentItem.media_url ? (
-              isExternalLink ? (
+              isYouTube ? (
+                <YouTubeEmbed
+                  url={currentItem.media_url}
+                  title={currentItem.title || 'Video'}
+                  autoplay
+                  className="shadow-lg"
+                />
+              ) : isExternalLink ? (
                 <LinkPreview 
                   url={currentItem.media_url}
                   title={currentItem.title}
@@ -801,7 +811,7 @@ export default function ArchiveItemModal({ item, isOpen, onClose, onDelete, onUp
               </div>
             )}
             
-            {isExternalLink && (
+            {isExternalLink && !isYouTube && (
               <a
                 href={currentItem.media_url}
                 target="_blank"

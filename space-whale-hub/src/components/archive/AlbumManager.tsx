@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Plus, Edit3, Trash2, Calendar, MapPin, FolderOpen, Upload, X, Image as ImageIcon } from 'lucide-react'
+import { Plus, Edit3, Trash2, Calendar, MapPin, FolderOpen, Upload, X, Image as ImageIcon, Link2 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
 import { archiveContentType, formatBytes, isAllowedMedia, isVideoFile, SIZE_LIMITS, VIDEO_SOURCE_MAX } from '@/lib/media-types'
 import { compressVideo } from '@/lib/compress-video'
+import { extractYouTubeId, isYouTubeUrl } from '@/lib/youtube'
 import { toast } from '@/components/ui/Toast'
 import EmptyState, { SpaceIllustration } from '@/components/ui/EmptyState'
 import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
@@ -42,6 +43,9 @@ export default function AlbumManager() {
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [showCoverUrlFallback, setShowCoverUrlFallback] = useState(false)
   const [pendingGalleryFiles, setPendingGalleryFiles] = useState<File[]>([])
+  const [youtubeLink, setYoutubeLink] = useState('')
+  const [youtubeTitle, setYoutubeTitle] = useState('')
+  const [addingYoutube, setAddingYoutube] = useState(false)
   const coverInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
   const titleInputRef = useRef<HTMLInputElement>(null)
@@ -420,6 +424,8 @@ export default function AlbumManager() {
       const count = await uploadFilesToAlbum(files, selectedAlbum, undefined, accessToken)
       setShowBatchUpload(false)
       setSelectedAlbum(null)
+      setYoutubeLink('')
+      setYoutubeTitle('')
       loadAlbums()
       toast(`Successfully uploaded ${count} file${count === 1 ? '' : 's'} to ${selectedAlbum.title}!`, 'success')
     } catch (error: unknown) {
@@ -428,6 +434,73 @@ export default function AlbumManager() {
       toast(message, 'error')
     } finally {
       setUploadingFiles(false)
+    }
+  }
+
+  const handleAddYouTubeLink = async () => {
+    if (!selectedAlbum || !user) return
+    const url = youtubeLink.trim()
+    if (!isYouTubeUrl(url)) {
+      toast('Paste a valid YouTube link (watch, youtu.be, or Shorts). Use Unlisted for community viewing.', 'error')
+      return
+    }
+
+    setAddingYoutube(true)
+    try {
+      const token = session?.access_token ?? await resolveAccessToken()
+      if (!token) {
+        toast('Could not verify your session. Please refresh or sign in again.', 'error')
+        return
+      }
+
+      const videoId = extractYouTubeId(url)
+      const title =
+        youtubeTitle.trim() ||
+        `YouTube reading (${videoId || 'video'})`
+
+      const itemResponse = await secureFetch('/api/create-constellation-item-secure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description: '',
+          content_type: 'video',
+          media_url: url,
+          artist_name: '',
+          tags: [selectedAlbum.title.toLowerCase().replace(/\s+/g, '-'), 'youtube'],
+          user_id: user.id,
+        }),
+      }, token)
+      const itemResult = await parseSecureResponse<{ success: boolean; data: { id: string }; error?: string }>(itemResponse)
+      if (!itemResult.success) {
+        throw new Error(itemResult.error || 'Failed to create video item')
+      }
+
+      const albumResponse = await secureFetch('/api/manage-album-items-secure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          album_id: selectedAlbum.id,
+          item_id: itemResult.data.id,
+          added_by: user.id,
+        }),
+      }, token)
+      const albumResult = await parseSecureResponse<{ success: boolean; error?: string }>(albumResponse)
+      if (!albumResult.success) {
+        throw new Error(albumResult.error || 'Failed to add video to album')
+      }
+
+      toast('YouTube video added — it will play embedded in the album.', 'success')
+      setYoutubeLink('')
+      setYoutubeTitle('')
+      setShowBatchUpload(false)
+      setSelectedAlbum(null)
+      loadAlbums()
+    } catch (error: unknown) {
+      console.error('Error adding YouTube link:', error)
+      toast(error instanceof Error ? error.message : 'Failed to add YouTube link', 'error')
+    } finally {
+      setAddingYoutube(false)
     }
   }
 
@@ -777,7 +850,7 @@ export default function AlbumManager() {
                   className="flex-1 px-3 py-2 text-blue-600 border border-blue-600/30 rounded-lg hover:bg-blue-600/10 transition-colors text-sm font-space-whale-body"
                 >
                   <Upload className="h-4 w-4 inline mr-1" />
-                  Add Photos
+                  Add Media
                 </button>
                 <button 
                   onClick={() => handleDeleteAlbum(album)}
@@ -818,12 +891,14 @@ export default function AlbumManager() {
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-space-whale-heading text-space-whale-navy">
-                  Add Photos to &ldquo;{selectedAlbum.title}&rdquo;
+                  Add media to &ldquo;{selectedAlbum.title}&rdquo;
                 </h2>
                 <button
                   onClick={() => {
                     setShowBatchUpload(false)
                     setSelectedAlbum(null)
+                    setYoutubeLink('')
+                    setYoutubeTitle('')
                   }}
                   className="text-space-whale-purple hover:text-space-whale-navy transition-colors"
                 >
@@ -832,6 +907,51 @@ export default function AlbumManager() {
               </div>
 
               <div className="space-y-6">
+                {/* YouTube unlisted readings — preferred for 2–3 min clips */}
+                <div className="rounded-xl border border-space-whale-lavender/30 bg-space-whale-lavender/10 p-5 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <Link2 className="h-5 w-5 text-space-whale-purple mt-0.5 shrink-0" />
+                    <div>
+                      <h3 className="font-space-whale-accent text-space-whale-navy">
+                        Add YouTube link (readings)
+                      </h3>
+                      <p className="text-xs text-space-whale-navy/60 font-space-whale-body mt-1">
+                        Upload to YouTube as <strong>Unlisted</strong>, then paste the link. Plays embedded here — members stay on Space Whale.
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    type="url"
+                    value={youtubeLink}
+                    onChange={(e) => setYoutubeLink(e.target.value)}
+                    placeholder="https://youtube.com/watch?v=… or youtu.be/…"
+                    className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy font-space-whale-body focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
+                    disabled={addingYoutube || uploadingFiles}
+                  />
+                  <input
+                    type="text"
+                    value={youtubeTitle}
+                    onChange={(e) => setYoutubeTitle(e.target.value)}
+                    placeholder="Title (optional) — e.g. Brooke — Pride Poetry 2022"
+                    className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy font-space-whale-body focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
+                    disabled={addingYoutube || uploadingFiles}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddYouTubeLink}
+                    disabled={addingYoutube || uploadingFiles || !youtubeLink.trim()}
+                    className="w-full px-4 py-2.5 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg font-space-whale-accent disabled:opacity-50"
+                  >
+                    {addingYoutube ? 'Adding…' : 'Add embedded YouTube video'}
+                  </button>
+                </div>
+
+                <div className="relative flex items-center gap-3 text-xs text-space-whale-navy/50 font-space-whale-body">
+                  <div className="flex-1 h-px bg-space-whale-lavender/30" />
+                  or upload files
+                  <div className="flex-1 h-px bg-space-whale-lavender/30" />
+                </div>
+
                 <div className="border-2 border-dashed border-space-whale-lavender/30 rounded-lg p-8 text-center hover:border-space-whale-purple/50 transition-colors">
                   <input
                     type="file"
@@ -844,7 +964,7 @@ export default function AlbumManager() {
                     }}
                     className="hidden"
                     id="batch-upload"
-                    disabled={uploadingFiles}
+                    disabled={uploadingFiles || addingYoutube}
                   />
                   <label htmlFor="batch-upload" className="cursor-pointer">
                     {uploadingFiles ? (
@@ -862,10 +982,10 @@ export default function AlbumManager() {
                         <Upload className="h-12 w-12 text-space-whale-purple/60 mx-auto" />
                         <div>
                           <p className="text-lg font-space-whale-body text-space-whale-navy mb-2">
-                            Click to select multiple files
+                            Click to select photos or short clips
                           </p>
                           <p className="text-sm text-space-whale-navy/60 font-space-whale-body">
-                            Images, MP4/MOV video, and audio — 2–3 min videos auto-compress (source up to {formatBytes(VIDEO_SOURCE_MAX)})
+                            Best for images and short files. Full readings: use YouTube Unlisted above.
                           </p>
                         </div>
                       </div>
@@ -875,13 +995,12 @@ export default function AlbumManager() {
 
                 <div className="bg-space-whale-lavender/10 rounded-lg p-4">
                   <h3 className="font-space-whale-accent text-space-whale-navy mb-2">
-                    How it works:
+                    Tip
                   </h3>
                   <ul className="text-sm text-space-whale-navy/70 font-space-whale-body space-y-1">
-                    <li>• Files will be uploaded to the archive</li>
-                    <li>• Each file becomes an archive item</li>
-                    <li>• All items are automatically added to "{selectedAlbum.title}"</li>
-                    <li>• File names become item titles</li>
+                    <li>• YouTube <strong>Unlisted</strong> (not Private) so members can watch via the embed</li>
+                    <li>• Video plays inside the album lightbox — no leave-to-YouTube button</li>
+                    <li>• Photos still upload directly as before</li>
                   </ul>
                 </div>
               </div>

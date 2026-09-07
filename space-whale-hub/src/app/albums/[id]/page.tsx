@@ -12,6 +12,8 @@ import AlbumCoverImage from '@/components/archive/AlbumCoverImage'
 import EmptyState from '@/components/ui/EmptyState'
 import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
 import { secureFetch } from '@/lib/secure-fetch'
+import { isYouTubeUrl } from '@/lib/youtube'
+import YouTubeEmbed from '@/components/media/YouTubeEmbed'
 
 interface ArchiveItem {
   id: string
@@ -189,7 +191,16 @@ export default function AlbumDetailPage() {
                     onClick={() => { setSelectedItem(item); setSelectedIndex(index); setIsModalOpen(true) }}
                   >
                     <div className="relative">
-                      {item.content_type === 'video' ? (
+                      {item.content_type === 'video' && isYouTubeUrl(item.media_url) ? (
+                        <div className="relative w-full aspect-[4/5] bg-space-whale-navy/10">
+                          <YouTubeEmbed url={item.media_url} lazy className="absolute inset-0 h-full w-full" />
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-black/45 text-white shadow-lg">
+                              <Play className="h-5 w-5 ml-0.5 fill-current" />
+                            </span>
+                          </div>
+                        </div>
+                      ) : item.content_type === 'video' ? (
                         <div className="relative w-full aspect-[4/5] bg-space-whale-navy/10">
                           {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
                           <video
