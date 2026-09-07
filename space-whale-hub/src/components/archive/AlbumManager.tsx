@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Plus, Edit3, Trash2, Calendar, MapPin, FolderOpen, Upload, X, Image as ImageIcon } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
+import { archiveContentType, formatBytes, isAllowedMedia, isVideoFile, SIZE_LIMITS } from '@/lib/media-types'
 import { toast } from '@/components/ui/Toast'
 import EmptyState, { SpaceIllustration } from '@/components/ui/EmptyState'
 import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
@@ -106,8 +107,7 @@ export default function AlbumManager() {
         body: JSON.stringify({
           title: file.name.replace(/\.[^/.]+$/, ''),
           description: '',
-          content_type: file.type.startsWith('image/') ? 'artwork'
-            : file.type.startsWith('video/') ? 'video' : 'artwork',
+          content_type: archiveContentType(file),
           media_url: uploadResult.url,
           artist_name: '',
           tags: [album.title.toLowerCase().replace(/\s+/g, '-')],
@@ -151,7 +151,22 @@ export default function AlbumManager() {
 
   const handleGalleryFilesSelect = (files: FileList | null) => {
     if (!files?.length) return
-    setPendingGalleryFiles(prev => [...prev, ...Array.from(files)])
+    const next: File[] = []
+    for (const file of Array.from(files)) {
+      if (!isAllowedMedia(file, 'archive')) {
+        toast(`${file.name}: unsupported type. Use images, MP4/MOV video, or audio.`, 'error')
+        continue
+      }
+      if (file.size > SIZE_LIMITS.archive) {
+        toast(
+          `${file.name} is ${formatBytes(file.size)} — max is ${formatBytes(SIZE_LIMITS.archive)}.`,
+          'error'
+        )
+        continue
+      }
+      next.push(file)
+    }
+    if (next.length) setPendingGalleryFiles(prev => [...prev, ...next])
   }
 
   const removePendingGalleryFile = (index: number) => {
@@ -576,13 +591,13 @@ export default function AlbumManager() {
               )}
             </div>
 
-            {/* Album Photos */}
+            {/* Album media */}
             <div>
               <label className="block text-sm font-space-whale-accent text-space-whale-navy mb-1">
-                Album Photos
+                Album media
               </label>
               <p className="text-xs text-space-whale-navy/60 font-space-whale-body mb-3">
-                Add images, videos, or audio to this collection. You can always add more later.
+                Photos, videos (MP4 / MOV), or audio — up to {formatBytes(SIZE_LIMITS.archive)} per file. Videos upload directly to storage.
               </p>
               <div
                 className="border-2 border-dashed border-space-whale-lavender/30 rounded-lg p-6 text-center hover:border-space-whale-purple/50 transition-colors cursor-pointer"
@@ -600,7 +615,7 @@ export default function AlbumManager() {
                 ref={galleryInputRef}
                 type="file"
                 multiple
-                accept="image/*,video/*,audio/*"
+                accept="image/*,video/mp4,video/webm,video/quicktime,.mp4,.mov,.webm,audio/*"
                 className="hidden"
                 onChange={(e) => {
                   handleGalleryFilesSelect(e.target.files)
@@ -614,7 +629,11 @@ export default function AlbumManager() {
                       key={`${file.name}-${index}`}
                       className="flex items-center justify-between px-3 py-2 bg-space-whale-lavender/10 rounded-lg text-sm font-space-whale-body text-space-whale-navy"
                     >
-                      <span className="truncate mr-2">{file.name}</span>
+                      <span className="truncate mr-2">
+                        {isVideoFile(file) ? '🎬 ' : ''}
+                        {file.name}
+                        <span className="text-space-whale-navy/50 ml-2">{formatBytes(file.size)}</span>
+                      </span>
                       <button
                         type="button"
                         onClick={() => removePendingGalleryFile(index)}
@@ -797,7 +816,7 @@ export default function AlbumManager() {
                   <input
                     type="file"
                     multiple
-                    accept="image/*,video/*,audio/*"
+                    accept="image/*,video/mp4,video/webm,video/quicktime,.mp4,.mov,.webm,audio/*"
                     onChange={(e) => {
                       if (e.target.files && e.target.files.length > 0) {
                         handleBatchUpload(e.target.files)
@@ -826,7 +845,7 @@ export default function AlbumManager() {
                             Click to select multiple files
                           </p>
                           <p className="text-sm text-space-whale-navy/60 font-space-whale-body">
-                            Images, videos, and audio files supported
+                            Images, MP4/MOV video, and audio — max {formatBytes(SIZE_LIMITS.archive)} each
                           </p>
                         </div>
                       </div>

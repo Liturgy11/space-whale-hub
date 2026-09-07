@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Upload, X, Image, Video, FileText, Music, Tag } from 'lucide-react'
 // Removed direct database import - using secure API route instead
 import { uploadMedia } from '@/lib/storage-client'
+import { archiveContentType, formatBytes, isAllowedMedia, SIZE_LIMITS } from '@/lib/media-types'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/ui/Toast'
 import { secureFetch } from '@/lib/secure-fetch'
@@ -140,31 +141,26 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // Validate file type (Android browsers sometimes return empty MIME types)
-      const isValidMimeType = file.type.startsWith('image/') || file.type.startsWith('video/') || file.type.startsWith('audio/') || file.type === 'application/pdf'
-      
-      // Fallback: check file extension for Android compatibility
-      const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
-      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif']
-      const videoExtensions = ['.mp4', '.webm']
-      const audioExtensions = ['.mp3', '.wav']
-      const isValidExtension = imageExtensions.includes(fileExtension) || videoExtensions.includes(fileExtension) || audioExtensions.includes(fileExtension) || fileExtension === '.pdf'
-      
-      if (!isValidMimeType && !isValidExtension) {
-        toast('Please upload an image, video, audio, or PDF file', 'error')
-        e.target.value = '' // Clear the input
+      if (!isAllowedMedia(file, 'archive')) {
+        toast('Please upload an image, MP4/MOV video, audio, or PDF file', 'error')
+        e.target.value = ''
         return
       }
 
-      // Check file size (50MB limit)
-      const maxSize = 50 * 1024 * 1024 // 50MB in bytes
-      if (file.size > maxSize) {
-        toast(`File is too large. Maximum size is 50MB. Your file is ${(file.size / (1024 * 1024)).toFixed(1)}MB.`, 'error')
-        e.target.value = '' // Clear the input
+      if (file.size > SIZE_LIMITS.archive) {
+        toast(
+          `File is too large. Maximum is ${formatBytes(SIZE_LIMITS.archive)}. Your file is ${formatBytes(file.size)}.`,
+          'error'
+        )
+        e.target.value = ''
         return
       }
-      
-      setFormData(prev => ({ ...prev, file }))
+
+      setFormData(prev => ({
+        ...prev,
+        file,
+        content_type: archiveContentType(file),
+      }))
     }
   }
 
@@ -299,7 +295,7 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
                         onChange={handleFileChange}
                         accept={
                           formData.content_type === 'artwork' ? 'image/*' :
-                          formData.content_type === 'video' ? 'video/*' :
+                          formData.content_type === 'video' ? 'video/mp4,video/webm,video/quicktime,.mp4,.mov,.webm' :
                           formData.content_type === 'audio' ? 'audio/*' :
                           'application/pdf'
                         }
@@ -326,10 +322,10 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
                               Click to upload or drag and drop
                             </p>
                             <p className="text-xs text-space-whale-navy/50 font-space-whale-body">
-                              {formData.content_type === 'artwork' ? 'Images (JPG, PNG, GIF) - Max 50MB' :
-                               formData.content_type === 'video' ? 'Videos (MP4, MOV, AVI) - Max 50MB' :
-                               formData.content_type === 'audio' ? 'Audio (MP3, WAV, M4A) - Max 50MB' :
-                               'PDF files - Max 50MB'}
+                              {formData.content_type === 'artwork' ? `Images (JPG, PNG, GIF) - Max ${formatBytes(SIZE_LIMITS.archive)}` :
+                               formData.content_type === 'video' ? `Videos (MP4, MOV) - Max ${formatBytes(SIZE_LIMITS.archive)}` :
+                               formData.content_type === 'audio' ? `Audio (MP3, WAV, M4A) - Max ${formatBytes(SIZE_LIMITS.archive)}` :
+                               `PDF files - Max ${formatBytes(SIZE_LIMITS.archive)}`}
                             </p>
                           </div>
                         )}

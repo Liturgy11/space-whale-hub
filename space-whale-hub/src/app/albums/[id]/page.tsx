@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, MapPin, GripVertical } from 'lucide-react'
+import { ArrowLeft, Calendar, MapPin, GripVertical, Play } from 'lucide-react'
 import { getSignedUrls, createSignedUrlMap } from '@/lib/signed-urls'
 import ArchiveItemModal from '@/components/archive/ArchiveItemModal'
 import { useAuth } from '@/contexts/AuthContext'
@@ -190,12 +190,21 @@ export default function AlbumDetailPage() {
                   >
                     <div className="relative">
                       {item.content_type === 'video' ? (
-                        // eslint-disable-next-line jsx-a11y/media-has-caption
-                        <video
-                          src={signedUrlMap[item.media_url] || item.media_url}
-                          className="w-full aspect-[4/5] object-cover"
-                          controls
-                        />
+                        <div className="relative w-full aspect-[4/5] bg-space-whale-navy/10">
+                          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                          <video
+                            src={signedUrlMap[item.media_url] || item.media_url}
+                            className="w-full h-full object-cover"
+                            muted
+                            playsInline
+                            preload="metadata"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-black/45 text-white shadow-lg">
+                              <Play className="h-5 w-5 ml-0.5 fill-current" />
+                            </span>
+                          </div>
+                        </div>
                       ) : (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img

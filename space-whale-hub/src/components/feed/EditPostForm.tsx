@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
+import { formatBytes, isAllowedMedia, isVideoFile, SIZE_LIMITS } from '@/lib/media-types'
 import { getPostMediaUrls, MAX_POST_IMAGES } from '@/lib/post-media'
 import MediaCarousel from '@/components/media/MediaCarousel'
 import ReorderableImageGrid from '@/components/media/ReorderableImageGrid'
@@ -67,13 +68,19 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
   const handleFileUpload = async (file: File) => {
     if (!user) return
 
-    const maxSize = 10 * 1024 * 1024
-    if (file.size > maxSize) {
-      setError(`File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB. Maximum size is 10MB.`)
+    if (!isAllowedMedia(file, 'posts')) {
+      setError('Please upload an image or MP4/MOV video')
       return
     }
 
-    const isVideo = file.type.startsWith('video/')
+    if (file.size > SIZE_LIMITS.posts) {
+      setError(
+        `File too large: ${formatBytes(file.size)}. Maximum is ${formatBytes(SIZE_LIMITS.posts)}.`
+      )
+      return
+    }
+
+    const isVideo = isVideoFile(file)
     if (isVideo && mediaItems.length > 0) {
       setError('Remove images before adding a video.')
       return
@@ -298,7 +305,7 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
               </span>
               <input
                 type="file"
-                accept="image/*,video/*"
+                accept="image/*,video/mp4,video/webm,video/quicktime,.mp4,.mov,.webm"
                 className="hidden"
                 disabled={uploadingMedia}
                 onChange={(e) => {

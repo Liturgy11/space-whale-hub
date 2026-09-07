@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
+import { archiveContentType, formatBytes, isAllowedMedia, isVideoFile, SIZE_LIMITS } from '@/lib/media-types'
 import { Upload, X, Image, Video, File, Music, Loader2, Check } from 'lucide-react'
 
 interface MediaUploadProps {
@@ -48,62 +49,41 @@ export default function MediaUpload({ onUploadComplete, onCancel }: MediaUploadP
 
   const handleFile = (file: File) => {
     setError('')
-    
-    // Validate file type (Android browsers sometimes return empty MIME types)
-    const isValidMimeType = file.type.startsWith('image/') || file.type.startsWith('video/') || file.type.startsWith('audio/') || file.type === 'application/pdf'
-    
-    // Fallback: check file extension for Android compatibility
-    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif']
-    const videoExtensions = ['.mp4', '.webm']
-    const audioExtensions = ['.mp3', '.wav']
-    const isValidExtension = imageExtensions.includes(fileExtension) || videoExtensions.includes(fileExtension) || audioExtensions.includes(fileExtension) || fileExtension === '.pdf'
-    
-    if (!isValidMimeType && !isValidExtension) {
-      setError('Please upload an image, video, audio, or PDF file')
+
+    if (!isAllowedMedia(file, 'archive')) {
+      setError('Please upload an image, MP4/MOV video, audio, or PDF file')
       return
     }
-    
+
+    if (file.size > SIZE_LIMITS.archive) {
+      setError(`File too large (${formatBytes(file.size)}). Max is ${formatBytes(SIZE_LIMITS.archive)}.`)
+      return
+    }
+
     setUploadedFile(file)
-    
-    // Create preview URL
-    const url = URL.createObjectURL(file)
-    setPreviewUrl(url)
+    setPreviewUrl(URL.createObjectURL(file))
   }
 
   const getFileIcon = (file: File) => {
-    const type = file.type
-    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif']
-    const videoExtensions = ['.mp4', '.webm']
-    const audioExtensions = ['.mp3', '.wav']
-    
-    if (type.startsWith('image/') || imageExtensions.includes(fileExtension)) return <Image className="h-8 w-8 text-green-500" />
-    if (type.startsWith('video/') || videoExtensions.includes(fileExtension)) return <Video className="h-8 w-8 text-blue-500" />
-    if (type.startsWith('audio/') || audioExtensions.includes(fileExtension)) return <Music className="h-8 w-8 text-purple-500" />
+    if (isVideoFile(file)) return <Video className="h-8 w-8 text-blue-500" />
+    if (file.type.startsWith('audio/') || /\.(mp3|wav|m4a)$/i.test(file.name)) {
+      return <Music className="h-8 w-8 text-purple-500" />
+    }
+    if (file.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|heic|heif)$/i.test(file.name)) {
+      return <Image className="h-8 w-8 text-green-500" />
+    }
     return <File className="h-8 w-8 text-gray-500" />
   }
 
   const getFileType = (file: File) => {
-    const type = file.type
-    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif']
-    const videoExtensions = ['.mp4', '.webm']
-    const audioExtensions = ['.mp3', '.wav']
-    
-    if (type.startsWith('image/') || imageExtensions.includes(fileExtension)) return 'image'
-    if (type.startsWith('video/') || videoExtensions.includes(fileExtension)) return 'video'
-    if (type.startsWith('audio/') || audioExtensions.includes(fileExtension)) return 'audio'
+    if (isVideoFile(file)) return 'video'
+    const type = archiveContentType(file)
+    if (type === 'artwork') return 'image'
+    if (type === 'audio') return 'audio'
     return 'document'
   }
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
+  const formatFileSize = (bytes: number) => formatBytes(bytes)
 
   const uploadFile = async () => {
     if (!uploadedFile || !user) return
@@ -185,10 +165,10 @@ export default function MediaUpload({ onUploadComplete, onCancel }: MediaUploadP
             type="file"
             onChange={handleFileInput}
             className="hidden"
-            accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
+            accept="image/*,video/mp4,video/webm,video/quicktime,.mp4,.mov,.webm,audio/*,.pdf"
           />
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-            Supports images, videos, audio, and documents (max 50MB)
+            Supports images, MP4/MOV video, audio, and PDFs (max {formatBytes(SIZE_LIMITS.archive)})
           </p>
         </div>
       ) : (

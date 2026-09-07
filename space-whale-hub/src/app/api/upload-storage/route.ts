@@ -87,29 +87,10 @@ export async function POST(request: NextRequest) {
       console.warn('⚠️ Could not verify authentication, proceeding with userId from form data (service role will handle security)')
     }
 
-    // Validate file type
-    const allowedTypes = {
-      avatars: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif'],
-      posts: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'video/mp4', 'video/webm'],
-      journal: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif'],
-      archive: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'video/mp4', 'video/webm', 'audio/mpeg', 'audio/wav', 'application/pdf']
-    }
-
-    // Map file extensions to MIME types (for Android browsers that may not provide correct MIME types)
-    const extensionToMime: Record<string, string> = {
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.png': 'image/png',
-      '.gif': 'image/gif',
-      '.webp': 'image/webp',
-      '.heic': 'image/heic',
-      '.heif': 'image/heif',
-      '.mp4': 'video/mp4',
-      '.webm': 'video/webm',
-      '.mp3': 'audio/mpeg',
-      '.wav': 'audio/wav',
-      '.pdf': 'application/pdf'
-    }
+    // Validate file type (shared with signed-upload path)
+    const { ALLOWED_MIME_TYPES, EXTENSION_TO_MIME } = await import('@/lib/media-types')
+    const allowedTypes = ALLOWED_MIME_TYPES
+    const extensionToMime = EXTENSION_TO_MIME
 
     console.log(`📁 File validation: type="${file.type}", category="${category}", name="${file.name}"`)
     console.log(`📁 Allowed types for ${category}:`, allowedTypes[category as keyof typeof allowedTypes])

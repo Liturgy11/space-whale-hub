@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
+import { formatBytes, isAllowedMedia, isVideoFile, SIZE_LIMITS } from '@/lib/media-types'
 import { MAX_POST_IMAGES } from '@/lib/post-media'
 import MediaCarousel from '@/components/media/MediaCarousel'
 import { Upload, Send, X, AlertCircle, Loader2, Plus } from 'lucide-react'
@@ -82,26 +83,19 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
     file: File,
     currentItems: MediaItem[]
   ): { ok: boolean; isImage: boolean; error?: string } => {
-    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif']
-    const videoExtensions = ['.mp4', '.webm']
-    const isValidMimeType = file.type.startsWith('image/') || file.type.startsWith('video/')
-    const isValidExtension =
-      imageExtensions.includes(fileExtension) || videoExtensions.includes(fileExtension)
-    const isImage = file.type.startsWith('image/') || imageExtensions.includes(fileExtension)
-    const isVideo = file.type.startsWith('video/') || videoExtensions.includes(fileExtension)
-    const currentHasVideo = currentItems.some((m) => m.type === 'video')
-
-    if (!isValidMimeType && !isValidExtension) {
-      return { ok: false, isImage: false, error: 'Please upload an image or video file' }
+    if (!isAllowedMedia(file, 'posts')) {
+      return { ok: false, isImage: false, error: 'Please upload an image or MP4/MOV video' }
     }
 
-    const maxSize = 10 * 1024 * 1024
-    if (file.size > maxSize) {
+    const isVideo = isVideoFile(file)
+    const isImage = !isVideo
+    const currentHasVideo = currentItems.some((m) => m.type === 'video')
+
+    if (file.size > SIZE_LIMITS.posts) {
       return {
         ok: false,
         isImage,
-        error: `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB. Maximum size is 10MB.`,
+        error: `File too large: ${formatBytes(file.size)}. Maximum is ${formatBytes(SIZE_LIMITS.posts)}.`,
       }
     }
 
@@ -336,7 +330,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*,video/*"
+            accept="image/*,video/mp4,video/webm,video/quicktime,.mp4,.mov,.webm"
             multiple={!hasVideo}
             className="hidden"
             disabled={uploadingMedia || !canAddMore}
