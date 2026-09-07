@@ -4,7 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Plus, Edit3, Trash2, Calendar, MapPin, FolderOpen, Upload, X, Image as ImageIcon } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
-import { archiveContentType, formatBytes, isAllowedMedia, isVideoFile, SIZE_LIMITS } from '@/lib/media-types'
+import { archiveContentType, formatBytes, isAllowedMedia, isVideoFile, SIZE_LIMITS, VIDEO_SOURCE_MAX } from '@/lib/media-types'
+import { compressVideo } from '@/lib/compress-video'
 import { toast } from '@/components/ui/Toast'
 import EmptyState, { SpaceIllustration } from '@/components/ui/EmptyState'
 import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
@@ -96,9 +97,21 @@ export default function AlbumManager() {
       const file = fileArray[index]
       onProgress?.(index + 1, fileArray.length)
 
-      const uploadResult = await uploadMedia(file, {
+      let fileToUpload = file
+      if (isVideoFile(file)) {
+        fileToUpload = await compressVideo(file, {
+          onStatus: (msg) => setSubmitStatus(msg),
+        })
+        if (fileToUpload.size > SIZE_LIMITS.archive) {
+          throw new Error(
+            `${file.name}: still ${formatBytes(fileToUpload.size)} after compression (max ${formatBytes(SIZE_LIMITS.archive)}). Try a shorter trim.`
+          )
+        }
+      }
+
+      const uploadResult = await uploadMedia(fileToUpload, {
         category: 'archive',
-        filename: `${Date.now()}-${index}-${file.name}`
+        filename: `${Date.now()}-${index}-${fileToUpload.name}`
       }, user.id)
 
       const itemResponse = await secureFetch('/api/create-constellation-item-secure', {
@@ -107,7 +120,7 @@ export default function AlbumManager() {
         body: JSON.stringify({
           title: file.name.replace(/\.[^/.]+$/, ''),
           description: '',
-          content_type: archiveContentType(file),
+          content_type: archiveContentType(fileToUpload),
           media_url: uploadResult.url,
           artist_name: '',
           tags: [album.title.toLowerCase().replace(/\s+/g, '-')],
@@ -157,7 +170,14 @@ export default function AlbumManager() {
         toast(`${file.name}: unsupported type. Use images, MP4/MOV video, or audio.`, 'error')
         continue
       }
-      if (file.size > SIZE_LIMITS.archive) {
+      if (isVideoFile(file) && file.size > VIDEO_SOURCE_MAX) {
+        toast(
+          `${file.name} is ${formatBytes(file.size)} — max source size is ${formatBytes(VIDEO_SOURCE_MAX)}.`,
+          'error'
+        )
+        continue
+      }
+      if (!isVideoFile(file) && file.size > SIZE_LIMITS.archive) {
         toast(
           `${file.name} is ${formatBytes(file.size)} — max is ${formatBytes(SIZE_LIMITS.archive)}.`,
           'error'
@@ -597,7 +617,7 @@ export default function AlbumManager() {
                 Album media
               </label>
               <p className="text-xs text-space-whale-navy/60 font-space-whale-body mb-3">
-                Photos, videos (MP4 / MOV), or audio — up to {formatBytes(SIZE_LIMITS.archive)} per file. Videos upload directly to storage.
+                Photos, videos (MP4 / MOV), or audio. Videos up to ~{formatBytes(VIDEO_SOURCE_MAX)} are auto-compressed for 2–3 min readings.
               </p>
               <div
                 className="border-2 border-dashed border-space-whale-lavender/30 rounded-lg p-6 text-center hover:border-space-whale-purple/50 transition-colors cursor-pointer"
@@ -845,7 +865,7 @@ export default function AlbumManager() {
                             Click to select multiple files
                           </p>
                           <p className="text-sm text-space-whale-navy/60 font-space-whale-body">
-                            Images, MP4/MOV video, and audio — max {formatBytes(SIZE_LIMITS.archive)} each
+                            Images, MP4/MOV video, and audio — 2–3 min videos auto-compress (source up to {formatBytes(VIDEO_SOURCE_MAX)})
                           </p>
                         </div>
                       </div>

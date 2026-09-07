@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
-import { formatBytes, isAllowedMedia, isVideoFile, SIZE_LIMITS } from '@/lib/media-types'
+import { formatBytes, isAllowedMedia, isVideoFile, SIZE_LIMITS, VIDEO_SOURCE_MAX } from '@/lib/media-types'
+import { compressVideo } from '@/lib/compress-video'
 import { MAX_POST_IMAGES } from '@/lib/post-media'
 import MediaCarousel from '@/components/media/MediaCarousel'
 import { Upload, Send, X, AlertCircle, Loader2, Plus } from 'lucide-react'
@@ -34,6 +35,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const [isDragging, setIsDragging] = useState(false)
+  const [mediaStatus, setMediaStatus] = useState<string | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -91,7 +93,15 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
     const isImage = !isVideo
     const currentHasVideo = currentItems.some((m) => m.type === 'video')
 
-    if (file.size > SIZE_LIMITS.posts) {
+    if (isVideo && file.size > VIDEO_SOURCE_MAX) {
+      return {
+        ok: false,
+        isImage: false,
+        error: `Video too large to process (${formatBytes(file.size)}). Max source size is ${formatBytes(VIDEO_SOURCE_MAX)}. Try trimming or exporting at 1080p.`,
+      }
+    }
+
+    if (!isVideo && file.size > SIZE_LIMITS.posts) {
       return {
         ok: false,
         isImage,
@@ -126,9 +136,27 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
     setUploadingMedia(true)
     setError('')
     setIsDragging(false)
+    setMediaStatus(null)
 
     try {
-      const fileToUpload = validation.isImage ? await compressImage(file) : file
+      let fileToUpload = validation.isImage ? await compressImage(file) : file
+      if (!validation.isImage) {
+        fileToUpload = await compressVideo(file, {
+          onStatus: setMediaStatus,
+          onProgress: (ratio) => {
+            if (ratio > 0 && ratio < 1) {
+              setMediaStatus(`Compressing video… ${Math.round(ratio * 100)}%`)
+            }
+          },
+        })
+        if (fileToUpload.size > SIZE_LIMITS.posts) {
+          throw new Error(
+            `Even after compression this clip is ${formatBytes(fileToUpload.size)} (max ${formatBytes(SIZE_LIMITS.posts)}). Try a shorter trim or lower resolution export.`
+          )
+        }
+      }
+
+      setMediaStatus('Uploading…')
       const result = await uploadMedia(
         fileToUpload,
         { category: 'posts', filename: `${Date.now()}-${fileToUpload.name}` },
@@ -146,6 +174,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
       return items
     } finally {
       setUploadingMedia(false)
+      setMediaStatus(null)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
@@ -355,7 +384,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
                 Add photos or a video
               </p>
               <p className="text-xs text-space-whale-purple/80 mb-2 font-space-whale-body">
-                Up to {MAX_POST_IMAGES} images · swipe through them in one post
+                Up to {MAX_POST_IMAGES} images · or one video (2–3 min readings auto-compress)
               </p>
               <button
                 type="button"
@@ -366,7 +395,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
                 {uploadingMedia ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 inline animate-spin" />
-                    Uploading...
+                    {mediaStatus?.includes('Compress') ? 'Compressing…' : 'Uploading…'}
                   </>
                 ) : (
                   <>
@@ -375,6 +404,11 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
                   </>
                 )}
               </button>
+              {mediaStatus && (
+                <p className="text-xs text-space-whale-navy/70 mt-2 font-space-whale-body">
+                  {mediaStatus}
+                </p>
+              )}
             </div>
           ) : (
             <div className="space-y-3">

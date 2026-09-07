@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { Upload, X, Image, Video, FileText, Music, Tag } from 'lucide-react'
 // Removed direct database import - using secure API route instead
 import { uploadMedia } from '@/lib/storage-client'
-import { archiveContentType, formatBytes, isAllowedMedia, SIZE_LIMITS } from '@/lib/media-types'
+import { archiveContentType, formatBytes, isAllowedMedia, isVideoFile, SIZE_LIMITS, VIDEO_SOURCE_MAX } from '@/lib/media-types'
+import { compressVideo } from '@/lib/compress-video'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/ui/Toast'
 import { secureFetch } from '@/lib/secure-fetch'
@@ -17,6 +18,7 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
   const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -33,11 +35,26 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
   const handleFileUpload = async (file: File) => {
     try {
       setUploading(true)
-      
-      // Use new storage system instead of direct storage calls
-      const result = await uploadMedia(file, {
+      let fileToUpload = file
+      if (isVideoFile(file)) {
+        fileToUpload = await compressVideo(file, {
+          onStatus: setUploadStatus,
+          onProgress: (ratio) => {
+            if (ratio > 0 && ratio < 1) {
+              setUploadStatus(`Compressing video… ${Math.round(ratio * 100)}%`)
+            }
+          },
+        })
+        if (fileToUpload.size > SIZE_LIMITS.archive) {
+          throw new Error(
+            `Even after compression this clip is ${formatBytes(fileToUpload.size)} (max ${formatBytes(SIZE_LIMITS.archive)}).`
+          )
+        }
+      }
+      setUploadStatus('Uploading…')
+      const result = await uploadMedia(fileToUpload, {
         category: 'archive',
-        filename: `${Date.now()}-${file.name}`
+        filename: `${Date.now()}-${fileToUpload.name}`
       }, user!.id)
       return result.url
     } catch (error) {
@@ -45,6 +62,7 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
       throw error
     } finally {
       setUploading(false)
+      setUploadStatus(null)
     }
   }
 
@@ -147,7 +165,16 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
         return
       }
 
-      if (file.size > SIZE_LIMITS.archive) {
+      if (isVideoFile(file) && file.size > VIDEO_SOURCE_MAX) {
+        toast(
+          `Video too large to process (${formatBytes(file.size)}). Max source size is ${formatBytes(VIDEO_SOURCE_MAX)}.`,
+          'error'
+        )
+        e.target.value = ''
+        return
+      }
+
+      if (!isVideoFile(file) && file.size > SIZE_LIMITS.archive) {
         toast(
           `File is too large. Maximum is ${formatBytes(SIZE_LIMITS.archive)}. Your file is ${formatBytes(file.size)}.`,
           'error'
@@ -323,10 +350,15 @@ export default function ArchiveUpload({ onUploadComplete }: ArchiveUploadProps) 
                             </p>
                             <p className="text-xs text-space-whale-navy/50 font-space-whale-body">
                               {formData.content_type === 'artwork' ? `Images (JPG, PNG, GIF) - Max ${formatBytes(SIZE_LIMITS.archive)}` :
-                               formData.content_type === 'video' ? `Videos (MP4, MOV) - Max ${formatBytes(SIZE_LIMITS.archive)}` :
+                               formData.content_type === 'video' ? `Videos (MP4, MOV) — 2–3 min readings auto-compress (source up to ${formatBytes(VIDEO_SOURCE_MAX)})` :
                                formData.content_type === 'audio' ? `Audio (MP3, WAV, M4A) - Max ${formatBytes(SIZE_LIMITS.archive)}` :
                                `PDF files - Max ${formatBytes(SIZE_LIMITS.archive)}`}
                             </p>
+                            {uploadStatus && (
+                              <p className="text-xs text-space-whale-purple mt-2 font-space-whale-body">
+                                {uploadStatus}
+                              </p>
+                            )}
                           </div>
                         )}
                       </label>

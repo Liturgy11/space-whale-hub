@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { uploadMedia } from '@/lib/storage-client'
-import { formatBytes, isAllowedMedia, isVideoFile, SIZE_LIMITS } from '@/lib/media-types'
+import { formatBytes, isAllowedMedia, isVideoFile, SIZE_LIMITS, VIDEO_SOURCE_MAX } from '@/lib/media-types'
+import { compressVideo } from '@/lib/compress-video'
 import { getPostMediaUrls, MAX_POST_IMAGES } from '@/lib/post-media'
 import MediaCarousel from '@/components/media/MediaCarousel'
 import ReorderableImageGrid from '@/components/media/ReorderableImageGrid'
@@ -60,6 +61,7 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
   const [uploadingMedia, setUploadingMedia] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
+  const [mediaStatus, setMediaStatus] = useState<string | null>(null)
 
   const mediaUrls = mediaItems.map((m) => m.url)
   const hasVideo = mediaItems.some((m) => m.type === 'video')
@@ -73,14 +75,20 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
       return
     }
 
-    if (file.size > SIZE_LIMITS.posts) {
+    const isVideo = isVideoFile(file)
+    if (isVideo && file.size > VIDEO_SOURCE_MAX) {
+      setError(
+        `Video too large to process (${formatBytes(file.size)}). Max source size is ${formatBytes(VIDEO_SOURCE_MAX)}.`
+      )
+      return
+    }
+    if (!isVideo && file.size > SIZE_LIMITS.posts) {
       setError(
         `File too large: ${formatBytes(file.size)}. Maximum is ${formatBytes(SIZE_LIMITS.posts)}.`
       )
       return
     }
 
-    const isVideo = isVideoFile(file)
     if (isVideo && mediaItems.length > 0) {
       setError('Remove images before adding a video.')
       return
@@ -96,11 +104,30 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
 
     setUploadingMedia(true)
     setError('')
+    setMediaStatus(null)
 
     try {
+      let fileToUpload = file
+      if (isVideo) {
+        fileToUpload = await compressVideo(file, {
+          onStatus: setMediaStatus,
+          onProgress: (ratio) => {
+            if (ratio > 0 && ratio < 1) {
+              setMediaStatus(`Compressing video… ${Math.round(ratio * 100)}%`)
+            }
+          },
+        })
+        if (fileToUpload.size > SIZE_LIMITS.posts) {
+          throw new Error(
+            `Even after compression this clip is ${formatBytes(fileToUpload.size)} (max ${formatBytes(SIZE_LIMITS.posts)}). Try a shorter trim.`
+          )
+        }
+      }
+
+      setMediaStatus('Uploading…')
       const result = await uploadMedia(
-        file,
-        { category: 'posts', filename: `${Date.now()}-${file.name}` },
+        fileToUpload,
+        { category: 'posts', filename: `${Date.now()}-${fileToUpload.name}` },
         user.id
       )
       setMediaItems((prev) => [
@@ -111,6 +138,7 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
       setError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
       setUploadingMedia(false)
+      setMediaStatus(null)
     }
   }
 
@@ -303,6 +331,11 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
               <span className="text-sm text-space-whale-navy font-space-whale-body">
                 {uploadingMedia ? 'Uploading...' : 'Add photos or video'}
               </span>
+              {mediaStatus && (
+                <p className="text-xs text-space-whale-navy/70 mt-2 font-space-whale-body">
+                  {mediaStatus}
+                </p>
+              )}
               <input
                 type="file"
                 accept="image/*,video/mp4,video/webm,video/quicktime,.mp4,.mov,.webm"

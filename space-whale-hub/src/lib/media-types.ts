@@ -3,10 +3,13 @@ export type MediaCategory = 'avatars' | 'posts' | 'journal' | 'archive'
 /** Soft client limits — keep images small; allow larger archive videos via signed upload. */
 export const SIZE_LIMITS: Record<MediaCategory, number> = {
   avatars: 5 * 1024 * 1024,
-  posts: 100 * 1024 * 1024, // videos on Community Orbit use signed upload
+  posts: 100 * 1024 * 1024, // after compression
   journal: 10 * 1024 * 1024,
-  archive: 100 * 1024 * 1024, // photos + short videos
+  archive: 100 * 1024 * 1024, // after compression
 }
+
+/** Max size for picking a raw phone video (we compress before upload). */
+export const VIDEO_SOURCE_MAX = 600 * 1024 * 1024
 
 /** Prefer API for small files; use signed direct upload above this (avoids Vercel ~4.5MB cap). */
 export const SIGNED_UPLOAD_THRESHOLD = 3.5 * 1024 * 1024
