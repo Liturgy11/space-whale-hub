@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, X, ZoomIn } from 'lucide-react'
+import FeedVideo from '@/components/media/FeedVideo'
 
 interface MediaCarouselProps {
   urls: string[]
@@ -68,18 +69,13 @@ export default function MediaCarousel({
         {urls.map((url, index) => (
           <div
             key={`${url}-${index}`}
-            className={`relative w-full shrink-0 snap-start ${heightClass} ${
-              clickable ? 'cursor-pointer group' : ''
-            }`}
-            onClick={() => onSlideClick?.(index)}
+            className={`relative w-full shrink-0 snap-start ${
+              isVideo ? '' : heightClass
+            } ${clickable && !isVideo ? 'cursor-pointer group' : ''}`}
+            onClick={() => !isVideo && onSlideClick?.(index)}
           >
             {isVideo ? (
-              <video
-                src={url}
-                controls
-                className="w-full h-full object-cover rounded-xl shadow-md"
-                onClick={(e) => e.stopPropagation()}
-              />
+              <FeedVideo src={url} compact={!isFeed} />
             ) : (
               <>
                 <img

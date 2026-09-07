@@ -7,6 +7,7 @@ import { formatBytes, isAllowedMedia, isVideoFile, SIZE_LIMITS, VIDEO_SOURCE_MAX
 import { compressVideo } from '@/lib/compress-video'
 import { getPostMediaUrls, MAX_POST_IMAGES } from '@/lib/post-media'
 import MediaCarousel from '@/components/media/MediaCarousel'
+import FeedVideo from '@/components/media/FeedVideo'
 import ReorderableImageGrid from '@/components/media/ReorderableImageGrid'
 import { Save, X, AlertTriangle, Loader2, Plus, Upload } from 'lucide-react'
 import { secureFetch } from '@/lib/secure-fetch'
@@ -273,11 +274,7 @@ export default function EditPostForm({ post, onPostUpdated, onCancel }: EditPost
             <div className="space-y-3">
               {hasVideo ? (
                 <div className="relative rounded-lg overflow-hidden">
-                  <video
-                    src={mediaUrls[0]}
-                    controls
-                    className="w-full max-h-48 object-cover rounded-lg"
-                  />
+                  <FeedVideo src={mediaUrls[0]} compact />
                   <button
                     type="button"
                     onClick={() => setMediaItems([])}

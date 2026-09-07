@@ -6,6 +6,7 @@ import { Heart, MessageCircle, MoreHorizontal, Bookmark, Edit, Trash2, X, Chevro
 import CommentForm from './CommentForm'
 import CommentsList from './CommentsList'
 import MediaCarousel from '@/components/media/MediaCarousel'
+import FeedVideo from '@/components/media/FeedVideo'
 import MoodBoardGallery from '@/components/media/MoodBoardGallery'
 import { getMoodBoardDisplayUrls } from '@/lib/mood-board'
 import { getPostMediaUrls } from '@/lib/post-media'
@@ -316,11 +317,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
           {post.media_type !== 'moodboard' && post.media_type !== 'mood' && galleryUrls.length > 0 && (
             <div className="mt-3">
               {post.media_type === 'video' ? (
-                <video
-                  src={galleryUrls[0]}
-                  controls
-                  className="w-full h-72 sm:h-96 object-cover rounded-xl shadow-md"
-                />
+                <FeedVideo src={galleryUrls[0]} />
               ) : isGallery ? (
                 <MediaCarousel
                   urls={galleryUrls}
