@@ -48,6 +48,7 @@ export default function AlbumManager() {
   const [formYoutubeTitle, setFormYoutubeTitle] = useState('')
   const [youtubeLink, setYoutubeLink] = useState('')
   const [youtubeTitle, setYoutubeTitle] = useState('')
+  const [batchYouTubeQueue, setBatchYouTubeQueue] = useState<Array<{ url: string; title: string }>>([])
   const [addingYoutube, setAddingYoutube] = useState(false)
   const coverInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
@@ -212,21 +213,106 @@ export default function AlbumManager() {
   }
 
   const queueFormYouTubeLink = () => {
-    const url = formYoutubeLink.trim()
-    if (!isYouTubeUrl(url)) {
-      toast('Paste a valid YouTube link (Unlisted recommended).', 'error')
+    const raw = formYoutubeLink.trim()
+    if (!raw) return
+
+    // Support one link, or several (newline / comma separated)
+    const candidates = raw
+      .split(/[\n,]+/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+
+    if (candidates.length === 0) return
+
+    const sharedTitle = formYoutubeTitle.trim()
+    const next: Array<{ url: string; title: string }> = []
+    const errors: string[] = []
+
+    for (const candidate of candidates) {
+      if (!isYouTubeUrl(candidate)) {
+        errors.push(candidate)
+        continue
+      }
+      if (
+        pendingYouTubeLinks.some((l) => l.url === candidate) ||
+        next.some((l) => l.url === candidate)
+      ) {
+        continue
+      }
+      next.push({
+        url: candidate,
+        title:
+          candidates.length === 1
+            ? sharedTitle
+            : sharedTitle
+              ? `${sharedTitle} (${extractYouTubeId(candidate) || 'video'})`
+              : '',
+      })
+    }
+
+    if (errors.length > 0) {
+      toast('Some entries weren’t valid YouTube links and were skipped.', 'warning')
+    }
+    if (next.length === 0) {
+      if (errors.length === 0) toast('Those links are already queued.', 'info')
       return
     }
-    if (pendingYouTubeLinks.some((l) => l.url === url)) {
-      toast('That link is already queued.', 'info')
-      return
-    }
-    setPendingYouTubeLinks((prev) => [
-      ...prev,
-      { url, title: formYoutubeTitle.trim() },
-    ])
+
+    setPendingYouTubeLinks((prev) => [...prev, ...next])
     setFormYoutubeLink('')
     setFormYoutubeTitle('')
+    toast(
+      next.length === 1 ? 'YouTube link queued.' : `${next.length} YouTube links queued.`,
+      'success'
+    )
+  }
+
+  const queueBatchYouTubeLink = () => {
+    const raw = youtubeLink.trim()
+    if (!raw) return
+
+    const candidates = raw
+      .split(/[\n,]+/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+
+    const sharedTitle = youtubeTitle.trim()
+    const next: Array<{ url: string; title: string }> = []
+    const errors: string[] = []
+
+    for (const candidate of candidates) {
+      if (!isYouTubeUrl(candidate)) {
+        errors.push(candidate)
+        continue
+      }
+      if (
+        batchYouTubeQueue.some((l) => l.url === candidate) ||
+        next.some((l) => l.url === candidate)
+      ) {
+        continue
+      }
+      next.push({
+        url: candidate,
+        title:
+          candidates.length === 1
+            ? sharedTitle
+            : sharedTitle
+              ? `${sharedTitle} (${extractYouTubeId(candidate) || 'video'})`
+              : '',
+      })
+    }
+
+    if (errors.length > 0) {
+      toast('Some entries weren’t valid YouTube links and were skipped.', 'warning')
+    }
+    if (next.length === 0) {
+      if (errors.length === 0) toast('Those links are already queued.', 'info')
+      return
+    }
+
+    setBatchYouTubeQueue((prev) => [...prev, ...next])
+    setYoutubeLink('')
+    setYoutubeTitle('')
   }
 
   const handleCoverFileSelect = (file: File | null) => {
@@ -520,6 +606,7 @@ export default function AlbumManager() {
       setSelectedAlbum(null)
       setYoutubeLink('')
       setYoutubeTitle('')
+      setBatchYouTubeQueue([])
       loadAlbums()
       toast(`Successfully uploaded ${count} file${count === 1 ? '' : 's'} to ${selectedAlbum.title}!`, 'success')
     } catch (error: unknown) {
@@ -533,9 +620,24 @@ export default function AlbumManager() {
 
   const handleAddYouTubeLink = async () => {
     if (!selectedAlbum || !user) return
-    const url = youtubeLink.trim()
-    if (!isYouTubeUrl(url)) {
-      toast('Paste a valid YouTube link (watch, youtu.be, or Shorts). Use Unlisted for community viewing.', 'error')
+
+    // Include whatever is typed but not yet queued
+    let queue = [...batchYouTubeQueue]
+    const typed = youtubeLink.trim()
+    if (typed) {
+      const candidates = typed.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean)
+      for (const candidate of candidates) {
+        if (!isYouTubeUrl(candidate)) continue
+        if (queue.some((l) => l.url === candidate)) continue
+        queue.push({
+          url: candidate,
+          title: youtubeTitle.trim() && candidates.length === 1 ? youtubeTitle.trim() : '',
+        })
+      }
+    }
+
+    if (queue.length === 0) {
+      toast('Add at least one YouTube link to the queue first.', 'error')
       return
     }
 
@@ -547,15 +649,17 @@ export default function AlbumManager() {
         return
       }
 
-      await addYouTubeLinksToAlbum(
-        [{ url, title: youtubeTitle.trim() }],
-        selectedAlbum,
-        token
-      )
+      await addYouTubeLinksToAlbum(queue, selectedAlbum, token)
 
-      toast('YouTube video added — it will play embedded in the album.', 'success')
+      toast(
+        queue.length === 1
+          ? 'YouTube video added — it will play embedded in the album.'
+          : `${queue.length} YouTube videos added — they play embedded in the album.`,
+        'success'
+      )
       setYoutubeLink('')
       setYoutubeTitle('')
+      setBatchYouTubeQueue([])
       setShowBatchUpload(false)
       setSelectedAlbum(null)
       loadAlbums()
@@ -768,18 +872,18 @@ export default function AlbumManager() {
                     </p>
                   </div>
                 </div>
-                <input
-                  type="url"
+                <textarea
                   value={formYoutubeLink}
                   onChange={(e) => setFormYoutubeLink(e.target.value)}
-                  placeholder="https://youtube.com/watch?v=… or youtu.be/…"
+                  placeholder={"https://youtube.com/watch?v=…\n(one link per line, or paste several)"}
+                  rows={3}
                   className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy font-space-whale-body focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
                 />
                 <input
                   type="text"
                   value={formYoutubeTitle}
                   onChange={(e) => setFormYoutubeTitle(e.target.value)}
-                  placeholder="Title (optional) — e.g. Mairead — Pride Poetry 2025"
+                  placeholder="Title (optional) — used when queuing a single link"
                   className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy font-space-whale-body focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
                 />
                 <button
@@ -788,7 +892,7 @@ export default function AlbumManager() {
                   disabled={!formYoutubeLink.trim()}
                   className="w-full px-3 py-2 border border-space-whale-purple/40 text-space-whale-purple rounded-lg hover:bg-space-whale-purple/10 font-space-whale-accent text-sm disabled:opacity-50"
                 >
-                  Queue YouTube video
+                  Add to queue
                 </button>
                 {pendingYouTubeLinks.length > 0 && (
                   <ul className="space-y-2">
@@ -1023,6 +1127,7 @@ export default function AlbumManager() {
                     setSelectedAlbum(null)
                     setYoutubeLink('')
                     setYoutubeTitle('')
+                    setBatchYouTubeQueue([])
                   }}
                   className="text-space-whale-purple hover:text-space-whale-navy transition-colors"
                 >
@@ -1037,18 +1142,18 @@ export default function AlbumManager() {
                     <Link2 className="h-5 w-5 text-space-whale-purple mt-0.5 shrink-0" />
                     <div>
                       <h3 className="font-space-whale-accent text-space-whale-navy">
-                        Add YouTube link (readings)
+                        Add YouTube links (readings)
                       </h3>
                       <p className="text-xs text-space-whale-navy/60 font-space-whale-body mt-1">
-                        Upload to YouTube as <strong>Unlisted</strong>, then paste the link. Plays embedded here — members stay on Space Whale.
+                        Queue as many Unlisted links as you need, then add them all at once. They play embedded on Space Whale.
                       </p>
                     </div>
                   </div>
-                  <input
-                    type="url"
+                  <textarea
                     value={youtubeLink}
                     onChange={(e) => setYoutubeLink(e.target.value)}
-                    placeholder="https://youtube.com/watch?v=… or youtu.be/…"
+                    placeholder={"https://youtube.com/watch?v=…\n(one per line — paste several at once)"}
+                    rows={3}
                     className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy font-space-whale-body focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
                     disabled={addingYoutube || uploadingFiles}
                   />
@@ -1056,18 +1161,61 @@ export default function AlbumManager() {
                     type="text"
                     value={youtubeTitle}
                     onChange={(e) => setYoutubeTitle(e.target.value)}
-                    placeholder="Title (optional) — e.g. Brooke — Pride Poetry 2022"
+                    placeholder="Title (optional) — for a single link"
                     className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy font-space-whale-body focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
                     disabled={addingYoutube || uploadingFiles}
                   />
-                  <button
-                    type="button"
-                    onClick={handleAddYouTubeLink}
-                    disabled={addingYoutube || uploadingFiles || !youtubeLink.trim()}
-                    className="w-full px-4 py-2.5 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg font-space-whale-accent disabled:opacity-50"
-                  >
-                    {addingYoutube ? 'Adding…' : 'Add embedded YouTube video'}
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      type="button"
+                      onClick={queueBatchYouTubeLink}
+                      disabled={addingYoutube || uploadingFiles || !youtubeLink.trim()}
+                      className="flex-1 px-4 py-2.5 border border-space-whale-purple/40 text-space-whale-purple rounded-lg hover:bg-space-whale-purple/10 font-space-whale-accent disabled:opacity-50"
+                    >
+                      Add to queue
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleAddYouTubeLink}
+                      disabled={
+                        addingYoutube ||
+                        uploadingFiles ||
+                        (batchYouTubeQueue.length === 0 && !youtubeLink.trim())
+                      }
+                      className="flex-1 px-4 py-2.5 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg font-space-whale-accent disabled:opacity-50"
+                    >
+                      {addingYoutube
+                        ? 'Adding…'
+                        : batchYouTubeQueue.length > 0
+                          ? `Add ${batchYouTubeQueue.length} video${batchYouTubeQueue.length === 1 ? '' : 's'} to album`
+                          : 'Add to album'}
+                    </button>
+                  </div>
+                  {batchYouTubeQueue.length > 0 && (
+                    <ul className="space-y-2">
+                      {batchYouTubeQueue.map((link, index) => (
+                        <li
+                          key={`${link.url}-${index}`}
+                          className="flex items-center justify-between px-3 py-2 bg-white/80 rounded-lg text-sm font-space-whale-body text-space-whale-navy"
+                        >
+                          <span className="truncate mr-2">
+                            ▶️ {link.title || link.url}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setBatchYouTubeQueue((prev) => prev.filter((_, i) => i !== index))
+                            }
+                            className="text-space-whale-navy/50 hover:text-red-600 shrink-0"
+                            aria-label="Remove from queue"
+                            disabled={addingYoutube}
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
 
                 <div className="relative flex items-center gap-3 text-xs text-space-whale-navy/50 font-space-whale-body">
