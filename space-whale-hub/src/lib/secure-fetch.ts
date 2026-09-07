@@ -2,14 +2,17 @@
  * Authenticated fetch for secure API routes.
  * Attaches the Supabase access token from the current session.
  */
-import { resolveAccessToken } from '@/lib/auth-session'
+import { isAccessTokenUsable, resolveAccessToken } from '@/lib/auth-session'
 
 export async function secureFetch(
   input: RequestInfo | URL,
   init: RequestInit = {},
   accessTokenOverride?: string | null
 ): Promise<Response> {
-  const accessToken = accessTokenOverride ?? await resolveAccessToken()
+  // Never send an expired override — refresh instead
+  const accessToken = isAccessTokenUsable(accessTokenOverride)
+    ? accessTokenOverride
+    : await resolveAccessToken()
 
   if (!accessToken) {
     return new Response(

@@ -12,7 +12,7 @@ export function getCachedAccessToken(): string | null {
   return cachedAccessToken
 }
 
-function isTokenExpired(token: string, bufferSeconds = 30): boolean {
+export function isAccessTokenExpired(token: string, bufferSeconds = 30): boolean {
   try {
     const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
     if (!payload.exp) return false
@@ -22,24 +22,29 @@ function isTokenExpired(token: string, bufferSeconds = 30): boolean {
   }
 }
 
+/** True when token exists and is not near expiry. */
+export function isAccessTokenUsable(token: string | null | undefined): token is string {
+  return !!token && !isAccessTokenExpired(token)
+}
+
 /** Resolve a usable access token: getSession → memory cache → refreshSession. */
 export async function resolveAccessToken(): Promise<string | null> {
   const { supabase } = await import('@/lib/supabase')
 
   const { data: { session } } = await supabase.auth.getSession()
-  if (session?.access_token && !isTokenExpired(session.access_token)) {
-    cachedAccessToken = session.access_token
-    return session.access_token
+  if (isAccessTokenUsable(session?.access_token)) {
+    cachedAccessToken = session!.access_token
+    return session!.access_token
   }
 
-  if (cachedAccessToken && !isTokenExpired(cachedAccessToken)) {
+  if (isAccessTokenUsable(cachedAccessToken)) {
     return cachedAccessToken
   }
 
   const { data: { session: refreshed }, error } = await supabase.auth.refreshSession()
-  if (!error && refreshed?.access_token) {
-    cachedAccessToken = refreshed.access_token
-    return refreshed.access_token
+  if (!error && isAccessTokenUsable(refreshed?.access_token)) {
+    cachedAccessToken = refreshed!.access_token
+    return refreshed!.access_token
   }
 
   cachedAccessToken = null

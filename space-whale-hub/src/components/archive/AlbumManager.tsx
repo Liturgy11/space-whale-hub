@@ -29,7 +29,7 @@ interface Album {
 }
 
 export default function AlbumManager() {
-  const { user, session } = useAuth()
+  const { user } = useAuth()
   const [albums, setAlbums] = useState<Album[]>([])
   const [loading, setLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
@@ -96,11 +96,11 @@ export default function AlbumManager() {
     files: File[] | FileList,
     album: Album,
     onProgress?: (current: number, total: number) => void,
-    accessToken?: string | null
+    _accessToken?: string | null
   ): Promise<number> => {
     if (!user) return 0
 
-    const token = accessToken ?? session?.access_token ?? await resolveAccessToken()
+    const token = await resolveAccessToken()
     if (!token) throw new Error('Missing access token')
 
     const fileArray = Array.from(files)
@@ -164,15 +164,17 @@ export default function AlbumManager() {
   const addYouTubeLinksToAlbum = async (
     links: Array<{ url: string; title: string }>,
     album: Album,
-    accessToken?: string | null
+    _accessToken?: string | null
   ): Promise<number> => {
     if (!user || links.length === 0) return 0
-    const token = accessToken ?? session?.access_token ?? await resolveAccessToken()
+    const token = await resolveAccessToken()
     if (!token) throw new Error('Missing access token')
 
     for (let i = 0; i < links.length; i++) {
       const link = links[i]
       setSubmitStatus(`Adding YouTube video (${i + 1}/${links.length})…`)
+      // Refresh token between items so long queues don't fail mid-way
+      const freshToken = (await resolveAccessToken()) || token
       const videoId = extractYouTubeId(link.url)
       const title = link.title.trim() || `YouTube reading (${videoId || 'video'})`
 
@@ -188,7 +190,7 @@ export default function AlbumManager() {
           tags: [album.title.toLowerCase().replace(/\s+/g, '-'), 'youtube'],
           user_id: user.id,
         }),
-      }, token)
+      }, freshToken)
       const itemResult = await parseSecureResponse<{ success: boolean; data: { id: string }; error?: string }>(itemResponse)
       if (!itemResult.success) {
         throw new Error(itemResult.error || 'Failed to create video item')
@@ -202,7 +204,7 @@ export default function AlbumManager() {
           item_id: itemResult.data.id,
           added_by: user.id,
         }),
-      }, token)
+      }, freshToken)
       const albumResult = await parseSecureResponse<{ success: boolean; error?: string }>(albumResponse)
       if (!albumResult.success) {
         throw new Error(albumResult.error || 'Failed to add video to album')
@@ -394,7 +396,7 @@ export default function AlbumManager() {
     setIsSubmitting(true)
     setSubmitStatus(null)
     try {
-      const accessToken = session?.access_token ?? await resolveAccessToken()
+      const accessToken = await resolveAccessToken()
       if (!accessToken) {
         toast('Could not verify your session. Please refresh the page or sign in again.', 'error')
         return
@@ -497,7 +499,7 @@ export default function AlbumManager() {
     setIsSubmitting(true)
     setSubmitStatus(null)
     try {
-      const accessToken = session?.access_token ?? await resolveAccessToken()
+      const accessToken = await resolveAccessToken()
       if (!accessToken) {
         toast('Could not verify your session. Please refresh the page or sign in again.', 'error')
         return
@@ -596,7 +598,7 @@ export default function AlbumManager() {
 
     setUploadingFiles(true)
     try {
-      const accessToken = session?.access_token ?? await resolveAccessToken()
+      const accessToken = await resolveAccessToken()
       if (!accessToken) {
         toast('Could not verify your session. Please refresh the page or sign in again.', 'error')
         return
@@ -643,7 +645,7 @@ export default function AlbumManager() {
 
     setAddingYoutube(true)
     try {
-      const token = session?.access_token ?? await resolveAccessToken()
+      const token = await resolveAccessToken()
       if (!token) {
         toast('Could not verify your session. Please refresh or sign in again.', 'error')
         return
@@ -665,7 +667,19 @@ export default function AlbumManager() {
       loadAlbums()
     } catch (error: unknown) {
       console.error('Error adding YouTube link:', error)
-      toast(error instanceof Error ? error.message : 'Failed to add YouTube link', 'error')
+      const message = error instanceof Error ? error.message : 'Failed to add YouTube link'
+      if (
+        message.toLowerCase().includes('authorization') ||
+        message.toLowerCase().includes('unauthorized') ||
+        message.toLowerCase().includes('unauthorised') ||
+        message.toLowerCase().includes('invalid or expired token') ||
+        message.toLowerCase().includes('missing or invalid authorization') ||
+        message.toLowerCase().includes('missing access token')
+      ) {
+        toast('Could not verify your session. Please refresh the page or sign out and back in.', 'error')
+      } else {
+        toast(message, 'error')
+      }
     } finally {
       setAddingYoutube(false)
     }
