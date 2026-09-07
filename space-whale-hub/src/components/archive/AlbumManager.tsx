@@ -43,6 +43,9 @@ export default function AlbumManager() {
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [showCoverUrlFallback, setShowCoverUrlFallback] = useState(false)
   const [pendingGalleryFiles, setPendingGalleryFiles] = useState<File[]>([])
+  const [pendingYouTubeLinks, setPendingYouTubeLinks] = useState<Array<{ url: string; title: string }>>([])
+  const [formYoutubeLink, setFormYoutubeLink] = useState('')
+  const [formYoutubeTitle, setFormYoutubeTitle] = useState('')
   const [youtubeLink, setYoutubeLink] = useState('')
   const [youtubeTitle, setYoutubeTitle] = useState('')
   const [addingYoutube, setAddingYoutube] = useState(false)
@@ -65,6 +68,9 @@ export default function AlbumManager() {
     setCoverPreview(null)
     setShowCoverUrlFallback(false)
     setPendingGalleryFiles([])
+    setPendingYouTubeLinks([])
+    setFormYoutubeLink('')
+    setFormYoutubeTitle('')
     setNewAlbum({
       title: '',
       description: '',
@@ -152,6 +158,75 @@ export default function AlbumManager() {
     }
 
     return fileArray.length
+  }
+
+  const addYouTubeLinksToAlbum = async (
+    links: Array<{ url: string; title: string }>,
+    album: Album,
+    accessToken?: string | null
+  ): Promise<number> => {
+    if (!user || links.length === 0) return 0
+    const token = accessToken ?? session?.access_token ?? await resolveAccessToken()
+    if (!token) throw new Error('Missing access token')
+
+    for (let i = 0; i < links.length; i++) {
+      const link = links[i]
+      setSubmitStatus(`Adding YouTube video (${i + 1}/${links.length})…`)
+      const videoId = extractYouTubeId(link.url)
+      const title = link.title.trim() || `YouTube reading (${videoId || 'video'})`
+
+      const itemResponse = await secureFetch('/api/create-constellation-item-secure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description: '',
+          content_type: 'video',
+          media_url: link.url.trim(),
+          artist_name: '',
+          tags: [album.title.toLowerCase().replace(/\s+/g, '-'), 'youtube'],
+          user_id: user.id,
+        }),
+      }, token)
+      const itemResult = await parseSecureResponse<{ success: boolean; data: { id: string }; error?: string }>(itemResponse)
+      if (!itemResult.success) {
+        throw new Error(itemResult.error || 'Failed to create video item')
+      }
+
+      const albumResponse = await secureFetch('/api/manage-album-items-secure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          album_id: album.id,
+          item_id: itemResult.data.id,
+          added_by: user.id,
+        }),
+      }, token)
+      const albumResult = await parseSecureResponse<{ success: boolean; error?: string }>(albumResponse)
+      if (!albumResult.success) {
+        throw new Error(albumResult.error || 'Failed to add video to album')
+      }
+    }
+
+    return links.length
+  }
+
+  const queueFormYouTubeLink = () => {
+    const url = formYoutubeLink.trim()
+    if (!isYouTubeUrl(url)) {
+      toast('Paste a valid YouTube link (Unlisted recommended).', 'error')
+      return
+    }
+    if (pendingYouTubeLinks.some((l) => l.url === url)) {
+      toast('That link is already queued.', 'info')
+      return
+    }
+    setPendingYouTubeLinks((prev) => [
+      ...prev,
+      { url, title: formYoutubeTitle.trim() },
+    ])
+    setFormYoutubeLink('')
+    setFormYoutubeTitle('')
   }
 
   const handleCoverFileSelect = (file: File | null) => {
@@ -262,17 +337,28 @@ export default function AlbumManager() {
       }
 
       const createdAlbum: Album = { ...result.data, item_count: 0 }
+      let fileCount = 0
+      let ytCount = 0
 
       if (pendingGalleryFiles.length > 0) {
-        const count = await uploadFilesToAlbum(
+        fileCount = await uploadFilesToAlbum(
           pendingGalleryFiles,
           createdAlbum,
-          (current, total) => setSubmitStatus(`Uploading photos (${current}/${total})…`),
+          (current, total) => setSubmitStatus(`Uploading files (${current}/${total})…`),
           accessToken
         )
-        toast(`Album created with ${count} photo${count === 1 ? '' : 's'}!`, 'success')
+      }
+      if (pendingYouTubeLinks.length > 0) {
+        ytCount = await addYouTubeLinksToAlbum(pendingYouTubeLinks, createdAlbum, accessToken)
+      }
+
+      if (fileCount + ytCount > 0) {
+        toast(
+          `Album created with ${fileCount + ytCount} item${fileCount + ytCount === 1 ? '' : 's'}!`,
+          'success'
+        )
       } else {
-        toast('Album created! Add photos below.', 'success')
+        toast('Album created! Add photos or a YouTube link below.', 'success')
         setSelectedAlbum(createdAlbum)
         setShowBatchUpload(true)
       }
@@ -354,15 +440,23 @@ export default function AlbumManager() {
       }
 
       const updatedAlbum: Album = { ...editingAlbum, ...newAlbum, cover_image_url: coverImageUrl || undefined }
+      let fileCount = 0
+      let ytCount = 0
 
       if (pendingGalleryFiles.length > 0) {
-        const count = await uploadFilesToAlbum(
+        fileCount = await uploadFilesToAlbum(
           pendingGalleryFiles,
           updatedAlbum,
-          (current, total) => setSubmitStatus(`Uploading photos (${current}/${total})…`),
+          (current, total) => setSubmitStatus(`Uploading files (${current}/${total})…`),
           accessToken
         )
-        toast(`Album updated with ${count} new photo${count === 1 ? '' : 's'}!`, 'success')
+      }
+      if (pendingYouTubeLinks.length > 0) {
+        ytCount = await addYouTubeLinksToAlbum(pendingYouTubeLinks, updatedAlbum, accessToken)
+      }
+
+      if (fileCount + ytCount > 0) {
+        toast(`Album updated with ${fileCount + ytCount} new item${fileCount + ytCount === 1 ? '' : 's'}!`, 'success')
       } else {
         toast('Album updated!', 'success')
       }
@@ -453,42 +547,11 @@ export default function AlbumManager() {
         return
       }
 
-      const videoId = extractYouTubeId(url)
-      const title =
-        youtubeTitle.trim() ||
-        `YouTube reading (${videoId || 'video'})`
-
-      const itemResponse = await secureFetch('/api/create-constellation-item-secure', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          description: '',
-          content_type: 'video',
-          media_url: url,
-          artist_name: '',
-          tags: [selectedAlbum.title.toLowerCase().replace(/\s+/g, '-'), 'youtube'],
-          user_id: user.id,
-        }),
-      }, token)
-      const itemResult = await parseSecureResponse<{ success: boolean; data: { id: string }; error?: string }>(itemResponse)
-      if (!itemResult.success) {
-        throw new Error(itemResult.error || 'Failed to create video item')
-      }
-
-      const albumResponse = await secureFetch('/api/manage-album-items-secure', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          album_id: selectedAlbum.id,
-          item_id: itemResult.data.id,
-          added_by: user.id,
-        }),
-      }, token)
-      const albumResult = await parseSecureResponse<{ success: boolean; error?: string }>(albumResponse)
-      if (!albumResult.success) {
-        throw new Error(albumResult.error || 'Failed to add video to album')
-      }
+      await addYouTubeLinksToAlbum(
+        [{ url, title: youtubeTitle.trim() }],
+        selectedAlbum,
+        token
+      )
 
       toast('YouTube video added — it will play embedded in the album.', 'success')
       setYoutubeLink('')
@@ -690,15 +753,76 @@ export default function AlbumManager() {
                 Album media
               </label>
               <p className="text-xs text-space-whale-navy/60 font-space-whale-body mb-3">
-                Photos, videos (MP4 / MOV), or audio. Videos up to ~{formatBytes(VIDEO_SOURCE_MAX)} are auto-compressed for 2–3 min readings.
+                Photos as files · full readings as YouTube Unlisted links (play embedded in the album).
               </p>
+
+              <div className="rounded-xl border border-space-whale-lavender/30 bg-space-whale-lavender/10 p-4 space-y-3 mb-4">
+                <div className="flex items-start gap-2">
+                  <Link2 className="h-4 w-4 text-space-whale-purple mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-space-whale-accent text-space-whale-navy">
+                      YouTube link (readings)
+                    </p>
+                    <p className="text-xs text-space-whale-navy/60 font-space-whale-body mt-0.5">
+                      Paste an Unlisted YouTube URL — stays on Space Whale when played.
+                    </p>
+                  </div>
+                </div>
+                <input
+                  type="url"
+                  value={formYoutubeLink}
+                  onChange={(e) => setFormYoutubeLink(e.target.value)}
+                  placeholder="https://youtube.com/watch?v=… or youtu.be/…"
+                  className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy font-space-whale-body focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
+                />
+                <input
+                  type="text"
+                  value={formYoutubeTitle}
+                  onChange={(e) => setFormYoutubeTitle(e.target.value)}
+                  placeholder="Title (optional) — e.g. Mairead — Pride Poetry 2025"
+                  className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg bg-white text-space-whale-navy font-space-whale-body focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
+                />
+                <button
+                  type="button"
+                  onClick={queueFormYouTubeLink}
+                  disabled={!formYoutubeLink.trim()}
+                  className="w-full px-3 py-2 border border-space-whale-purple/40 text-space-whale-purple rounded-lg hover:bg-space-whale-purple/10 font-space-whale-accent text-sm disabled:opacity-50"
+                >
+                  Queue YouTube video
+                </button>
+                {pendingYouTubeLinks.length > 0 && (
+                  <ul className="space-y-2">
+                    {pendingYouTubeLinks.map((link, index) => (
+                      <li
+                        key={`${link.url}-${index}`}
+                        className="flex items-center justify-between px-3 py-2 bg-white/80 rounded-lg text-sm font-space-whale-body text-space-whale-navy"
+                      >
+                        <span className="truncate mr-2">
+                          ▶️ {link.title || link.url}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPendingYouTubeLinks((prev) => prev.filter((_, i) => i !== index))
+                          }
+                          className="text-space-whale-navy/50 hover:text-red-600 shrink-0"
+                          aria-label="Remove YouTube link"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
               <div
                 className="border-2 border-dashed border-space-whale-lavender/30 rounded-lg p-6 text-center hover:border-space-whale-purple/50 transition-colors cursor-pointer"
                 onClick={() => galleryInputRef.current?.click()}
               >
                 <Upload className="h-8 w-8 text-space-whale-purple/60 mx-auto mb-2" />
                 <p className="text-sm font-space-whale-body text-space-whale-navy">
-                  Click to select files
+                  Or click to select photo / short video files
                 </p>
                 <p className="text-xs text-space-whale-navy/60 font-space-whale-body mt-1">
                   Select multiple files at once
@@ -779,11 +903,11 @@ export default function AlbumManager() {
                   : isSubmitting
                   ? 'Saving…'
                   : editingAlbum
-                    ? pendingGalleryFiles.length > 0
-                      ? `Update & Add ${pendingGalleryFiles.length} Photo${pendingGalleryFiles.length === 1 ? '' : 's'}`
+                    ? pendingGalleryFiles.length + pendingYouTubeLinks.length > 0
+                      ? `Update & Add ${pendingGalleryFiles.length + pendingYouTubeLinks.length} item${pendingGalleryFiles.length + pendingYouTubeLinks.length === 1 ? '' : 's'}`
                       : 'Update Album'
-                    : pendingGalleryFiles.length > 0
-                      ? `Create & Add ${pendingGalleryFiles.length} Photo${pendingGalleryFiles.length === 1 ? '' : 's'}`
+                    : pendingGalleryFiles.length + pendingYouTubeLinks.length > 0
+                      ? `Create & Add ${pendingGalleryFiles.length + pendingYouTubeLinks.length} item${pendingGalleryFiles.length + pendingYouTubeLinks.length === 1 ? '' : 's'}`
                       : 'Create Album'}
               </button>
             </div>
