@@ -7,6 +7,8 @@ export const dynamic = 'force-dynamic'
 const POST_COLUMNS =
   'id, content, tags, content_warning_text, media_url, media_urls, media_type, created_at, user_id'
 
+const POST_COLUMNS_WITH_PIN = `${POST_COLUMNS}, pinned_at`
+
 async function fetchFeedViaRpc(
   supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
   userId: string | null,
@@ -26,11 +28,26 @@ async function fetchFeedLegacy(
   userId: string | null,
   limit: number
 ) {
-  const { data: posts, error } = await supabaseAdmin
+  const ordered = await supabaseAdmin
     .from('posts')
-    .select(POST_COLUMNS)
+    .select(POST_COLUMNS_WITH_PIN)
+    .order('pinned_at', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
     .limit(limit)
+
+  let posts = ordered.data
+  let error = ordered.error
+
+  // Feed still loads before the pin column has been added.
+  if (error && /pinned_at/i.test(error.message)) {
+    const fallback = await supabaseAdmin
+      .from('posts')
+      .select(POST_COLUMNS)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+    posts = fallback.data
+    error = fallback.error
+  }
 
   if (error) throw error
   if (!posts || posts.length === 0) return []
@@ -100,6 +117,7 @@ async function fetchFeedLegacy(
     media_urls: post.media_urls || (post.media_url ? [post.media_url] : []),
     media_type: post.media_type,
     created_at: post.created_at,
+    pinned: Boolean((post as { pinned_at?: string | null }).pinned_at),
     author: {
       id: post.user_id,
       display_name: profileMap.get(post.user_id)?.display_name || 'Space Whale',

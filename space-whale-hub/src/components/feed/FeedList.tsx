@@ -24,6 +24,7 @@ interface Post {
   media_urls?: string[]
   media_type?: string
   created_at: string
+  pinned?: boolean
   author: {
     id: string
     display_name: string
@@ -54,6 +55,10 @@ function readCache(): Post[] | null {
   } catch {
     return null
   }
+}
+
+function withPinnedFirst(posts: Post[]): Post[] {
+  return [...posts].sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned))
 }
 
 function writeCache(posts: Post[]) {
@@ -97,8 +102,9 @@ export default function FeedList({
 
         if (generation !== fetchGeneration.current) return
 
-        setPosts(json.data)
-        writeCache(json.data)
+        const next = withPinnedFirst(json.data)
+        setPosts(next)
+        writeCache(next)
       } catch (err: unknown) {
         if (generation !== fetchGeneration.current) return
         if (!silent && !posts.length) {
@@ -156,6 +162,33 @@ export default function FeedList({
     } catch (err: unknown) {
       console.error('Error toggling like:', err)
       setError('Failed to update like. Please try again.')
+    }
+  }
+
+  const handlePin = async (postId: string, pinned: boolean) => {
+    try {
+      const response = await secureFetch('/api/pin-post-secure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId, pinned }),
+      })
+      const result = await response.json()
+      if (!result.success) throw new Error(result.error || 'Failed to update pin')
+
+      setPosts((current) => {
+        const next = withPinnedFirst(
+          current.map((post) => ({
+            ...post,
+            pinned: post.id === postId ? pinned : pinned ? false : post.pinned,
+          }))
+        )
+        writeCache(next)
+        return next
+      })
+      toast(pinned ? 'Pinned to the top of Orbit' : 'Unpinned', 'success')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to update pin'
+      toast(message, 'error')
     }
   }
 
@@ -278,6 +311,7 @@ export default function FeedList({
               onComment={() => {}}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onPin={handlePin}
               onBookmark={() =>
                 toast('Post saved for later! (Bookmark functionality coming soon)', 'info')
               }

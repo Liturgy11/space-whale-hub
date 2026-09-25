@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Heart, MessageCircle, MoreHorizontal, Bookmark, Edit, Trash2, X, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react'
+import { Heart, MessageCircle, MoreHorizontal, Bookmark, Edit, Trash2, X, ChevronLeft, ChevronRight, AlertCircle, Pin } from 'lucide-react'
 import CommentForm from './CommentForm'
 import CommentsList from './CommentsList'
 import MediaCarousel from '@/components/media/MediaCarousel'
@@ -20,6 +20,7 @@ interface Post {
   media_urls?: string[]
   media_type?: string
   created_at: string
+  pinned?: boolean
   author: {
     id: string
     display_name: string
@@ -39,11 +40,12 @@ interface PostCardProps {
   onEdit?: (postId: string) => void
   onDelete?: (postId: string) => void
   onBookmark?: (postId: string) => void
+  onPin?: (postId: string, pinned: boolean) => void
   isDeleting?: boolean
   onCancelDelete?: () => void
 }
 
-export default function PostCard({ post, onLike, onComment, onEdit, onDelete, onBookmark, isDeleting = false, onCancelDelete }: PostCardProps) {
+export default function PostCard({ post, onLike, onComment, onEdit, onDelete, onBookmark, onPin, isDeleting = false, onCancelDelete }: PostCardProps) {
   const { user } = useAuth()
   const [showContent, setShowContent] = useState(!post.content_warning)
   const [showOptions, setShowOptions] = useState(false)
@@ -71,6 +73,8 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
   }
 
   const isAuthor = user?.id === post.author.id
+  const isAdmin = user?.email === 'lizwamc@gmail.com'
+  const showPostMenu = isAuthor || isAdmin
 
   // Lightbox functions for mood board
   const openImageLightbox = (imageUrl: string, allImages: string[], index: number) => {
@@ -160,6 +164,9 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
               )}
             </div>
             <p className="text-xs sm:text-sm font-space-whale-body text-space-whale-purple">
+              {post.pinned && (
+                <span className="font-space-whale-accent text-space-whale-navy">Pinned · </span>
+              )}
               {post.author.pronouns && `${post.author.pronouns} • `}
               {post.author.country && `${post.author.country} Country • `}
               {formatDate(post.created_at)}
@@ -168,7 +175,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
         </div>
 
         <div className="flex items-center space-x-1 sm:space-x-2">
-          {isAuthor && (
+          {showPostMenu && (
             <div className="relative">
               <button
                 onClick={() => setShowOptions(!showOptions)}
@@ -188,6 +195,20 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
                     aria-hidden="true"
                   />
                   <div className="absolute right-0 top-8 bg-white dark:bg-gray-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1 z-10 min-w-[120px]">
+                    {isAdmin && (
+                      <button
+                        onClick={() => {
+                          onPin?.(post.id, !post.pinned)
+                          setShowOptions(false)
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                        aria-label={post.pinned ? 'Unpin post' : 'Pin post to top'}
+                      >
+                        <Pin className="h-4 w-4 mr-2" />
+                        {post.pinned ? 'Unpin' : 'Pin to top'}
+                      </button>
+                    )}
+                    {isAuthor && (
                     <button
                       onClick={() => {
                         onEdit?.(post.id)
@@ -237,6 +258,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete
                       </button>
+                    )}
                     )}
                   </div>
                 </>

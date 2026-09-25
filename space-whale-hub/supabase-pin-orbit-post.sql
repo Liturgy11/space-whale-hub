@@ -1,6 +1,13 @@
--- Run once in Supabase SQL Editor for faster Community Orbit loads (single DB round trip).
--- Safe to re-run: replaces the function if it already exists.
--- Requires public.posts.pinned_at (see supabase-pin-orbit-post.sql).
+-- Run once in the Supabase SQL Editor.
+-- Adds a single admin pin for Community Orbit, then updates the feed query
+-- so that post stays at the top. Safe to re-run.
+
+ALTER TABLE public.posts
+  ADD COLUMN IF NOT EXISTS pinned_at timestamptz;
+
+CREATE INDEX IF NOT EXISTS posts_pinned_at_idx
+  ON public.posts (pinned_at DESC)
+  WHERE pinned_at IS NOT NULL;
 
 CREATE OR REPLACE FUNCTION public.get_community_feed(
   p_user_id uuid DEFAULT NULL,
