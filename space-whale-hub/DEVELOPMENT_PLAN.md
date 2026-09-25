@@ -371,6 +371,22 @@ All changes committed and pushed to `main` (deploys via Vercel).
 
 ---
 
+## Soft launch — Pride Poetry, 28 Nov 2026
+
+People from the night should be able to join on a phone, find the readings, and not land in something that feels unfinished.
+
+- [ ] **Invite for the night** — signup currently skips the invite code (check is commented out in `SignUpForm`). Turn it back on, mint one event code, and put it on a slide or card as a QR.
+- [ ] **Pride Poetry album as the front door** — Unlisted YouTube readings with real titles, a cover, and a few photos. Nov 28 clips can be added after the night.
+- [ ] **Point newcomers at Constellation** — welcome already covers slow space, private journal, and guidelines. Add a line that the Pride Poetry readings live in Constellation. Phone tab says Archive; home says Constellation — line those names up.
+- [ ] **Soften Deep Space** — workshop cards still say date TBD and pricing TBD. List only what is actually happening, or mark them clearly as expressions of interest.
+- [ ] **Leave a light on in Orbit** — one post from Lit about how this space relates to Pride Poetry. Hide the bookmark control that still says “coming soon.”
+- [ ] **Phone rehearsal the week before** — new account, on mobile data, through the code, into the album, play one reading.
+- [ ] **Mycelial Network — spore stays planted** — placing a spore then swiping was panning the icon across a fixed forest. Forest now moves with the spores, and a finger swipe scrolls the page instead of dragging the icon.
+
+Leave until after 28 Nov: Mycelial polish beyond the plant-in-place bug, member video uploads, extra gallery polish.
+
+---
+
 ## Next Priority Features 🎯
 
 ### Immediate Next Steps (High Priority)

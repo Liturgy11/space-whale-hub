@@ -503,6 +503,20 @@ body {
 }
 
 /* Respect reduced motion — trauma-informed, neuroaffirming */
+/* Forest artwork lives on the React Flow viewport so spores stay planted when the view moves. */
+.mycelial-forest .react-flow__viewport {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.45)),
+    url('/forest-background.png');
+  background-size: cover, cover;
+  background-position: center, center;
+  background-repeat: no-repeat;
+}
+
+.mycelial-forest .react-flow__background {
+  background: transparent !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html:focus-within {
     scroll-behavior: auto;

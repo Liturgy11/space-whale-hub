@@ -286,6 +286,7 @@ export default function MycelialNetwork({ currentUserId, onEditSpore, onCurrentS
       )}
 
       <ReactFlow
+        className="mycelial-forest"
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -297,6 +298,14 @@ export default function MycelialNetwork({ currentUserId, onEditSpore, onCurrentS
         minZoom={0.3}
         maxZoom={2}
         nodesDraggable={false}
+        nodesConnectable={false}
+        elementsSelectable={false}
+        panOnDrag={false}
+        panOnScroll={false}
+        zoomOnScroll={false}
+        zoomOnPinch={false}
+        zoomOnDoubleClick={false}
+        preventScrolling={false}
         proOptions={{ hideAttribution: true }}
       >
         <Background
