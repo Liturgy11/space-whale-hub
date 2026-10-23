@@ -113,7 +113,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       if (silent) setRefreshing(true)
       else setLoading(true)
       
-      const response = await fetch('/api/get-journal-entries', {
+      const response = await secureFetch('/api/get-journal-entries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id })

@@ -227,7 +227,7 @@ export default function PostForm({ onPostCreated, onCancel }: PostFormProps) {
 
     try {
       try {
-        await fetch('/api/create-profile', {
+        await secureFetch('/api/create-profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

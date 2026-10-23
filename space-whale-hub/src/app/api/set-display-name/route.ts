@@ -1,49 +1,54 @@
-import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { NextRequest, NextResponse } from 'next/server'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { verifyAuthUser } from '@/lib/auth-server'
 
-export async function POST(request: Request) {
+export const dynamic = 'force-dynamic'
+
+export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
+
     const { displayName } = await request.json()
-    
-    if (!displayName) {
-      return NextResponse.json({
-        success: false,
-        error: 'Display name is required'
-      }, { status: 400 })
+
+    if (!displayName || typeof displayName !== 'string' || !displayName.trim()) {
+      return NextResponse.json(
+        { success: false, error: 'Display name is required' },
+        { status: 400 }
+      )
     }
 
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      return NextResponse.json({
-        success: false,
-        error: 'Not authenticated'
-      }, { status: 401 })
-    }
+    const trimmed = displayName.trim().slice(0, 80)
+    const supabaseAdmin = getSupabaseAdmin()
 
-    // Update user metadata
-    const { error: updateError } = await supabase.auth.updateUser({
-      data: {
-        display_name: displayName
-      }
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(auth.userId, {
+      user_metadata: {
+        ...auth.user.user_metadata,
+        display_name: trimmed,
+      },
     })
 
-    if (updateError) {
-      return NextResponse.json({
-        success: false,
-        error: updateError.message
-      }, { status: 500 })
+    if (authError) {
+      return NextResponse.json({ success: false, error: authError.message }, { status: 500 })
     }
+
+    await supabaseAdmin
+      .from('profiles')
+      .upsert(
+        {
+          id: auth.userId,
+          display_name: trimmed,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      )
 
     return NextResponse.json({
       success: true,
-      message: 'Display name updated successfully'
+      message: 'Display name updated successfully',
     })
-  } catch (err: any) {
-    return NextResponse.json({
-      success: false,
-      error: err.message
-    }, { status: 500 })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
   }
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/ui/Toast'
+import { secureFetch } from '@/lib/secure-fetch'
 import { SpaceIllustration } from '@/components/ui/EmptyState'
 import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
 import { X, Sparkles, Save } from 'lucide-react'
@@ -156,7 +157,7 @@ export default function SporeForm({ existingSpore, onSaved, onCancel }: SporeFor
     setError('')
 
     try {
-      const res = await fetch('/api/upsert-spore', {
+      const res = await secureFetch('/api/upsert-spore', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

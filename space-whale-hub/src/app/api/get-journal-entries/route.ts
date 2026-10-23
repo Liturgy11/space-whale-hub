@@ -1,61 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { assertMatchingUserId, verifyAuthUser } from '@/lib/auth-server'
 
-// Force dynamic rendering - don't evaluate at build time
 export const dynamic = 'force-dynamic'
-
-function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    const missing = []
-    if (!supabaseUrl) missing.push('NEXT_PUBLIC_SUPABASE_URL')
-    if (!supabaseServiceKey) missing.push('SUPABASE_SERVICE_ROLE_KEY')
-    throw new Error(`Missing Supabase environment variables: ${missing.join(', ')}. Please set them in your deployment environment variables (Vercel, etc.) or .env.local file.`)
-  }
-
-  return createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  })
-}
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
+
     const { userId, mood, limit } = await request.json()
-    
-    if (!userId) {
-      return NextResponse.json({
-        success: false,
-        error: 'User ID is required'
-      }, { status: 400 })
-    }
 
-    // Check environment variables before creating client
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const mismatch = assertMatchingUserId(auth.userId, userId)
+    if (mismatch) return mismatch
 
-    if (!supabaseUrl || !supabaseServiceKey) {
-      const missing = []
-      if (!supabaseUrl) missing.push('NEXT_PUBLIC_SUPABASE_URL')
-      if (!supabaseServiceKey) missing.push('SUPABASE_SERVICE_ROLE_KEY')
-      return NextResponse.json({
-        success: false,
-        error: `Server configuration error: Missing Supabase environment variables: ${missing.join(', ')}. Please set them in your deployment environment variables.`
-      }, { status: 500 })
-    }
-
-    // Create a Supabase client with service role (bypasses RLS)
     const supabaseAdmin = getSupabaseAdmin()
 
-    // Build query
     let query = supabaseAdmin
       .from('journal_entries')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', auth.userId)
       .order('created_at', { ascending: false })
 
     if (mood) {
@@ -67,39 +31,35 @@ export async function POST(request: NextRequest) {
     }
 
     const { data, error } = await query
-    
+
     if (error) {
       console.error('Database error:', error)
-      return NextResponse.json({
-        success: false,
-        error: error.message
-      }, { status: 500 })
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 })
     }
 
-    // Fire-and-forget access logging — don't await so it doesn't block the response
     if (data && data.length > 0) {
-      const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null
+      const ipAddress =
+        request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null
       const userAgent = request.headers.get('user-agent') || null
-      data.forEach((entry: any) => {
-        Promise.resolve(supabaseAdmin.rpc('log_journal_access', {
-          p_entry_id: entry.id,
-          p_user_id: userId,
-          p_action: 'view',
-          p_ip_address: ipAddress,
-          p_user_agent: userAgent
-        })).catch((err: any) => console.error(`Failed to log access for entry ${entry.id}:`, err))
+      data.forEach((entry: { id: string }) => {
+        Promise.resolve(
+          supabaseAdmin.rpc('log_journal_access', {
+            p_entry_id: entry.id,
+            p_user_id: auth.userId,
+            p_action: 'view',
+            p_ip_address: ipAddress,
+            p_user_agent: userAgent,
+          })
+        ).catch((err: unknown) =>
+          console.error(`Failed to log access for entry ${entry.id}:`, err)
+        )
       })
     }
 
-    return NextResponse.json({
-      success: true,
-      entries: data || []
-    })
-  } catch (err: any) {
+    return NextResponse.json({ success: true, entries: data || [] })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('API error:', err)
-    return NextResponse.json({
-      success: false,
-      error: err.message
-    }, { status: 500 })
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
   }
 }

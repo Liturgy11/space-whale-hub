@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Plus, Copy, Trash2, Calendar, Users, Key, CheckCircle, XCircle } from 'lucide-react'
+import { secureFetch } from '@/lib/secure-fetch'
 
 interface InviteCode {
   id: string
@@ -32,11 +33,11 @@ export default function InviteCodeManager() {
 
   const fetchInviteCodes = async () => {
     try {
-      const response = await fetch('/api/invite-codes')
+      const response = await secureFetch('/api/invite-codes')
       const data = await response.json()
       
-      if (data.error) {
-        setError(data.error)
+      if (!response.ok || data.error) {
+        setError(data.error || 'Failed to fetch invite codes')
       } else {
         setInviteCodes(data.inviteCodes)
       }
@@ -51,7 +52,7 @@ export default function InviteCodeManager() {
     e.preventDefault()
     
     try {
-      const response = await fetch('/api/invite-codes', {
+      const response = await secureFetch('/api/invite-codes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -65,8 +66,8 @@ export default function InviteCodeManager() {
 
       const data = await response.json()
       
-      if (data.error) {
-        setError(data.error)
+      if (!response.ok || data.error) {
+        setError(data.error || 'Failed to create invite code')
       } else {
         setInviteCodes([data.inviteCode, ...inviteCodes])
         setNewCode('')

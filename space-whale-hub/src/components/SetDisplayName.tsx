@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/ui/Toast'
+import { secureFetch } from '@/lib/secure-fetch'
 
 export default function SetDisplayName() {
   const { user } = useAuth()
@@ -16,7 +17,7 @@ export default function SetDisplayName() {
     setSuccess(false)
 
     try {
-      const response = await fetch('/api/set-display-name', {
+      const response = await secureFetch('/api/set-display-name', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,58 +1,47 @@
-import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { NextRequest, NextResponse } from 'next/server'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { assertMatchingUserId, verifyAuthUser } from '@/lib/auth-server'
 
-export async function POST(request: Request) {
+export const dynamic = 'force-dynamic'
+
+export async function POST(request: NextRequest) {
   try {
-    const { userId, displayName, emailOptIn } = await request.json()
-    
-    if (!userId) {
-      return NextResponse.json({
-        success: false,
-        error: 'User ID is required'
-      }, { status: 400 })
-    }
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
 
-    // Create a profile for the user
-    const { data, error } = await supabase
+    const { userId, displayName, emailOptIn } = await request.json()
+
+    const mismatch = assertMatchingUserId(auth.userId, userId)
+    if (mismatch) return mismatch
+
+    const supabaseAdmin = getSupabaseAdmin()
+    const { data, error } = await supabaseAdmin
       .from('profiles')
       .insert({
-        id: userId,
-        display_name: displayName || 'Lit',
+        id: auth.userId,
+        display_name: displayName || 'Space Whale',
         pronouns: null,
         avatar_url: null,
         is_public: true,
         email_opt_in: emailOptIn ?? false,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .select()
       .single()
-    
+
     if (error) {
-      // If profile already exists, that's okay
       if (error.code === '23505') {
-        return NextResponse.json({
-          success: true,
-          message: 'Profile already exists'
-        })
+        return NextResponse.json({ success: true, message: 'Profile already exists' })
       }
-      
       console.error('Profile creation error:', error)
-      return NextResponse.json({
-        success: false,
-        error: error.message
-      }, { status: 500 })
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({
-      success: true,
-      profile: data
-    })
-  } catch (err: any) {
+    return NextResponse.json({ success: true, profile: data })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('API error:', err)
-    return NextResponse.json({
-      success: false,
-      error: err.message
-    }, { status: 500 })
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
   }
 }

@@ -2,6 +2,8 @@
  * Utility functions for handling signed URLs for archive media
  */
 
+import { secureFetch } from '@/lib/secure-fetch'
+
 export interface SignedUrlResult {
   original_url: string
   signed_url: string
@@ -18,7 +20,7 @@ export async function getSignedUrls(mediaUrls: string[]): Promise<SignedUrlResul
   }
 
   try {
-    const response = await fetch('/api/get-signed-url', {
+    const response = await secureFetch('/api/get-signed-url', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
