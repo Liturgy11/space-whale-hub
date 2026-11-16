@@ -209,56 +209,58 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
                       </button>
                     )}
                     {isAuthor && (
-                    <button
-                      onClick={() => {
-                        onEdit?.(post.id)
-                        setShowOptions(false)
-                      }}
-                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
-                      aria-label="Edit post"
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </button>
-                    {isDeleting ? (
-                      <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-600">
-                        <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">Delete this post?</p>
-                        <div className="flex space-x-2">
+                      <>
+                        <button
+                          onClick={() => {
+                            onEdit?.(post.id)
+                            setShowOptions(false)
+                          }}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                          aria-label="Edit post"
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </button>
+                        {isDeleting ? (
+                          <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-600">
+                            <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">Delete this post?</p>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => {
+                                  onDelete?.(post.id)
+                                  setShowOptions(false)
+                                }}
+                                className="flex-1 px-3 py-1.5 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                                aria-label="Confirm delete"
+                              >
+                                Delete
+                              </button>
+                              <button
+                                onClick={() => {
+                                  onCancelDelete?.()
+                                  setShowOptions(false)
+                                }}
+                                className="flex-1 px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                                aria-label="Cancel delete"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
                           <button
                             onClick={() => {
                               onDelete?.(post.id)
-                              setShowOptions(false)
+                              // Don't close menu on first click - keep it open to show confirmation
                             }}
-                            className="flex-1 px-3 py-1.5 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                            aria-label="Confirm delete"
+                            className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            aria-label="Delete post"
                           >
+                            <Trash2 className="h-4 w-4 mr-2" />
                             Delete
                           </button>
-                          <button
-                            onClick={() => {
-                              onCancelDelete?.()
-                              setShowOptions(false)
-                            }}
-                            className="flex-1 px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
-                            aria-label="Cancel delete"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          onDelete?.(post.id)
-                          // Don't close menu on first click - keep it open to show confirmation
-                        }}
-                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        aria-label="Delete post"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </button>
-                    )}
+                        )}
+                      </>
                     )}
                   </div>
                 </>
