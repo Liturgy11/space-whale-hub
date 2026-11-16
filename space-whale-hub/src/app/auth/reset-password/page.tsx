@@ -124,8 +124,7 @@ function ResetPasswordContent() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Image src="/Space Whale_Horizontal.jpg" alt="Space Whale" width={300} height={90} className="mx-auto mb-4" priority />
-          <h2 className="text-xl font-space-whale-body text-space-whale-navy mb-4">Space Whale Portal</h2>
-          <p className="text-base font-space-whale-body text-space-whale-navy mb-6">Create, share, and connect.</p>
+          <h2 className="text-xl font-space-whale-body text-space-whale-navy mb-6">Space Whale Portal</h2>
           <div className="w-24 h-px bg-space-whale-lavender/30 mx-auto"></div>
         </div>
 

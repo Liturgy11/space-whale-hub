@@ -84,12 +84,9 @@ function AuthPageContent() {
             className="mx-auto mb-3 rounded-full"
               priority
             />
-            <h2 className="text-xl font-space-whale-body text-space-whale-navy mb-1">
+            <h2 className="text-xl font-space-whale-body text-space-whale-navy">
               Space Whale Portal
             </h2>
-            <p className="text-base font-space-whale-body text-space-whale-navy">
-              Create, share, and connect.
-            </p>
           </div>
 
           {isLogin ? (

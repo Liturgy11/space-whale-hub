@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import ForgotPasswordForm from './ForgotPasswordForm'
+import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
 
 interface LoginFormProps {
   onSuccess?: () => void
@@ -65,9 +67,18 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
       <div className="w-full">
         <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
           <div className="text-center mb-6">
-            <h2 className="text-xl font-space-whale-heading text-space-whale-navy mb-2">
-              Welcome Back
-            </h2>
+            <div className="flex items-center justify-center gap-2">
+              <Image
+                src={SPACE_ILLUSTRATIONS.communityOrbit}
+                alt=""
+                width={36}
+                height={36}
+                className="h-9 w-9 object-contain"
+              />
+              <h2 className="text-xl font-space-whale-heading text-space-whale-navy">
+                Welcome, Star Baby
+              </h2>
+            </div>
           </div>
           <div className="animate-pulse">
             <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
@@ -89,9 +100,18 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
     <div className="w-full">
       <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
         <div className="text-center mb-6">
-          <h2 className="text-xl font-space-whale-heading text-space-whale-navy mb-2">
-            Welcome Back
-          </h2>
+          <div className="flex items-center justify-center gap-2">
+            <Image
+              src={SPACE_ILLUSTRATIONS.communityOrbit}
+              alt=""
+              width={36}
+              height={36}
+              className="h-9 w-9 object-contain"
+            />
+            <h2 className="text-xl font-space-whale-heading text-space-whale-navy">
+              Welcome, Star Baby
+            </h2>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
