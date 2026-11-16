@@ -359,7 +359,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
             Already have an account?{' '}
             <button
               onClick={onSwitchToLogin}
-              className="text-space-whale-purple hover:text-space-whale-dark-purple font-space-whale-accent transition-colors"
+              className="text-space-whale-dark-purple hover:text-space-whale-navy font-space-whale-accent underline-offset-2 hover:underline transition-colors"
             >
               Sign in here
             </button>

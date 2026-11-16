@@ -39,10 +39,10 @@ function AuthPageContent() {
   }
 
   return (
-    <div className="min-h-screen flex">
-      {/* Artwork panel — left on desktop, full background on mobile */}
+    <div className="min-h-dvh flex flex-col md:flex-row">
+      {/* Artwork panel — left on desktop */}
       <div
-        className="hidden md:block md:w-1/2 lg:w-3/5 relative flex-shrink-0"
+        className="hidden md:block md:w-1/2 lg:w-3/5 relative flex-shrink-0 min-h-dvh"
         style={{
           backgroundImage: 'url(/cosmic-rainbow.png)',
           backgroundSize: 'cover',
@@ -62,26 +62,27 @@ function AuthPageContent() {
         </div>
       </div>
 
-      {/* Form panel — artwork as faded background on mobile */}
+      {/* Form panel — full-height artwork wash on mobile, white on desktop */}
       <div
-        className="relative w-full md:w-1/2 lg:w-2/5 flex items-center justify-center p-6 overflow-y-auto"
-        style={{ backgroundColor: 'white' }}
+        className="relative w-full md:w-1/2 lg:w-2/5 flex-1 min-h-dvh flex items-center justify-center px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] overflow-y-auto md:bg-white"
+        style={{
+          backgroundImage: 'url(/cosmic-rainbow.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
       >
-        {/* Mobile artwork background */}
-        <div
-          className="md:hidden absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: 'url(/cosmic-rainbow.png)', opacity: 0.28 }}
-        />
+        <div className="md:hidden absolute inset-0 bg-white/72" aria-hidden />
+        <div className="hidden md:block absolute inset-0 bg-white" aria-hidden />
 
         <div className="relative w-full max-w-md">
           {/* Logo */}
           <div className="text-center mb-6">
             <Image
-            src="/space-whale-social.png"
-            alt="Space Whale"
-            width={100}
-            height={100}
-            className="mx-auto mb-3 rounded-full"
+              src="/space-whale-social.png"
+              alt="Space Whale"
+              width={100}
+              height={100}
+              className="mx-auto mb-3 rounded-full"
               priority
             />
             <h2 className="text-xl font-space-whale-body text-space-whale-navy">
@@ -118,7 +119,7 @@ function AuthPageContent() {
 export default function AuthPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-dvh flex items-center justify-center bg-white">
         <Loader2 className="h-8 w-8 animate-spin text-space-whale-purple" />
       </div>
     }>
