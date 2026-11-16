@@ -87,6 +87,9 @@ function AuthPageContent() {
             <h2 className="text-xl font-space-whale-body text-space-whale-navy">
               Space Whale Portal
             </h2>
+            <p className="mt-1 text-lg font-space-whale-heading text-space-whale-navy">
+              Welcome, Star Baby
+            </p>
           </div>
 
           {isLogin ? (

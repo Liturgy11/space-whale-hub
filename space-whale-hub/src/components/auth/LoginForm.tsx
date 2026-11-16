@@ -66,19 +66,14 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
     return (
       <div className="w-full">
         <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
-          <div className="text-center mb-6">
-            <div className="flex flex-col items-center gap-1">
-              <Image
-                src={SPACE_ILLUSTRATIONS.communityOrbit}
-                alt=""
-                width={44}
-                height={44}
-                className="h-11 w-11 object-contain animate-float"
-              />
-              <h2 className="text-xl font-space-whale-heading text-space-whale-navy">
-                Welcome, Star Baby
-              </h2>
-            </div>
+          <div className="flex justify-center mb-6">
+            <Image
+              src={SPACE_ILLUSTRATIONS.communityOrbit}
+              alt=""
+              width={44}
+              height={44}
+              className="h-11 w-11 object-contain animate-float"
+            />
           </div>
           <div className="animate-pulse">
             <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
@@ -99,19 +94,14 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
   return (
     <div className="w-full">
       <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
-        <div className="text-center mb-6">
-          <div className="flex flex-col items-center gap-1">
-            <Image
-              src={SPACE_ILLUSTRATIONS.communityOrbit}
-              alt=""
-              width={44}
-              height={44}
-              className="h-11 w-11 object-contain animate-float"
-            />
-            <h2 className="text-xl font-space-whale-heading text-space-whale-navy">
-              Welcome, Star Baby
-            </h2>
-          </div>
+        <div className="flex justify-center mb-6">
+          <Image
+            src={SPACE_ILLUSTRATIONS.communityOrbit}
+            alt=""
+            width={44}
+            height={44}
+            className="h-11 w-11 object-contain animate-float"
+          />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
