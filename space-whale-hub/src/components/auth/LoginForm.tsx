@@ -68,6 +68,9 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
         <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
           <div className="text-center mb-6">
             <div className="flex items-center justify-center gap-2">
+              <h2 className="text-xl font-space-whale-heading text-space-whale-navy">
+                Welcome, Star Baby
+              </h2>
               <Image
                 src={SPACE_ILLUSTRATIONS.communityOrbit}
                 alt=""
@@ -75,9 +78,6 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
                 height={36}
                 className="h-9 w-9 object-contain"
               />
-              <h2 className="text-xl font-space-whale-heading text-space-whale-navy">
-                Welcome, Star Baby
-              </h2>
             </div>
           </div>
           <div className="animate-pulse">
@@ -101,6 +101,9 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
       <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2">
+            <h2 className="text-xl font-space-whale-heading text-space-whale-navy">
+              Welcome, Star Baby
+            </h2>
             <Image
               src={SPACE_ILLUSTRATIONS.communityOrbit}
               alt=""
@@ -108,9 +111,6 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
               height={36}
               className="h-9 w-9 object-contain"
             />
-            <h2 className="text-xl font-space-whale-heading text-space-whale-navy">
-              Welcome, Star Baby
-            </h2>
           </div>
         </div>
 
