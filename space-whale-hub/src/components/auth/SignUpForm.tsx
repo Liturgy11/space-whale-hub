@@ -135,12 +135,9 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
     <div className="w-full">
       <div className="bg-lofi-card rounded-xl shadow-lg p-8 rainbow-border-soft">
         <div className="text-center mb-6">
-          <h2 className="text-xl font-space-whale-heading text-space-whale-navy mb-2">
+          <h2 className="text-xl font-space-whale-heading text-space-whale-navy">
             Join the Portal
           </h2>
-          <p className="text-sm font-space-whale-body text-space-whale-navy">
-            Made for LGBTIQA+, ND, disabled folks, and anyone seeking space to create, share, and connect.
-          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
