@@ -174,18 +174,15 @@ export default function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProp
         </form>
 
         <div className="mt-4 space-y-3 text-center">
-          <p className="font-space-whale-body text-space-whale-navy">
-            Don&apos;t have an account?{' '}
-            <button
-              onClick={onSwitchToSignUp}
-              className="text-space-whale-dark-purple hover:text-space-whale-navy font-space-whale-accent underline-offset-2 hover:underline transition-colors"
-            >
-              Sign up here
-            </button>
-          </p>
+          <button
+            onClick={onSwitchToSignUp}
+            className="font-space-whale-accent text-space-whale-dark-purple hover:text-space-whale-navy underline-offset-2 hover:underline transition-colors"
+          >
+            Sign up here
+          </button>
           <button
             onClick={() => setShowForgotPassword(true)}
-            className="text-sm font-space-whale-body text-space-whale-navy/70 hover:text-space-whale-navy transition-colors"
+            className="block mx-auto text-sm font-space-whale-body text-space-whale-navy/70 hover:text-space-whale-navy transition-colors"
           >
             Forgot your password?
           </button>
