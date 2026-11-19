@@ -227,10 +227,9 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
           </div>
         </div>
 
-        {/* Photos */}
         <div>
           <label className="block text-sm font-medium text-space-whale-navy mb-2 font-space-whale-body">
-            Add Photos (Optional)
+            Add photos, video or audio (optional)
           </label>
 
           <input
@@ -245,29 +244,23 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
           />
 
           {!mediaUrl ? (
-            <div className="border-2 border-dashed border-space-whale-lavender/30 rounded-lg p-4 text-center hover:border-space-whale-purple/50 transition-colors">
-              <Upload className="h-7 w-7 text-space-whale-purple mx-auto mb-1.5" />
-              <p className="text-sm text-space-whale-navy mb-2 font-space-whale-body">
-                Add photos, videos, or audio to your entry
-              </p>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="px-4 py-2 bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-colors font-space-whale-accent text-sm min-h-[44px] touch-manipulation"
-              >
-                {uploading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 inline animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4 mr-2 inline" />
-                    Upload Media
-                  </>
-                )}
-              </button>
+            <div
+              role="button"
+              tabIndex={0}
+              className="border-2 border-dashed border-space-whale-lavender/30 rounded-lg p-5 text-center hover:border-space-whale-purple/50 transition-colors cursor-pointer touch-manipulation"
+              onClick={() => !uploading && fileInputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (!uploading && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault()
+                  fileInputRef.current?.click()
+                }
+              }}
+            >
+              {uploading ? (
+                <Loader2 className="h-7 w-7 text-space-whale-purple mx-auto animate-spin" />
+              ) : (
+                <Upload className="h-7 w-7 text-space-whale-purple mx-auto" />
+              )}
             </div>
           ) : (
             <div className="border border-space-whale-lavender/30 rounded-lg overflow-hidden form-surface">
