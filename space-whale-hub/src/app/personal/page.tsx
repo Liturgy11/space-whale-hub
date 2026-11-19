@@ -80,10 +80,11 @@ function PersonalSpaceContent() {
           iconSrc="/illustrations/inner-space-eye.png"
           title="Inner Space"
           description="Your private space to reflect and create."
+          className="relative z-10 mb-6 sm:mb-8"
           actions={
             <button
               onClick={() => setShowWallpaperCustomizer(true)}
-              className="flex items-center justify-center px-4 py-3 sm:py-2 min-h-[44px] w-full sm:w-auto text-space-whale-purple hover:text-space-whale-navy transition-colors font-space-whale-accent border border-space-whale-lavender/30 rounded-lg hover:bg-space-whale-lavender/10 active:scale-[0.98] touch-manipulation"
+              className="flex items-center justify-center px-4 py-3 sm:py-2 min-h-[44px] w-full sm:w-auto rounded-lg font-space-whale-accent text-space-whale-navy bg-white/90 backdrop-blur-sm border border-white/80 shadow-md hover:bg-white active:scale-[0.98] transition-all touch-manipulation"
             >
               <Settings className="h-4 w-4 sm:h-5 sm:w-5 mr-2 flex-shrink-0" />
               <span>Customise</span>
