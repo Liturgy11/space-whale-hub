@@ -164,12 +164,12 @@ export default function WallpaperCustomizer({ onClose, onWallpaperChange }: Wall
             
             {customImage && (
               <div className="mt-4">
-                <p className="text-sm text-space-whale-purple mb-2">Preview:</p>
-                <div className="w-full h-32 rounded-lg overflow-hidden">
+                <p className="text-sm text-space-whale-navy/70 mb-2">Preview:</p>
+                <div className="w-full h-48 rounded-lg overflow-hidden bg-gradient-to-br from-space-whale-lavender/20 via-white to-accent-pink/10 flex items-center justify-center">
                   <img
                     src={customImage}
                     alt="Custom wallpaper preview"
-                    className="w-full h-full object-cover"
+                    className="max-w-full max-h-full object-contain"
                   />
                 </div>
               </div>

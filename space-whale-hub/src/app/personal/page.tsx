@@ -30,29 +30,25 @@ function PersonalSpaceContent() {
   };
 
 
+  const isCustomImage = currentWallpaper.startsWith('data:image/') ||
+                       currentWallpaper.startsWith('http://') ||
+                       currentWallpaper.startsWith('https://')
+
   const getWallpaperClass = () => {
-    // Check if it's a custom image (data URL or HTTP/HTTPS URL)
-    const isCustomImage = currentWallpaper.startsWith('data:image/') || 
-                         currentWallpaper.startsWith('http://') || 
-                         currentWallpaper.startsWith('https://')
-    
     if (isCustomImage) {
-      return 'min-h-screen bg-cover bg-center bg-no-repeat'
+      // Soft wash behind contained artwork so the image isn't stretched to fill
+      return 'min-h-screen bg-gradient-to-br from-space-whale-lavender/20 via-white to-accent-pink/10'
     }
-    
+
     const wallpapers: Record<string, string> = {
       'garden': 'min-h-screen bg-gradient-to-br from-green-100 via-emerald-50 to-teal-100',
       'cosmic': 'min-h-screen bg-gradient-to-br from-purple-900 via-indigo-800 to-blue-900',
       'psychedelic': 'min-h-screen bg-gradient-to-br from-pink-400 via-purple-500 to-indigo-600',
       'minimal': 'min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100'
     }
-    
+
     return wallpapers[currentWallpaper] || wallpapers['minimal']
   }
-
-  const isCustomImage = currentWallpaper.startsWith('data:image/') || 
-                       currentWallpaper.startsWith('http://') || 
-                       currentWallpaper.startsWith('https://')
 
   return (
     <AppShell
@@ -60,14 +56,24 @@ function PersonalSpaceContent() {
       showUserProfile
       logoSize="sm"
       className={getWallpaperClass()}
-      style={isCustomImage ? { backgroundImage: `url(${currentWallpaper})` } : undefined}
       backgroundOverlay={
-        !isCustomImage ? (
+        isCustomImage ? (
+          <div
+            className="fixed inset-0 pointer-events-none z-0"
+            style={{
+              backgroundImage: `url(${currentWallpaper})`,
+              backgroundSize: 'contain',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              opacity: 0.55,
+            }}
+          />
+        ) : (
           <div
             className="fixed inset-0 bg-cover bg-center pointer-events-none z-0"
             style={{ backgroundImage: 'url(/teal-landscape.png)', opacity: 0.18 }}
           />
-        ) : undefined
+        )
       }
       mainClassName="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8"
     >
