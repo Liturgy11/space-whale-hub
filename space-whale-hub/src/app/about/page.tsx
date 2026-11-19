@@ -35,10 +35,7 @@ function AboutContent() {
       afterMain={
         <div className="bg-lofi-card rounded-xl p-6 mx-4 sm:mx-6 lg:mx-8 mb-8 rainbow-border-soft glow-soft">
           <p className="text-sm font-space-whale-body text-space-whale-navy">
-            <strong>Land Acknowledgement:</strong> Space Whale operates on First Nations land, Darkinjung Country, 
-            (Central Coast, NSW). We acknowledge sovereignty was never ceded and pay our respects to elder&apos;s 
-            past, present and emerging. Space Whale welcomes all people and celebrates diversity. 
-            Space Whale is a registered LGBTIQA+ safe space.
+            <strong>Land Acknowledgement:</strong> Space Whale traverses the skies, seas and lands of Darkinjung Country, where sovereignty was never ceded. With respect to Elders past, present and future, we acknowledge First Nations&apos; ways of being and caring for Country and community. We honour the stories this Country carries across countless generations, and the ongoing work of healing and care that continues. We commit to listening to First Nations, and to care for each other and for Country. Space Whale welcomes all people and celebrates diversity. Space Whale is a registered LGBTIQA+ safe space.
           </p>
         </div>
       }
