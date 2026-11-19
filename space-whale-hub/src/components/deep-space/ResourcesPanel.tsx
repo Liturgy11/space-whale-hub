@@ -123,12 +123,12 @@ function phoneHref(phone: string) {
 
 export default function ResourcesPanel() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div>
       <div className="mb-8">
         <h2 className="text-2xl font-space-whale-heading text-space-whale-navy mb-2">
           Resources
         </h2>
-        <p className="text-sm text-space-whale-purple/80 font-space-whale-body max-w-xl mb-5">
+        <p className="text-sm sm:text-base text-space-whale-purple/80 font-space-whale-body max-w-2xl mb-5">
           Videos, books, podcasts and tools around the themes we care about — curated slowly, with
           care.
         </p>
