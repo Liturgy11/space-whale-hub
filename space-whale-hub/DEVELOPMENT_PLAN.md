@@ -92,7 +92,7 @@ A trauma-informed, neuroaffirming, gender-affirming digital sanctuary for creati
 - **Scholarship fund**: "Pay it forward"
 - **Sponsor a trans/ND person** for subsidized therapy
 - **Future**: Invite practitioners to host (they can monetize)
-- **Substack integration** - somehow?
+- **Substack integration** - somehow? → see **Parked — Substack ↔ Portal co-creation** below
 
 ### 7. Expansion Vision
 - **Invite friends/colleagues** to host workshops
@@ -378,7 +378,7 @@ People from the night should be able to join on a phone, find the readings, and 
 - [ ] **Invite for the night** — signup currently skips the invite code (check is commented out in `SignUpForm`). Turn it back on, mint one event code, and put it on a slide or card as a QR.
 - [ ] **Pride Poetry album as the front door** — Unlisted YouTube readings with real titles, a cover, and a few photos. Nov 28 clips can be added after the night.
 - [ ] **Point newcomers at Constellation** — welcome already covers slow space, private journal, and guidelines. Add a line that the Pride Poetry readings live in Constellation. Phone tab says Archive; home says Constellation — line those names up.
-- [ ] **Soften Deep Space** — workshop cards still say date TBD and pricing TBD. List only what is actually happening, or mark them clearly as expressions of interest.
+- [x] **Soften Deep Space** — Gatherings/Resources tabs; Open Studio only (via Substack); host-a-gathering invite; resource topic shelves + crisis support. Fill resource links over time.
 - [ ] **Leave a light on in Orbit** — one post from Lit about how this space relates to Pride Poetry. Hide the bookmark control that still says “coming soon.”
 - [ ] **Phone rehearsal the week before** — new account, on mobile data, through the code, into the album, play one reading.
 - [ ] **Mycelial Network — spore stays planted** — placing a spore then swiping was panning the icon across a fixed forest. Forest now moves with the spores, and a finger swipe scrolls the page instead of dragging the icon.
@@ -450,6 +450,39 @@ Signup checkbox (“occasional news about Space Whale offerings…”) is record
   - Settings toggle so people can change consent
   - Simple admin export/list of opted-in emails
   - Optional: connect to Resend (or similar) only for those who opted in
+
+### Parked — Substack ↔ Portal co-creation (post soft launch)
+Two hearths, one handshake. **Space Whale Sojourns** (Substack: https://litmccarthy.substack.com/) = public letters + live studio. **Portal** = private commons (Inner Space, Orbit, Mycelial, Constellation, Deep Space).
+
+**Roles**
+- Substack: reach, subscribe, live video/workshops, archive of letters
+- Portal: trust, privacy, ongoing belonging, community tooling
+- Don’t merge them — bridge them. Subscriber free access = gift reciprocity that opens the door; the forest keeps you.
+
+**Already in motion**
+- Deep Space Gatherings → Open Studio CTA to Sojourns subscribe (`/subscribe`)
+- Host-a-gathering email pitch for community offerings
+- Resources shelves ready to fill (including a future “From the letters” strip)
+- Invite-code system exists (signup gate parked open for Pride Poetry soft launch)
+
+**Soon (after 28 Nov)**
+- Dedicated **Sojourns invite code** (or seasonal codes) shared only in a Substack letter / subscriber chat
+- Re-enable invite requirement on signup with Sojourns as a steady path alongside event codes
+- Light “This month on Sojourns” blurb on Deep Space linking the latest letter or studio
+
+**Later architecture dreams**
+- Auto-mint one-time invites on Substack subscribe (webhook / Zapier) — nicer than manual codes; not required day one
+- Resources: “From the letters” shelf mirroring essays Lit is happy to deep-link
+- Constellation albums for studio / Pride Poetry recordings; Substack points in
+- Soft post-studio prompts → Mycelial spore / Inner Space reflection (no heavy automation)
+- Live/cohort courses: announce + live on Substack → between-session home in Portal (Orbit thread, album, optional course space)
+- Self-paced learning: Portal-native (or Substack archive + Portal checklist)
+- Community resource suggest / personal stash (moderated commons) — Lit shelf stays distinct from community offerings; crisis block stays staff-only
+
+**Values check**
+- Substack for broadcast + live; Portal for care, ND pacing, encryption, community
+- Keep crisis support and First Nations shelves curated — not open wiki
+- Prefer honour + invite codes over brittle “sign in with Substack email” unless it becomes clearly worth it
 
 ### Lower Priority / Future Enhancements
 - Post form: lightweight "Add content warning" chip + badge on cards
