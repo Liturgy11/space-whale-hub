@@ -94,7 +94,7 @@ function CommunityFeedContent() {
         <SpacePageHeader
           iconSrc="/illustrations/star-baby.png"
           title="Community Orbit"
-          description="Share your art, poetry, reflections, and inspiration. A cosy place to share and witness each other."
+          description="A space to share your creations and reflections, and connect with others."
         >
           {/* Mycelial Network banner */}
           {showNetworkBanner && (

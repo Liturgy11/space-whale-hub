@@ -147,7 +147,7 @@ function AboutContent() {
                 <h3 className="text-xl font-space-whale-subheading text-space-whale-navy">Community Orbit</h3>
               </div>
               <p className="text-space-whale-navy font-space-whale-body">
-                Share your art and your heart with the community. Post your everyday joys, curiosities, works in progress, and what's inspiring you.
+                A space to share your creations and reflections, and connect with others.
               </p>
             </div>
 

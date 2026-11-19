@@ -42,7 +42,7 @@ type ExploreMenuItem = {
 
 const exploreMenuItems: ExploreMenuItem[] = [
   { href: "/personal", icon: { iconSrc: "/illustrations/inner-space-eye.png" }, label: "Inner Space", sub: "Journal & reflect" },
-  { href: "/feed", icon: { iconSrc: "/illustrations/star-baby.png" }, label: "Community Orbit", sub: "Share with community" },
+  { href: "/feed", icon: { iconSrc: "/illustrations/star-baby.png" }, label: "Community Orbit", sub: "Share & connect" },
   { href: "/workshops", icon: { iconSrc: "/illustrations/whale.png" }, label: "Deep Space", sub: "Workshops & resources" },
   { href: "/archive?tab=network", icon: { iconSrc: "/illustrations/mushroom-3.png" }, label: "Mycelial Network", sub: "Find your people" },
   { href: "/archive", icon: { iconSrc: "/illustrations/star.png" }, label: "Constellation", sub: "Archive & gallery" },
@@ -58,7 +58,7 @@ const featureCards = [
   {
     href: "/feed",
     label: "Community Orbit",
-    description: "The community stream. Connect with ND queers, nature lovers, artists, and seekers.",
+    description: "A space to share your creations and reflections, and connect with others.",
     icon: { iconSrc: "/illustrations/star-baby.png" },
   },
   {
