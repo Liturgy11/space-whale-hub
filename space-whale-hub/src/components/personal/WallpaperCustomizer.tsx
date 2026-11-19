@@ -11,6 +11,72 @@ interface WallpaperCustomizerProps {
   onWallpaperChange: (wallpaper: string) => void
 }
 
+/** Resize + honour EXIF orientation so desktop camera exports don't look stretched/rotated. */
+async function prepareWallpaperFile(file: File, maxEdge = 2400, quality = 0.88): Promise<File> {
+  const objectUrl = URL.createObjectURL(file)
+  try {
+    let source: CanvasImageSource
+    let width: number
+    let height: number
+
+    if (typeof createImageBitmap === 'function') {
+      try {
+        const bitmap = await createImageBitmap(file, {
+          // Respect EXIF orientation (common desktop fail for phone photos uploaded from a computer)
+          imageOrientation: 'from-image',
+        } as ImageBitmapOptions)
+        source = bitmap
+        width = bitmap.width
+        height = bitmap.height
+      } catch {
+        const img = await loadImage(objectUrl)
+        source = img
+        width = img.naturalWidth
+        height = img.naturalHeight
+      }
+    } else {
+      const img = await loadImage(objectUrl)
+      source = img
+      width = img.naturalWidth
+      height = img.naturalHeight
+    }
+
+    const scale = Math.min(1, maxEdge / Math.max(width, height))
+    const targetW = Math.max(1, Math.round(width * scale))
+    const targetH = Math.max(1, Math.round(height * scale))
+
+    const canvas = document.createElement('canvas')
+    canvas.width = targetW
+    canvas.height = targetH
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return file
+    ctx.drawImage(source, 0, 0, targetW, targetH)
+
+    if ('close' in source && typeof (source as ImageBitmap).close === 'function') {
+      ;(source as ImageBitmap).close()
+    }
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, 'image/jpeg', quality)
+    )
+    if (!blob) return file
+
+    const base = file.name.replace(/\.[^.]+$/, '') || 'wallpaper'
+    return new File([blob], `${base}.jpg`, { type: 'image/jpeg' })
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image()
+    img.onload = () => resolve(img)
+    img.onerror = () => reject(new Error('Could not read image'))
+    img.src = src
+  })
+}
+
 const presetWallpapers = [
   {
     id: 'garden',
@@ -54,32 +120,52 @@ export default function WallpaperCustomizer({ onClose, onWallpaperChange }: Wall
   }
 
   const handleCustomUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+    const input = event.target
+    const file = input.files?.[0]
     if (!file || !user) return
 
-    if (!file.type.startsWith('image/')) {
+    const looksLikeImage =
+      file.type.startsWith('image/') ||
+      /\.(jpe?g|png|gif|webp|heic|heif)$/i.test(file.name)
+    if (!looksLikeImage) {
       toast('Please select an image file', 'error')
+      input.value = ''
       return
     }
 
     setUploading(true)
     try {
-      console.log('Uploading custom wallpaper:', { fileName: file.name, fileSize: file.size, fileType: file.type })
+      // Desktop camera exports are often huge + EXIF-rotated; normalise when possible
+      let uploadFile = file
+      try {
+        uploadFile = await prepareWallpaperFile(file)
+      } catch (prepError) {
+        console.warn('Wallpaper prepare skipped, uploading original:', prepError)
+        // HEIC/unsupported decode on some desktops — try original if under limit
+      }
 
-      // Use new storage system instead of base64
-      const result = await uploadMedia(file, {
-        category: 'archive', // Using archive bucket for wallpapers
-        filename: `${user.id}-wallpaper-${Date.now()}`
-      }, user.id)
+      const result = await uploadMedia(
+        uploadFile,
+        {
+          category: 'journal',
+          folder: 'wallpapers',
+          filename: `${user.id}-wallpaper-${Date.now()}.${uploadFile.type === 'image/jpeg' ? 'jpg' : 'img'}`,
+        },
+        user.id
+      )
 
-      console.log('Wallpaper uploaded to storage:', result.url)
       setCustomImage(result.url)
       setSelectedWallpaper('')
-    } catch (error: any) {
+      toast('Wallpaper ready — hit Apply to use it', 'success')
+    } catch (error: unknown) {
       console.error('Error uploading custom wallpaper:', error)
-      toast(`Upload failed: ${error.message}`, 'error')
+      toast(
+        `Upload failed: ${error instanceof Error ? error.message : 'Please try a JPG or PNG'}`,
+        'error'
+      )
     } finally {
       setUploading(false)
+      input.value = ''
     }
   }
 
@@ -171,7 +257,7 @@ export default function WallpaperCustomizer({ onClose, onWallpaperChange }: Wall
                     alt="Custom wallpaper preview"
                     className="absolute inset-0 h-full w-full object-cover object-center"
                   />
-                  <div className="absolute inset-0 bg-white/35" />
+                  <div className="absolute inset-0 bg-white/25" />
                 </div>
               </div>
             )}

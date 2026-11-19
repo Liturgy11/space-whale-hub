@@ -58,14 +58,14 @@ function PersonalSpaceContent() {
       backgroundOverlay={
         isCustomImage ? (
           <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden>
-            {/* Real img + object-cover keeps aspect ratio; no CSS background stretch */}
             <img
               src={currentWallpaper}
               alt=""
               className="absolute inset-0 h-full w-full object-cover object-center"
+              decoding="async"
             />
-            {/* Soft scrim for readability — image itself stays full colour */}
-            <div className="absolute inset-0 bg-white/35" />
+            {/* Light scrim for readability without washing the art out */}
+            <div className="absolute inset-0 bg-white/25" />
           </div>
         ) : (
           <div
