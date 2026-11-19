@@ -26,12 +26,12 @@ function TabIcon({ src, className = 'h-4 w-4' }: { src: string; className?: stri
 export default function ConstellationTabs() {
   const { user } = useAuth()
   const searchParams = useSearchParams()
-  const [tab, setTab] = useState<'archive' | 'network'>('archive')
+  const [tab, setTab] = useState<'archive' | 'network'>(
+    () => (searchParams.get('tab') === 'network' ? 'network' : 'archive')
+  )
 
   useEffect(() => {
-    if (searchParams.get('tab') === 'network') {
-      setTab('network')
-    }
+    setTab(searchParams.get('tab') === 'network' ? 'network' : 'archive')
   }, [searchParams])
   const [showSporeForm, setShowSporeForm] = useState(false)
   const [sporeKey, setSporeKey] = useState(0) // bump to re-fetch network after save
@@ -39,17 +39,19 @@ export default function ConstellationTabs() {
 
   return (
     <div>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
-        <SpacePageHeader
-          iconSrc="/illustrations/star.png"
-          title="Constellation"
-          description="Archive of Space Whale events — pride poetry, community workshops, and creative gatherings."
-          className="mb-4 sm:mb-6"
-        />
-      </div>
+      {tab === 'archive' && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
+          <SpacePageHeader
+            iconSrc="/illustrations/star.png"
+            title="Constellation"
+            description="Archive of Space Whale events — pride poetry, community workshops, and creative gatherings."
+            className="mb-4 sm:mb-6"
+          />
+        </div>
+      )}
 
       {/* Tab bar */}
-      <div className="sticky top-16 z-40 bg-white/80 backdrop-blur-md border-b border-space-whale-lavender/20">
+      <div className={`sticky top-16 z-40 bg-white/80 backdrop-blur-md border-b border-space-whale-lavender/20 ${tab === 'network' ? 'mt-2 sm:mt-4' : ''}`}>
         <div className="max-w-5xl mx-auto px-4 flex gap-0">
           <button
             onClick={() => setTab('archive')}
