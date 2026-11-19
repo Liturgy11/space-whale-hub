@@ -312,9 +312,6 @@ export default function FeedList({
               onEdit={handleEdit}
               onDelete={handleDelete}
               onPin={handlePin}
-              onBookmark={() =>
-                toast('Post saved for later! (Bookmark functionality coming soon)', 'info')
-              }
               isDeleting={deletingPostId === post.id}
               onCancelDelete={() => setDeletingPostId(null)}
             />

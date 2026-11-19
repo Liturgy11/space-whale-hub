@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Heart, MessageCircle, MoreHorizontal, Bookmark, Edit, Trash2, X, ChevronLeft, ChevronRight, AlertCircle, Pin } from 'lucide-react'
+import { Heart, MessageCircle, MoreHorizontal, Edit, Trash2, X, ChevronLeft, ChevronRight, AlertCircle, Pin } from 'lucide-react'
 import CommentForm from './CommentForm'
 import CommentsList from './CommentsList'
 import MediaCarousel from '@/components/media/MediaCarousel'
@@ -268,14 +268,7 @@ export default function PostCard({ post, onLike, onComment, onEdit, onDelete, on
             </div>
           )}
           
-          <button 
-            onClick={() => onBookmark?.(post.id)}
-            className="p-2 text-gray-400 hover:text-yellow-500 transition-colors"
-            title="Save for later"
-            aria-label="Bookmark post"
-          >
-            <Bookmark className="h-4 w-4" />
-          </button>
+          {/* Bookmark hidden for soft launch — see DEVELOPMENT_PLAN.md (Parked — Orbit bookmarks) */}
         </div>
       </div>
 

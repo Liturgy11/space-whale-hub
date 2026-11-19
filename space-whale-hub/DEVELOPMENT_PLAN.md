@@ -436,6 +436,21 @@ Leave until after 28 Nov: Mycelial polish beyond the plant-in-place bug, member 
   - Convert admin email check to role/allowlist
   - Optional: allow trusted contributors to add to specific albums
 
+### Parked — Orbit bookmarks (post soft launch)
+Bookmark / “save for later” icon hidden on Community Orbit posts for soft launch (was a toast stub: “coming soon”).
+- **Later:** real per-user saved posts (table + API), bookmark toggle on PostCard, a simple “Saved” view or filter in Orbit
+- Keep props/`onBookmark` wiring optional so re-enabling is a small UI restore
+
+### Parked — Email opt-in / mailing list (post soft launch)
+Signup checkbox (“occasional news about Space Whale offerings…”) is recorded today as `email_opt_in` on **Supabase Auth `user_metadata`** only. Not a browsable list in the portal; not wired to Resend/automated sends.
+- **How to check now:** Supabase SQL on `auth.users` → `raw_user_meta_data->>'email_opt_in'`, or Authentication → Users → User Metadata
+- **Do not trust `profiles.email_opt_in` yet** — column/sync incomplete; create-profile path doesn’t pass the checkbox
+- **Later:**
+  - Persist reliably on `profiles.email_opt_in` (migration + signup/profile sync)
+  - Settings toggle so people can change consent
+  - Simple admin export/list of opted-in emails
+  - Optional: connect to Resend (or similar) only for those who opted in
+
 ### Lower Priority / Future Enhancements
 - Post form: lightweight "Add content warning" chip + badge on cards
 - Image pinch‑to‑zoom and swipe‑to‑close in archive lightbox
