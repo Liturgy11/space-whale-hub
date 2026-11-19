@@ -175,7 +175,7 @@ function HomeContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           <h1 className="text-4xl md:text-6xl font-space-whale-heading text-space-whale-navy mb-8">
-            Welcome, fellow travellers
+            The portal is open
           </h1>
 
           {/* Explore Button */}
