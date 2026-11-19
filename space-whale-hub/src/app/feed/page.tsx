@@ -124,10 +124,10 @@ function CommunityFeedContent() {
           )}
 
           {/* Share Button */}
-          <div className="mb-6 sm:mb-8">
+          <div className="mt-5 mb-6 sm:mb-8 flex justify-center">
             <button
               onClick={handleShareClick}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-space-whale-navy text-white font-space-whale-accent text-sm shadow-md hover:bg-space-whale-navy/80 hover:-translate-y-0.5 transition-all duration-200"
+              className="inline-flex items-center justify-center gap-2 px-8 py-2.5 min-h-[44px] rounded-full bg-space-whale-navy text-white font-space-whale-accent text-sm shadow-md hover:bg-space-whale-navy/80 hover:-translate-y-0.5 transition-all duration-200"
             >
               <Plus className="h-4 w-4" />
               Share
