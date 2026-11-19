@@ -24,7 +24,6 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
   const [uploading, setUploading] = useState(false)
   const [files, setFiles] = useState<UploadedFile[]>([])
   const [error, setError] = useState('')
-  const [title, setTitle] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const filesRef = useRef<UploadedFile[]>([])
 
@@ -164,8 +163,7 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
 
       onUploadComplete?.(
         results.map((result) => result.url),
-        'moodboard',
-        title.trim() || undefined
+        'moodboard'
       )
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Upload failed. Please try again.')
@@ -176,32 +174,31 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
 
   const uploadZone = (
     <div
-      className={`border-2 border-dashed rounded-lg p-4 sm:p-5 text-center transition-colors ${
+      role="button"
+      tabIndex={0}
+      className={`w-full border-2 border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors touch-manipulation cursor-pointer ${
         dragActive
           ? 'border-space-whale-purple bg-space-whale-lavender/20'
           : 'border-space-whale-lavender/30 hover:border-space-whale-purple/50'
       }`}
+      onClick={() => fileInputRef.current?.click()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          fileInputRef.current?.click()
+        }
+      }}
       onDragEnter={handleDrag}
       onDragLeave={handleDrag}
       onDragOver={handleDrag}
       onDrop={handleDrop}
     >
       <Upload className="h-8 w-8 text-space-whale-purple mx-auto mb-2" />
-      <p className="text-sm font-space-whale-subheading text-space-whale-navy mb-1">
-        Add your mood board images
+      <p className="text-sm font-space-whale-accent text-space-whale-navy">
+        Add images
       </p>
-      <p className="text-sm text-space-whale-navy/80 mb-3 font-space-whale-body">
-        Tap to browse, or drag images here on desktop
-      </p>
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        className="px-4 py-2.5 min-h-[44px] bg-gradient-to-r from-space-whale-purple to-accent-pink text-white rounded-lg hover:from-space-whale-purple/90 hover:to-accent-pink/90 transition-colors font-space-whale-accent text-sm touch-manipulation"
-      >
-        Choose Images
-      </button>
-      <p className="text-xs text-space-whale-purple mt-3 font-space-whale-body">
-        Multiple images · max 10MB each
+      <p className="text-xs text-space-whale-navy/60 mt-2 font-space-whale-body">
+        Multiple · max 10MB each
       </p>
     </div>
   )
@@ -265,20 +262,6 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
             </button>
           </>
         )}
-
-        <div>
-          <label className="block text-sm font-medium text-space-whale-navy mb-1.5 font-space-whale-body">
-            Title (Optional)
-          </label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Autumn vibes, Morning ritual"
-            className="mobile-input w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg form-surface text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors"
-            maxLength={100}
-          />
-        </div>
 
         <input
           ref={fileInputRef}
