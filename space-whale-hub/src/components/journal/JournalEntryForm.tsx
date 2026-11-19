@@ -17,7 +17,6 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
   const { user } = useAuth()
   const [mounted, setMounted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [mediaUrl, setMediaUrl] = useState('')
   const [mediaType, setMediaType] = useState('')
@@ -169,7 +168,6 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: title.trim() || undefined,
           content: finalContent,
           content_encrypted: encryptedData?.encrypted || null,
           is_encrypted: isEncrypted,
@@ -187,7 +185,6 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
       const result = await response.json()
       if (!result.success) throw new Error(result.error || 'Failed to create journal entry')
 
-      setTitle('')
       setContent('')
       clearMedia()
       setEnableEncryption(false)
@@ -211,41 +208,23 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
           </div>
         )}
 
-        {/* Write first */}
         <div>
-          <label className="block text-sm font-medium text-space-whale-navy mb-1.5 font-space-whale-body">
-            What&apos;s on your mind?
-          </label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             required
             rows={6}
             autoFocus
+            aria-label="Journal entry"
             className="mobile-textarea w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg form-surface text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors resize-none"
-            placeholder="Write freely..."
             maxLength={10000}
           />
           <div className="flex justify-between items-center mt-1.5">
-            <p className="text-xs text-space-whale-purple font-space-whale-body">🔒 Private</p>
-            <span className="text-xs text-space-whale-purple">
-              {content.length}/10,000 characters
+            <p className="text-xs text-space-whale-navy/60 font-space-whale-body">Private</p>
+            <span className="text-xs text-space-whale-navy/60">
+              {content.length}/10,000
             </span>
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-space-whale-navy mb-1.5 font-space-whale-body">
-            Title (Optional)
-          </label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="mobile-input w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg form-surface text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors"
-            placeholder="Give your entry a title..."
-            maxLength={200}
-          />
         </div>
 
         {/* Photos */}
