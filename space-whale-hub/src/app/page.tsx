@@ -174,7 +174,7 @@ function HomeContent() {
         <div className="text-center">
           <h1 className="text-4xl md:text-6xl font-space-whale-heading text-space-whale-navy mb-8">
             Welcome, fellow travellers.
-            <span className="block mt-3 text-3xl md:text-5xl font-space-whale-body text-space-whale-navy/80">
+            <span className="block mt-3 text-3xl md:text-5xl font-space-whale-heading text-space-whale-navy/90">
               The portal is now open…
             </span>
           </h1>
