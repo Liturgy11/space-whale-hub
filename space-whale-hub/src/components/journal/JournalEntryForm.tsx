@@ -201,14 +201,14 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
 
   const formBody = (
     <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 overflow-hidden">
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:p-5 sm:pt-0 space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pt-3 pb-4 sm:px-5 sm:pt-4 space-y-4">
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-3">
             <p className="text-red-600 text-sm">{error}</p>
           </div>
         )}
 
-        <div>
+        <div className="p-0.5 -m-0.5">
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -216,7 +216,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
             rows={4}
             autoFocus
             aria-label="Journal entry"
-            className="w-full min-h-[6.5rem] max-h-[40vh] px-4 py-3 rounded-lg border border-space-whale-lavender/40 bg-space-whale-lavender/15 text-space-whale-navy text-base placeholder:text-space-whale-navy/40 focus:ring-2 focus:ring-space-whale-purple focus:border-transparent focus:bg-space-whale-lavender/20 transition-colors resize-y"
+            className="w-full min-h-[6.5rem] max-h-[40vh] px-4 py-3 rounded-xl border border-space-whale-lavender/50 bg-space-whale-lavender/15 text-space-whale-navy text-base placeholder:text-space-whale-navy/40 shadow-sm focus:outline-none focus:ring-2 focus:ring-space-whale-purple/40 focus:border-space-whale-purple/50 focus:bg-space-whale-lavender/20 transition-colors resize-y"
             maxLength={10000}
           />
           <div className="flex justify-between items-center mt-1.5">
@@ -378,7 +378,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
 
   const panel = (
     <div className="flex flex-col min-h-0 h-full max-h-[85dvh] sm:max-h-[min(92vh,900px)] w-full bg-lofi-card shadow-2xl rainbow-border-soft md:rounded-2xl md:max-w-lg overflow-hidden">
-      <div className="shrink-0 flex items-center justify-between px-4 sm:px-5 pt-4 sm:pt-5 pb-0">
+      <div className="shrink-0 flex items-center justify-between px-4 sm:px-5 pt-4 sm:pt-5 pb-2">
         <h2 className="text-xl sm:text-2xl font-space-whale-heading text-space-whale-navy">
           New Journal Entry
         </h2>
