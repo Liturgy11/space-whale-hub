@@ -861,31 +861,23 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
               </h3>
 
               <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-space-whale-purple font-space-whale-body">
-                <span className="flex items-center gap-1 flex-shrink-0">
-                  <Lock className="h-3 w-3" />
+                <span className="inline-flex items-center gap-1">
+                  <Lock className="h-3 w-3 flex-shrink-0" />
                   Private
+                  <span className="opacity-40 mx-0.5" aria-hidden>·</span>
+                  <Calendar className="h-3 w-3 flex-shrink-0" />
+                  {formatDate(entry.created_at)}
                 </span>
                 {isEncrypted(entry) && (
                   <>
                     <span className="opacity-40">·</span>
-                    <span className="flex-shrink-0">🔒 Encrypted</span>
+                    <span>🔒 Encrypted</span>
                   </>
                 )}
-                <span className="opacity-40">·</span>
-                <span className="flex items-center gap-1 flex-shrink-0">
-                  <Calendar className="h-3 w-3" />
-                  {formatDate(entry.created_at)}
-                </span>
                 {entry.mood && (
                   <>
                     <span className="opacity-40">·</span>
-                    <span className="flex-shrink-0 capitalize">{getMoodEmoji(entry.mood)} {entry.mood}</span>
-                  </>
-                )}
-                {entry.media_type === 'moodboard' && (
-                  <>
-                    <span className="opacity-40">·</span>
-                    <span className="flex-shrink-0">✨ Mood board</span>
+                    <span className="capitalize">{getMoodEmoji(entry.mood)} {entry.mood}</span>
                   </>
                 )}
               </div>
