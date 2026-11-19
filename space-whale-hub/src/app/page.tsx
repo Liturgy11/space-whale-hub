@@ -52,7 +52,7 @@ const featureCards = [
   {
     href: "/personal",
     label: "Inner Space",
-    description: "Your private journal for reflection and creativity. Write, collect inspiration, and explore prompts.",
+    description: "Your own private space for journaling and collecting inspiration.",
     icon: { iconSrc: "/illustrations/inner-space-eye.png" },
   },
   {
