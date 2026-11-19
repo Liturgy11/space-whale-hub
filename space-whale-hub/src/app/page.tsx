@@ -43,7 +43,7 @@ type ExploreMenuItem = {
 const exploreMenuItems: ExploreMenuItem[] = [
   { href: "/personal", icon: { iconSrc: "/illustrations/inner-space-eye.png" }, label: "Inner Space", sub: "Journal & reflect" },
   { href: "/feed", icon: { iconSrc: "/illustrations/star-baby.png" }, label: "Community Orbit", sub: "Share & connect" },
-  { href: "/workshops", icon: { iconSrc: "/illustrations/whale.png" }, label: "Deep Space", sub: "Workshops & resources" },
+  { href: "/workshops", icon: { iconSrc: "/illustrations/whale.png" }, label: "Deep Space", sub: "Gatherings & resources" },
   { href: "/archive?tab=network", icon: { iconSrc: "/illustrations/mushroom-3.png" }, label: "Mycelial Network", sub: "Find your people" },
   { href: "/archive", icon: { iconSrc: "/illustrations/star.png" }, label: "Constellation", sub: "Archive & gallery" },
 ];
@@ -64,7 +64,7 @@ const featureCards = [
   {
     href: "/workshops",
     label: "Deep Space",
-    description: "Workshops and creative offerings to support your journey. Explore resources, online groups, and spaces to grow together.",
+    description: "Gatherings and curated resources — Open Studio on Substack now, with room for community hosts and self-paced learning to come.",
     icon: { iconSrc: "/illustrations/whale.png" },
   },
   {
