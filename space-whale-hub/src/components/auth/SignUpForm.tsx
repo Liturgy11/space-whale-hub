@@ -330,7 +330,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
                 className="h-6 w-6 flex-shrink-0 mt-0.5"
               />
               <span>
-                By creating an account, you&apos;re agreeing to show up with care, and trust that we&apos;re all doing our best together. Welcome home.
+                By creating an account, you&apos;re agreeing to show up with care.
               </span>
             </p>
           </div>
