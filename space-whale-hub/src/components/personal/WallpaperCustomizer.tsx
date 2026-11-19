@@ -77,35 +77,45 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   })
 }
 
+/** Preset art wallpapers (Lit’s paintings) — ids match personal page. */
+export const PRESET_WALLPAPER_IMAGES: Record<string, string> = {
+  garden: '/wallpapers/garden-vibes.jpg',
+  cosmic: '/wallpapers/cosmic-vibes.jpg',
+  psychedelic: '/wallpapers/psychedelic-vibes.jpg',
+}
+
 const presetWallpapers = [
   {
     id: 'garden',
     name: 'Garden Vibes',
-    description: 'Soft greens, earth tones, and natural textures',
+    description: 'Lush garden painting — colour and growth',
+    imageSrc: PRESET_WALLPAPER_IMAGES.garden,
     gradient: 'from-green-100 via-emerald-50 to-teal-100',
-    icon: <Leaf className="h-6 w-6" />
+    icon: <Leaf className="h-6 w-6" />,
   },
   {
     id: 'cosmic',
     name: 'Cosmic Vibes',
-    description: 'Deep space, nebulas, and cosmic energy',
+    description: 'Night sky, stars, and a rainbow wave',
+    imageSrc: PRESET_WALLPAPER_IMAGES.cosmic,
     gradient: 'from-purple-900 via-indigo-800 to-blue-900',
-    icon: <Sparkles className="h-6 w-6" />
+    icon: <Sparkles className="h-6 w-6" />,
   },
   {
     id: 'psychedelic',
     name: 'Psychedelic Vibes',
-    description: 'Vibrant colors, flowing patterns, and trippy energy',
+    description: 'Illumination — patterned portals and colour',
+    imageSrc: PRESET_WALLPAPER_IMAGES.psychedelic,
     gradient: 'from-pink-400 via-purple-500 to-indigo-600',
-    icon: <Zap className="h-6 w-6" />
+    icon: <Zap className="h-6 w-6" />,
   },
   {
     id: 'minimal',
     name: 'Minimal Vibes',
     description: 'Clean, simple, and calming',
     gradient: 'from-gray-50 via-white to-gray-100',
-    icon: <Palette className="h-6 w-6" />
-  }
+    icon: <Palette className="h-6 w-6" />,
+  },
 ]
 
 export default function WallpaperCustomizer({ onClose, onWallpaperChange }: WallpaperCustomizerProps) {
@@ -189,7 +199,7 @@ export default function WallpaperCustomizer({ onClose, onWallpaperChange }: Wall
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-lofi-card rounded-xl shadow-lg p-6 rainbow-border-soft max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-space-whale-heading text-space-whale-navy">Customize Your Space</h2>
+          <h2 className="text-2xl font-space-whale-heading text-space-whale-navy">Customise Your Space</h2>
           <button
             onClick={onClose}
             className="text-space-whale-purple hover:text-space-whale-navy transition-colors"
@@ -213,10 +223,19 @@ export default function WallpaperCustomizer({ onClose, onWallpaperChange }: Wall
                       : 'border-space-whale-lavender/30 hover:border-space-whale-purple/50'
                   }`}
                 >
-                  <div className={`w-full h-20 rounded-lg mb-3 bg-gradient-to-br ${wallpaper.gradient} flex items-center justify-center`}>
-                    <div className="text-white/80">
-                      {wallpaper.icon}
-                    </div>
+                  <div
+                    className={`relative w-full h-24 rounded-lg mb-3 overflow-hidden bg-gradient-to-br ${wallpaper.gradient} flex items-center justify-center`}
+                  >
+                    {'imageSrc' in wallpaper && wallpaper.imageSrc ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={wallpaper.imageSrc}
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-space-whale-navy/50">{wallpaper.icon}</div>
+                    )}
                   </div>
                   <div className="text-left">
                     <h4 className="font-medium text-space-whale-navy">{wallpaper.name}</h4>

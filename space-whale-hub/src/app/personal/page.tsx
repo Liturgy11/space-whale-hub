@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import AppShell from "@/components/layout/AppShell";
 import SpacePageHeader from "@/components/layout/SpacePageHeader";
@@ -13,7 +13,27 @@ import JournalEntryForm from "@/components/journal/JournalEntryForm";
 import JournalList from "@/components/journal/JournalList";
 import MediaUpload from "@/components/media/MediaUpload";
 import MoodBoardUpload from "@/components/media/MoodBoardUpload";
-import WallpaperCustomizer from "@/components/personal/WallpaperCustomizer";
+import WallpaperCustomizer, { PRESET_WALLPAPER_IMAGES } from "@/components/personal/WallpaperCustomizer";
+
+const wallpaperStorageKey = (userId: string) => `inner_space_wallpaper_${userId}`
+
+function readStoredWallpaper(userId: string | undefined): string {
+  if (!userId || typeof window === 'undefined') return 'minimal'
+  try {
+    return localStorage.getItem(wallpaperStorageKey(userId)) || 'minimal'
+  } catch {
+    return 'minimal'
+  }
+}
+
+function writeStoredWallpaper(userId: string | undefined, wallpaper: string) {
+  if (!userId || typeof window === 'undefined') return
+  try {
+    localStorage.setItem(wallpaperStorageKey(userId), wallpaper)
+  } catch (error) {
+    console.warn('Could not save wallpaper preference:', error)
+  }
+}
 
 function PersonalSpaceContent() {
   const { user } = useAuth();
@@ -24,29 +44,38 @@ function PersonalSpaceContent() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [currentWallpaper, setCurrentWallpaper] = useState<string>('minimal');
 
+  // Restore wallpaper when returning to Inner Space (state alone resets on unmount)
+  useEffect(() => {
+    if (!user?.id) return
+    setCurrentWallpaper(readStoredWallpaper(user.id))
+  }, [user?.id])
+
+  const handleWallpaperChange = (wallpaper: string) => {
+    setCurrentWallpaper(wallpaper)
+    writeStoredWallpaper(user?.id, wallpaper)
+    setShowWallpaperCustomizer(false)
+  }
+
   const handleEntryCreated = () => {
     setShowForm(false);
     setRefreshKey(prev => prev + 1); // Trigger list refresh
   };
 
 
-  const isCustomImage = currentWallpaper.startsWith('data:image/') ||
-                       currentWallpaper.startsWith('http://') ||
-                       currentWallpaper.startsWith('https://')
+  const isUploadedImage =
+    currentWallpaper.startsWith('data:image/') ||
+    currentWallpaper.startsWith('http://') ||
+    currentWallpaper.startsWith('https://')
+
+  const presetImageSrc = PRESET_WALLPAPER_IMAGES[currentWallpaper]
+  const artWallpaperSrc = isUploadedImage ? currentWallpaper : presetImageSrc
 
   const getWallpaperClass = () => {
-    if (isCustomImage) {
+    if (artWallpaperSrc) {
       return 'min-h-screen bg-space-whale-navy/5'
     }
 
-    const wallpapers: Record<string, string> = {
-      'garden': 'min-h-screen bg-gradient-to-br from-green-100 via-emerald-50 to-teal-100',
-      'cosmic': 'min-h-screen bg-gradient-to-br from-purple-900 via-indigo-800 to-blue-900',
-      'psychedelic': 'min-h-screen bg-gradient-to-br from-pink-400 via-purple-500 to-indigo-600',
-      'minimal': 'min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100'
-    }
-
-    return wallpapers[currentWallpaper] || wallpapers['minimal']
+    return 'min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100'
   }
 
   return (
@@ -56,10 +85,10 @@ function PersonalSpaceContent() {
       logoSize="sm"
       className={getWallpaperClass()}
       backgroundOverlay={
-        isCustomImage ? (
+        artWallpaperSrc ? (
           <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden>
             <img
-              src={currentWallpaper}
+              src={artWallpaperSrc}
               alt=""
               className="absolute inset-0 h-full w-full object-cover object-center"
               decoding="async"
@@ -228,10 +257,7 @@ function PersonalSpaceContent() {
       {showWallpaperCustomizer && (
         <WallpaperCustomizer
           onClose={() => setShowWallpaperCustomizer(false)}
-          onWallpaperChange={(wallpaper) => {
-            setCurrentWallpaper(wallpaper)
-            setShowWallpaperCustomizer(false)
-          }}
+          onWallpaperChange={handleWallpaperChange}
         />
       )}
     </AppShell>
