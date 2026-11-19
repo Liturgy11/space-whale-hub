@@ -36,8 +36,7 @@ function PersonalSpaceContent() {
 
   const getWallpaperClass = () => {
     if (isCustomImage) {
-      // Soft wash behind contained artwork so the image isn't stretched to fill
-      return 'min-h-screen bg-gradient-to-br from-space-whale-lavender/20 via-white to-accent-pink/10'
+      return 'min-h-screen bg-space-whale-navy/5'
     }
 
     const wallpapers: Record<string, string> = {
@@ -58,16 +57,16 @@ function PersonalSpaceContent() {
       className={getWallpaperClass()}
       backgroundOverlay={
         isCustomImage ? (
-          <div
-            className="fixed inset-0 pointer-events-none z-0"
-            style={{
-              backgroundImage: `url(${currentWallpaper})`,
-              backgroundSize: 'contain',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-              opacity: 0.55,
-            }}
-          />
+          <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden>
+            {/* Real img + object-cover keeps aspect ratio; no CSS background stretch */}
+            <img
+              src={currentWallpaper}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover object-center"
+            />
+            {/* Soft scrim for readability — image itself stays full colour */}
+            <div className="absolute inset-0 bg-white/35" />
+          </div>
         ) : (
           <div
             className="fixed inset-0 bg-cover bg-center pointer-events-none z-0"
