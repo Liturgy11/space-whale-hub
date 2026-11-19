@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { Search, Tag, FolderOpen, Calendar, MapPin, Image as ImageIcon } from 'lucide-react'
 // Removed direct database import - using secure API route instead
-import ArchiveUpload from './ArchiveUpload'
 import ArchiveItemModal from './ArchiveItemModal'
 import LinkPreview from './LinkPreview'
 import { getSignedUrls, createSignedUrlMap } from '@/lib/signed-urls'
@@ -136,11 +135,6 @@ export default function ArchivePage() {
     }
   }, [isClient])
 
-  const handleUploadComplete = () => {
-    // Refresh list after upload (albums may change if covers set later)
-    loadConstellationItems()
-  }
-
   const handleDeleteItem = (id: string) => {
     // Legacy for modal path; noop in albums grid
     setIsModalOpen(false)
@@ -205,14 +199,7 @@ export default function ArchivePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-space-whale-lavender/20 via-white to-space-whale-purple/10" suppressHydrationWarning>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <p className="text-lg text-space-whale-navy/70 font-space-whale-body">
-              I&apos;ll be uploading albums from past workshops and Pride Poetry gatherings over time. Watch this space...
-            </p>
-            <ArchiveUpload onUploadComplete={handleUploadComplete} />
-          </div>
-        </div>
+        {/* Contribute / Share upload parked for soft launch — use Admin → Albums; restore for gallery later */}
 
         {/* Search */}
         <div className="mb-8">
@@ -290,9 +277,7 @@ export default function ArchivePage() {
               >
                 Clear search
               </button>
-            ) : (
-              <ArchiveUpload onUploadComplete={handleUploadComplete} />
-            )}
+            ) : null}
           </EmptyState>
         )}
       </main>

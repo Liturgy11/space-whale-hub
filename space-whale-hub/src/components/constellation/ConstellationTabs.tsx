@@ -44,7 +44,7 @@ export default function ConstellationTabs() {
           <SpacePageHeader
             iconSrc="/illustrations/star.png"
             title="Constellation"
-            description="Archive of Space Whale events — pride poetry, community workshops, and creative gatherings."
+            description="An archive of Space Whale gatherings, Pride Poetry events, and a gallery."
             className="mb-4 sm:mb-6"
           />
         </div>

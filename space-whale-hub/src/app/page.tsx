@@ -70,7 +70,7 @@ const featureCards = [
   {
     href: "/archive",
     label: "Constellation",
-    description: "Archive of Space Whale events - pride poetry, community workshops, and creative gatherings.",
+    description: "An archive of Space Whale gatherings, Pride Poetry events, and a gallery.",
     icon: { iconSrc: "/illustrations/star.png" },
   },
 ] as const;
