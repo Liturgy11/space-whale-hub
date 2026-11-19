@@ -213,10 +213,10 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
             value={content}
             onChange={(e) => setContent(e.target.value)}
             required
-            rows={6}
+            rows={4}
             autoFocus
             aria-label="Journal entry"
-            className="mobile-textarea w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg form-surface text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors resize-none"
+            className="w-full min-h-[6.5rem] max-h-[40vh] px-4 py-3 rounded-lg border border-space-whale-lavender/40 bg-space-whale-lavender/15 text-space-whale-navy text-base placeholder:text-space-whale-navy/40 focus:ring-2 focus:ring-space-whale-purple focus:border-transparent focus:bg-space-whale-lavender/20 transition-colors resize-y"
             maxLength={10000}
           />
           <div className="flex justify-between items-center mt-1.5">
