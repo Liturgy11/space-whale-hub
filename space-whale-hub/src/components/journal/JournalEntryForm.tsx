@@ -17,6 +17,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
   const { user } = useAuth()
   const [mounted, setMounted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [mediaUrl, setMediaUrl] = useState('')
   const [mediaType, setMediaType] = useState('')
@@ -168,6 +169,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          title: title.trim() || undefined,
           content: finalContent,
           content_encrypted: encryptedData?.encrypted || null,
           is_encrypted: isEncrypted,
@@ -185,6 +187,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
       const result = await response.json()
       if (!result.success) throw new Error(result.error || 'Failed to create journal entry')
 
+      setTitle('')
       setContent('')
       clearMedia()
       setEnableEncryption(false)
@@ -225,6 +228,23 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
               {content.length}/10,000
             </span>
           </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="journal-entry-title"
+            className="block text-sm font-space-whale-body text-space-whale-navy mb-1.5"
+          >
+            Title (optional)
+          </label>
+          <input
+            id="journal-entry-title"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="mobile-input w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-space-whale-lavender/10 text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple/40 focus:border-transparent transition-colors"
+            maxLength={200}
+          />
         </div>
 
         <div>

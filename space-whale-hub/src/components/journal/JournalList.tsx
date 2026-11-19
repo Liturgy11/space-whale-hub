@@ -856,9 +856,11 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
         <div key={entry.id} className="bg-lofi-card rounded-xl shadow-lg p-3 sm:p-5 hover:shadow-xl transition-all duration-300 rainbow-border-soft overflow-hidden">
           <div className="flex flex-row justify-between items-start gap-2 mb-2">
             <div className="flex-1 min-w-0">
-              <h3 className="text-base sm:text-lg font-space-whale-subheading text-space-whale-navy break-words mb-1">
-                {entry.title || 'Untitled Entry'}
-              </h3>
+              {entry.title?.trim() && (
+                <h3 className="text-base sm:text-lg font-space-whale-subheading text-space-whale-navy break-words mb-1">
+                  {entry.title.trim()}
+                </h3>
+              )}
 
               <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-space-whale-purple font-space-whale-body">
                 <span className="inline-flex items-center gap-1">
