@@ -242,7 +242,7 @@ export default function JournalEntryForm({ onSuccess, onCancel }: JournalEntryFo
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mobile-input w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg bg-space-whale-lavender/10 text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple/40 focus:border-transparent transition-colors"
+            className="mobile-input w-full px-4 py-3 rounded-lg border border-space-whale-lavender/50 bg-space-whale-lavender/15 text-space-whale-navy focus:outline-none focus:ring-2 focus:ring-space-whale-purple/40 focus:border-space-whale-purple/50 focus:bg-space-whale-lavender/20 transition-colors"
             maxLength={200}
           />
         </div>

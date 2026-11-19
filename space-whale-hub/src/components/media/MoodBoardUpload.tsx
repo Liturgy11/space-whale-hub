@@ -277,7 +277,7 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mobile-input w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg form-surface text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors"
+            className="mobile-input w-full px-4 py-3 rounded-lg border border-space-whale-lavender/50 bg-space-whale-lavender/15 text-space-whale-navy focus:outline-none focus:ring-2 focus:ring-space-whale-purple/40 focus:border-space-whale-purple/50 focus:bg-space-whale-lavender/20 transition-colors"
             maxLength={100}
           />
         </div>
