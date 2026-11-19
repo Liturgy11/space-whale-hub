@@ -24,6 +24,7 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
   const [uploading, setUploading] = useState(false)
   const [files, setFiles] = useState<UploadedFile[]>([])
   const [error, setError] = useState('')
+  const [title, setTitle] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const filesRef = useRef<UploadedFile[]>([])
 
@@ -163,7 +164,8 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
 
       onUploadComplete?.(
         results.map((result) => result.url),
-        'moodboard'
+        'moodboard',
+        title.trim() || undefined
       )
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Upload failed. Please try again.')
@@ -262,6 +264,23 @@ export default function MoodBoardUpload({ onUploadComplete, onCancel }: MoodBoar
             </button>
           </>
         )}
+
+        <div>
+          <label
+            htmlFor="moodboard-title"
+            className="block text-sm font-space-whale-body text-space-whale-navy mb-1.5"
+          >
+            Title (optional)
+          </label>
+          <input
+            id="moodboard-title"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="mobile-input w-full px-4 py-3 border border-space-whale-lavender/30 rounded-lg form-surface text-space-whale-navy focus:ring-2 focus:ring-space-whale-purple focus:border-transparent transition-colors"
+            maxLength={100}
+          />
+        </div>
 
         <input
           ref={fileInputRef}
