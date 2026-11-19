@@ -174,23 +174,8 @@ function HomeContent() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
-          {/* Space Whale Logo */}
-          <div className="mb-8">
-            <Image
-              src="/space-whale-social.png"
-              alt="Space Whale"
-              width={180}
-              height={180}
-              className="mx-auto rounded-full w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44"
-              priority
-            />
-          </div>
-          
           <h1 className="text-4xl md:text-6xl font-space-whale-heading text-space-whale-navy mb-8">
-            Welcome fellow travellers{" "}
-            <span className="bg-gradient-to-r from-space-whale-purple via-accent-pink to-accent-orange bg-clip-text text-transparent">
-              to the Space Whale Portal
-            </span>
+            Welcome, fellow travellers
           </h1>
 
           {/* Explore Button */}
