@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState, useMemo } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ReactFlow,
   Node,
@@ -19,6 +19,7 @@ import '@xyflow/react/dist/style.css'
 import { Sparkles, X, MapPin, Heart, Star } from 'lucide-react'
 import { SpaceIllustration } from '@/components/ui/EmptyState'
 import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
+import { secureFetch } from '@/lib/secure-fetch'
 
 const MUSHROOM_ILLUSTRATION = '/illustrations/mushroom-3.png'
 
@@ -44,6 +45,8 @@ interface Spore {
   offerings: string[]
   curiosities: string[]
   connection_formats: string[]
+  position_x?: number | null
+  position_y?: number | null
 }
 
 interface Connection {
@@ -78,13 +81,17 @@ function SporeAvatarFallback({ displayName, className = 'h-8 w-8' }: { displayNa
 // Custom spore node
 function SporeNode({ data }: NodeProps) {
   const spore = data.spore as Spore
+  const isOwn = Boolean(data.isOwn)
 
   return (
     <>
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
       <div
-        className="flex flex-col items-center cursor-pointer group"
+        className={`flex flex-col items-center group ${
+          isOwn ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'
+        }`}
         style={{ width: 72 }}
+        title={isOwn ? 'Drag to plant yourself in the forest' : undefined}
       >
         <div
           className="w-14 h-14 rounded-full border-2 border-space-whale-purple/60 shadow-lg overflow-hidden flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:border-space-whale-purple group-hover:shadow-space-whale-purple/40 group-hover:shadow-xl"
@@ -95,7 +102,7 @@ function SporeNode({ data }: NodeProps) {
           }}
         >
           {spore.avatar_url ? (
-            <img src={spore.avatar_url} alt={spore.display_name} className="w-full h-full object-cover" />
+            <img src={spore.avatar_url} alt={spore.display_name} className="w-full h-full object-cover pointer-events-none" draggable={false} />
           ) : (
             <SporeAvatarFallback displayName={spore.display_name} />
           )}
@@ -149,6 +156,46 @@ interface MycelialNetworkProps {
   onCurrentSporeLoaded?: (spore: Spore | null) => void
 }
 
+function hasSavedPosition(spore: Spore): boolean {
+  return spore.position_x != null && spore.position_y != null &&
+    Number.isFinite(spore.position_x) && Number.isFinite(spore.position_y)
+}
+
+function localPositionKey(userId: string) {
+  return `mycelial_spore_position_${userId}`
+}
+
+function readLocalPosition(userId: string | undefined): { x: number; y: number } | null {
+  if (!userId || typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(localPositionKey(userId))
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as { x?: unknown; y?: unknown }
+    if (!Number.isFinite(parsed.x) || !Number.isFinite(parsed.y)) return null
+    return { x: parsed.x as number, y: parsed.y as number }
+  } catch {
+    return null
+  }
+}
+
+function writeLocalPosition(userId: string, x: number, y: number) {
+  try {
+    localStorage.setItem(localPositionKey(userId), JSON.stringify({ x, y }))
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+function withLocalFallback(spores: Spore[], currentUserId?: string): Spore[] {
+  if (!currentUserId) return spores
+  return spores.map(spore => {
+    if (spore.user_id !== currentUserId || hasSavedPosition(spore)) return spore
+    const local = readLocalPosition(currentUserId)
+    if (!local) return spore
+    return { ...spore, position_x: local.x, position_y: local.y }
+  })
+}
+
 export default function MycelialNetwork({ currentUserId, onEditSpore, onCurrentSporeLoaded }: MycelialNetworkProps) {
   const [spores, setSpores] = useState<Spore[]>([])
   const [connections, setConnections] = useState<Connection[]>([])
@@ -156,16 +203,18 @@ export default function MycelialNetwork({ currentUserId, onEditSpore, onCurrentS
   const [selectedSpore, setSelectedSpore] = useState<Spore | null>(null)
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
+  const suppressClickRef = useRef(false)
 
   const fetchSpores = useCallback(async () => {
     try {
       const res = await fetch('/api/get-spores')
       const json = await res.json()
       if (json.success) {
-        setSpores(json.spores)
+        const nextSpores = withLocalFallback(json.spores as Spore[], currentUserId)
+        setSpores(nextSpores)
         setConnections(json.connections)
         if (onCurrentSporeLoaded) {
-          const mine = json.spores.find((s: Spore) => s.user_id === currentUserId) ?? null
+          const mine = nextSpores.find((s: Spore) => s.user_id === currentUserId) ?? null
           onCurrentSporeLoaded(mine)
         }
       }
@@ -186,14 +235,21 @@ export default function MycelialNetwork({ currentUserId, onEditSpore, onCurrentS
     const layoutMap = new Map(layout.map(p => [p.id, p]))
 
     const newNodes: Node[] = spores.map(spore => {
-      const pos = layoutMap.get(spore.user_id) || { x: 0, y: 0 }
+      const isOwn = spore.user_id === currentUserId
+      const fallback = layoutMap.get(spore.user_id) || { x: 0, y: 0 }
+      const position = hasSavedPosition(spore)
+        ? { x: spore.position_x as number, y: spore.position_y as number }
+        : { x: fallback.x + 400, y: fallback.y + 300 }
+
       return {
         id: spore.user_id,
         type: 'spore',
-        position: { x: pos.x + 400, y: pos.y + 300 },
+        position,
+        draggable: isOwn,
+        selectable: isOwn,
         data: {
           spore,
-          onClick: () => setSelectedSpore(spore),
+          isOwn,
         },
       }
     })
@@ -214,12 +270,50 @@ export default function MycelialNetwork({ currentUserId, onEditSpore, onCurrentS
 
     setNodes(newNodes)
     setEdges(newEdges)
-  }, [spores, connections, setNodes, setEdges])
+  }, [spores, connections, currentUserId, setNodes, setEdges])
 
-  const onNodeClick = useCallback((_: any, node: Node) => {
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false
+      return
+    }
     const spore = spores.find(s => s.user_id === node.id)
     if (spore) setSelectedSpore(spore)
   }, [spores])
+
+  const onNodeDragStart = useCallback(() => {
+    suppressClickRef.current = true
+  }, [])
+
+  const onNodeDragStop = useCallback(async (_: React.MouseEvent, node: Node) => {
+    if (!currentUserId || node.id !== currentUserId) return
+
+    const position_x = node.position.x
+    const position_y = node.position.y
+
+    writeLocalPosition(currentUserId, position_x, position_y)
+    setSpores(prev =>
+      prev.map(spore =>
+        spore.user_id === node.id
+          ? { ...spore, position_x, position_y }
+          : spore
+      )
+    )
+
+    try {
+      const res = await secureFetch('/api/update-spore-position', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ position_x, position_y }),
+      })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        console.error('Failed to save spore position:', json)
+      }
+    } catch (err) {
+      console.error('Failed to save spore position:', err)
+    }
+  }, [currentUserId])
 
   const userHasSpore = spores.some(s => s.user_id === currentUserId)
 
@@ -272,6 +366,9 @@ export default function MycelialNetwork({ currentUserId, onEditSpore, onCurrentS
             <span className="text-space-whale-navy/70 capitalize">{EDGE_LABELS[type as keyof typeof EDGE_LABELS]}</span>
           </div>
         ))}
+        {userHasSpore && (
+          <p className="pt-1.5 text-[11px] text-space-whale-purple/70">Drag your spore to plant it</p>
+        )}
       </div>
 
       {/* Edit / Add spore button */}
@@ -286,20 +383,23 @@ export default function MycelialNetwork({ currentUserId, onEditSpore, onCurrentS
       )}
 
       <ReactFlow
-        className="mycelial-forest"
+        className="mycelial-forest h-full"
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
+        onNodeDragStart={onNodeDragStart}
+        onNodeDragStop={onNodeDragStop}
         nodeTypes={nodeTypes}
         fitView
         fitViewOptions={{ padding: 0.3 }}
         minZoom={0.3}
         maxZoom={2}
-        nodesDraggable={false}
+        nodesDraggable
         nodesConnectable={false}
-        elementsSelectable={false}
+        elementsSelectable
+        selectNodesOnDrag={false}
         panOnDrag={false}
         panOnScroll={false}
         zoomOnScroll={false}

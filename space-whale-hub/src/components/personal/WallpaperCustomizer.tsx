@@ -88,7 +88,6 @@ const presetWallpapers = [
   {
     id: 'garden',
     name: 'Garden Vibes',
-    description: 'Lush garden painting — colour and growth',
     imageSrc: PRESET_WALLPAPER_IMAGES.garden,
     gradient: 'from-green-100 via-emerald-50 to-teal-100',
     icon: <Leaf className="h-6 w-6" />,
@@ -96,7 +95,6 @@ const presetWallpapers = [
   {
     id: 'cosmic',
     name: 'Cosmic Vibes',
-    description: 'Night sky, stars, and a rainbow wave',
     imageSrc: PRESET_WALLPAPER_IMAGES.cosmic,
     gradient: 'from-purple-900 via-indigo-800 to-blue-900',
     icon: <Sparkles className="h-6 w-6" />,
@@ -104,7 +102,6 @@ const presetWallpapers = [
   {
     id: 'psychedelic',
     name: 'Psychedelic Vibes',
-    description: 'Illumination — patterned portals and colour',
     imageSrc: PRESET_WALLPAPER_IMAGES.psychedelic,
     gradient: 'from-pink-400 via-purple-500 to-indigo-600',
     icon: <Zap className="h-6 w-6" />,
@@ -112,7 +109,6 @@ const presetWallpapers = [
   {
     id: 'minimal',
     name: 'Minimal Vibes',
-    description: 'Clean, simple, and calming',
     gradient: 'from-gray-50 via-white to-gray-100',
     icon: <Palette className="h-6 w-6" />,
   },
@@ -239,7 +235,6 @@ export default function WallpaperCustomizer({ onClose, onWallpaperChange }: Wall
                   </div>
                   <div className="text-left">
                     <h4 className="font-medium text-space-whale-navy">{wallpaper.name}</h4>
-                    <p className="text-sm text-space-whale-purple">{wallpaper.description}</p>
                   </div>
                 </button>
               ))}

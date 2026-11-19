@@ -503,14 +503,23 @@ body {
 }
 
 /* Respect reduced motion — trauma-informed, neuroaffirming */
-/* Forest artwork lives on the React Flow viewport so spores stay planted when the view moves. */
-.mycelial-forest .react-flow__viewport {
+/*
+ * Forest art on the React Flow root (not .react-flow__viewport).
+ * fitView transforms the viewport — putting the image there crops it into a
+ * sharp rectangle after layout. Pan/zoom are off, so a fixed pane bg is correct.
+ */
+.mycelial-forest.react-flow,
+.mycelial-forest {
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.45)),
     url('/forest-background.png');
   background-size: cover, cover;
   background-position: center, center;
   background-repeat: no-repeat;
+}
+
+.mycelial-forest .react-flow__viewport {
+  background: transparent;
 }
 
 .mycelial-forest .react-flow__background {
