@@ -1,14 +1,18 @@
 import { Calendar, Clock, MapPin, DollarSign } from 'lucide-react'
 
+/** Direct subscribe page for Space Whale Sojourns */
+const OPEN_STUDIO_SUBSTACK_URL = 'https://litmccarthy.substack.com/subscribe'
+
 const openStudio = {
   title: 'Space Whale Open Studio',
   facilitator: 'Lit (Space Whale)',
   description:
-    'A monthly online creative session where you can work on your own projects alongside others or respond to creative prompts. A supportive space to create together.',
+    'A monthly online creative session where you can work on your own projects alongside others or respond to creative prompts. Hosted via Space Whale Sojourns on Substack — subscribe to get session access and the letters between gatherings.',
   note: 'ND and Rainbow friendly.',
-  date: 'Monthly via Zoom',
+  date: 'Monthly on Substack',
   time: '60–90 minutes',
-  price: 'Pricing on request',
+  location: 'Space Whale Sojourns (Substack)',
+  price: 'Free to subscribe · session details in the letters',
 }
 
 const hostMailto =
@@ -57,22 +61,24 @@ export default function GatheringsPanel() {
           </li>
           <li className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-cyan-600 flex-shrink-0" aria-hidden />
-            Online via Zoom
+            {openStudio.location}
           </li>
           <li className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-cyan-600 flex-shrink-0" aria-hidden />
             {openStudio.price}
           </li>
         </ul>
-        <p className="text-sm text-space-whale-navy/80 font-space-whale-body mt-5">
-          Want to join? Email{' '}
-          <a
-            href="mailto:hellospacewhale@gmail.com?subject=Open%20Studio"
-            className="text-space-whale-purple hover:text-space-whale-navy underline underline-offset-2"
-          >
-            hellospacewhale@gmail.com
-          </a>
+        <p className="text-sm text-space-whale-navy/80 font-space-whale-body mt-5 mb-4">
+          Subscribe to Space Whale Sojourns for Open Studio access and updates.
         </p>
+        <a
+          href={OPEN_STUDIO_SUBSTACK_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg border-2 border-space-whale-purple text-space-whale-purple text-sm font-space-whale-accent hover:bg-space-whale-lavender/30 transition-colors"
+        >
+          Subscribe on Substack
+        </a>
       </article>
 
       <section className="border-t border-space-whale-lavender/30 pt-8">
