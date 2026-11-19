@@ -989,7 +989,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                     onChange={(e) => setEditContent(e.target.value)}
                     className="w-full px-3 py-2 border border-space-whale-lavender/30 rounded-lg focus:ring-2 focus:ring-space-whale-purple focus:border-transparent"
                     rows={4}
-                    placeholder={editMediaType === 'moodboard' ? 'Add a caption or thoughts...' : "What's on your mind?"}
+                    placeholder={editMediaType === 'moodboard' ? 'Add a caption…' : undefined}
                   />
                 </div>
                 
