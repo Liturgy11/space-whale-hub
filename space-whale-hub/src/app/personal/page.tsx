@@ -14,6 +14,8 @@ import JournalList from "@/components/journal/JournalList";
 import MediaUpload from "@/components/media/MediaUpload";
 import MoodBoardUpload from "@/components/media/MoodBoardUpload";
 import WallpaperCustomizer, { PRESET_WALLPAPER_IMAGES } from "@/components/personal/WallpaperCustomizer";
+import { getSignedUrl } from "@/lib/signed-urls";
+import { isJournalStorageUrl } from "@/lib/storage-urls";
 
 const wallpaperStorageKey = (userId: string) => `inner_space_wallpaper_${userId}`
 
@@ -43,12 +45,34 @@ function PersonalSpaceContent() {
   const [showWallpaperCustomizer, setShowWallpaperCustomizer] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [currentWallpaper, setCurrentWallpaper] = useState<string>('minimal');
+  const [signedWallpaperUrl, setSignedWallpaperUrl] = useState<string | null>(null);
 
   // Restore wallpaper when returning to Inner Space (state alone resets on unmount)
   useEffect(() => {
     if (!user?.id) return
     setCurrentWallpaper(readStoredWallpaper(user.id))
   }, [user?.id])
+
+  // Custom wallpapers in the journal bucket need signed URLs once the bucket is private
+  useEffect(() => {
+    let cancelled = false
+    async function signIfNeeded() {
+      if (!isJournalStorageUrl(currentWallpaper)) {
+        setSignedWallpaperUrl(null)
+        return
+      }
+      try {
+        const signed = await getSignedUrl(currentWallpaper)
+        if (!cancelled) setSignedWallpaperUrl(signed)
+      } catch {
+        if (!cancelled) setSignedWallpaperUrl(null)
+      }
+    }
+    signIfNeeded()
+    return () => {
+      cancelled = true
+    }
+  }, [currentWallpaper])
 
   const handleWallpaperChange = (wallpaper: string) => {
     setCurrentWallpaper(wallpaper)
@@ -68,7 +92,9 @@ function PersonalSpaceContent() {
     currentWallpaper.startsWith('https://')
 
   const presetImageSrc = PRESET_WALLPAPER_IMAGES[currentWallpaper]
-  const artWallpaperSrc = isUploadedImage ? currentWallpaper : presetImageSrc
+  const artWallpaperSrc = isUploadedImage
+    ? (signedWallpaperUrl || currentWallpaper)
+    : presetImageSrc
 
   const getWallpaperClass = () => {
     if (artWallpaperSrc) {

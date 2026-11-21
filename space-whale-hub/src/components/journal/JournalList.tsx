@@ -13,6 +13,8 @@ import { getMoodBoardDisplayUrls, getMoodBoardImageUrls } from '@/lib/mood-board
 import EmptyState from '@/components/ui/EmptyState'
 import { SPACE_ILLUSTRATIONS } from '@/lib/space-illustrations'
 import { secureFetch } from '@/lib/secure-fetch'
+import { createSignedUrlMap, getSignedUrls } from '@/lib/signed-urls'
+import { collectJournalMediaUrls, resolveDisplayUrl } from '@/lib/storage-urls'
 
 const JOURNAL_CACHE_KEY = 'swp_journal_cache'
 const JOURNAL_CACHE_TTL = 3 * 60 * 1000 // 3 minutes
@@ -40,6 +42,7 @@ interface JournalListProps {
 export default function JournalList({ refreshTrigger }: JournalListProps) {
   const { user } = useAuth()
   const [entries, setEntries] = useState<any[]>([])
+  const [signedUrlMap, setSignedUrlMap] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
@@ -128,6 +131,19 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
       const data = result.entries || []
       setEntries(data)
       writeJournalCache(user.id, data)
+
+      // Journal bucket is private — mint short-lived signed URLs for display
+      const mediaUrls = collectJournalMediaUrls(data)
+      if (mediaUrls.length > 0) {
+        try {
+          const signed = await getSignedUrls(mediaUrls)
+          setSignedUrlMap(createSignedUrlMap(signed))
+        } catch (signError) {
+          console.warn('Journal media signing skipped:', signError)
+        }
+      } else {
+        setSignedUrlMap({})
+      }
     } catch (err: any) {
       console.error('Error loading entries:', err)
       if (!silent) setError(err.message)
@@ -665,7 +681,11 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
             )}
             {shareModalEntry.media_type === 'image' && shareModalEntry.media_url && (
               <div className="mb-4">
-                <img src={shareModalEntry.media_url} alt="Post preview" className="w-full h-32 object-cover rounded-lg" />
+                <img
+                  src={resolveDisplayUrl(shareModalEntry.media_url, signedUrlMap)}
+                  alt="Post preview"
+                  className="w-full h-32 object-cover rounded-lg"
+                />
               </div>
             )}
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -1070,13 +1090,14 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                     onClick={(e) => {
                       e.stopPropagation()
                       if (entry.media_url) {
-                        setShowImageUrl(entry.media_url)
+                        const display = resolveDisplayUrl(entry.media_url, signedUrlMap)
+                        setShowImageUrl(display)
                         setShowImageModal(true)
                       }
                     }}
                   >
                     <img
-                      src={entry.media_url}
+                      src={resolveDisplayUrl(entry.media_url, signedUrlMap)}
                       alt="Journal media"
                       className="w-full h-72 sm:h-96 object-cover rounded-xl shadow-md transition-transform group-hover:scale-[1.02]"
                       loading="lazy"
@@ -1100,7 +1121,9 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                 ) : entry.media_type === 'moodboard' ? (
                   <div className="space-y-3">
                     <MoodBoardGallery
-                      tags={entry.tags}
+                      urls={getMoodBoardDisplayUrls(entry).map((u) =>
+                        resolveDisplayUrl(u, signedUrlMap)
+                      )}
                       onImageClick={(index, allUrls) =>
                         openImageLightbox(allUrls[index], allUrls, index)
                       }
@@ -1113,7 +1136,7 @@ export default function JournalList({ refreshTrigger }: JournalListProps) {
                   </div>
                 ) : entry.media_type === 'video' ? (
                   <video
-                    src={entry.media_url}
+                    src={resolveDisplayUrl(entry.media_url, signedUrlMap)}
                     controls
                     className="w-full h-72 sm:h-96 object-cover rounded-xl shadow-md"
                   />

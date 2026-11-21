@@ -4,6 +4,19 @@ import { verifyAuthUser } from '@/lib/auth-server'
 
 export const dynamic = 'force-dynamic'
 
+function parseStoragePublicUrl(url: string): { bucket: string; path: string } | null {
+  const marker = '/storage/v1/object/public/'
+  const idx = url.indexOf(marker)
+  if (idx === -1) return null
+  const rest = url.slice(idx + marker.length)
+  const slash = rest.indexOf('/')
+  if (slash <= 0) return null
+  const bucket = rest.slice(0, slash)
+  const path = decodeURIComponent(rest.slice(slash + 1).split('?')[0] || '')
+  if (!bucket || !path) return null
+  return { bucket, path }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const auth = await verifyAuthUser(request)
@@ -13,30 +26,34 @@ export async function POST(request: NextRequest) {
     const { media_urls } = await request.json()
 
     if (!media_urls || !Array.isArray(media_urls)) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'media_urls array is required' 
-      }, { status: 400 })
+      return NextResponse.json(
+        { success: false, error: 'media_urls array is required' },
+        { status: 400 }
+      )
     }
 
-    // Generate signed URLs for each media URL
     const signedUrls = await Promise.all(
       media_urls.map(async (url: string) => {
         try {
-          // Extract bucket and path from the public URL
-          // Format: https://[project].supabase.co/storage/v1/object/public/[bucket]/[path]
-          const urlParts = url.split('/storage/v1/object/public/')
-          if (urlParts.length !== 2) {
-            console.warn('Invalid media URL format:', url)
+          const parsed = parseStoragePublicUrl(url)
+          if (!parsed) {
             return { original_url: url, signed_url: url, error: 'Invalid URL format' }
           }
 
-          const [bucket, path] = urlParts[1].split('/', 2)
-          
-          // Generate signed URL (valid for 1 hour)
+          const { bucket, path } = parsed
+
+          // Journal objects are private — only the owner may mint a signed URL
+          if (bucket === 'journal' && !path.startsWith(`${auth.userId}/`)) {
+            return {
+              original_url: url,
+              signed_url: url,
+              error: 'Not allowed to access this journal media',
+            }
+          }
+
           const { data, error } = await supabaseAdmin.storage
             .from(bucket)
-            .createSignedUrl(path, 3600) // 1 hour expiration
+            .createSignedUrl(path, 3600)
 
           if (error) {
             console.error('Error creating signed URL for:', url, error)
@@ -46,32 +63,20 @@ export async function POST(request: NextRequest) {
           return {
             original_url: url,
             signed_url: data.signedUrl,
-            expires_at: new Date(Date.now() + 3600 * 1000).toISOString()
+            expires_at: new Date(Date.now() + 3600 * 1000).toISOString(),
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
           console.error('Error processing URL:', url, error)
-          return { 
-            original_url: url, 
-            signed_url: url, 
-            error: error.message 
-          }
+          return { original_url: url, signed_url: url, error: message }
         }
       })
     )
 
-    return NextResponse.json({ 
-      success: true, 
-      data: signedUrls 
-    })
-
-  } catch (error: any) {
+    return NextResponse.json({ success: true, data: signedUrls })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
     console.error('API error generating signed URLs:', error)
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message 
-    }, { status: 500 })
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
   }
 }
-
-
-
