@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,9 +14,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate the invite code using our database function
-    const { data, error } = await supabase.rpc('validate_invite_code', {
-      invite_code: inviteCode
+    const supabaseAdmin = getSupabaseAdmin()
+    const { data, error } = await supabaseAdmin.rpc('validate_invite_code', {
+      invite_code: inviteCode,
     })
 
     if (error) {
@@ -27,9 +29,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       valid: data,
-      message: data ? 'Invite code is valid' : 'Invalid or expired invite code'
+      message: data ? 'Invite code is valid' : 'Invalid or expired invite code',
     })
-
   } catch (error) {
     console.error('Error in invite validation:', error)
     return NextResponse.json(
@@ -38,5 +39,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
-

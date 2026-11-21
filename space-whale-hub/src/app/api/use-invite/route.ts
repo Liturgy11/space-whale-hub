@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { assertMatchingUserId, verifyAuthUser } from '@/lib/auth-server'
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAuthUser(request)
+    if (!auth.ok) return auth.response
+
     const { inviteCode, userId } = await request.json()
 
     if (!inviteCode || !userId) {
@@ -12,10 +18,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Use the invite code using our database function
-    const { data, error } = await supabase.rpc('use_invite_code', {
+    const mismatch = assertMatchingUserId(auth.userId, userId)
+    if (mismatch) return mismatch
+
+    const supabaseAdmin = getSupabaseAdmin()
+    const { data, error } = await supabaseAdmin.rpc('use_invite_code', {
       invite_code: inviteCode,
-      user_id: userId
+      user_id: auth.userId,
     })
 
     if (error) {
@@ -35,9 +44,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Invite code used successfully'
+      message: 'Invite code used successfully',
     })
-
   } catch (error) {
     console.error('Error in invite usage:', error)
     return NextResponse.json(
@@ -46,5 +54,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
-

@@ -95,20 +95,21 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
       // TEMPORARILY DISABLED: Invite code usage
       // TODO: Re-enable invite code usage before production
       /*
-      // Use the invite code after successful signup
+      // Use the invite code after successful signup (requires auth Bearer — secureFetch)
       try {
-        // Get the current user ID
         const { data: { user } } = await supabase.auth.getUser()
-        
-        if (user?.id) {
+        const { data: { session } } = await supabase.auth.getSession()
+
+        if (user?.id && session?.access_token) {
           const useResponse = await fetch('/api/use-invite', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
               inviteCode: inviteCode.trim(),
-              userId: user.id
+              userId: user.id,
             }),
           })
 
